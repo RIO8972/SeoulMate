@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RequiredArgsConstructor
 public class TestController {
-
     private final UserRepository userRepository;
 
     @GetMapping("/controller")
     public String test() {
-        userRepository.save(new User("rio"));
+        //userRepository.save(new User("rio"));
+        log.info(userRepository.findById(1L).toString()); //추가한부분
         return "test";
     }
 }

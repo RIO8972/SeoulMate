@@ -2,8 +2,12 @@ package com.knu.oauthlogin.domain;
 
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
+
+@Getter @ToString
 @Entity
 @Table(name="USERS") //https://lktgt.tistory.com/47 USER는 얘약어여엇 USERS사용
 @NoArgsConstructor
@@ -16,4 +20,5 @@ public class User {
     public User(String name){
         this.username = name;
     }
+
 }
