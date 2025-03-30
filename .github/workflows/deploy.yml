@@ -42,6 +42,7 @@ jobs:
       # Step 1: Base64로 인코딩된 SSH 키 복호화
       - name: Set up SSH key
         run: |
+          mkdir -p ~/.ssh  # SSH 디렉터리 생성
           echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa  # 권한 설정
         shell: bash
