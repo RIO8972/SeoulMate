@@ -17,9 +17,10 @@ public class TestController {
     private final UserRepository userRepository;
 
     @GetMapping("/controller")
-    public String test(Model model) {
+    public String test(Model model) { //test
+
         User user = userRepository.findById(1L).get();
-        log.info(user.toString()); 
+        log.info(user.toString());
         model.addAttribute("username",user.getUsername());
         return "test";
     }
