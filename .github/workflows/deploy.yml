@@ -53,7 +53,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}  # EC2 인스턴스의 퍼블릭 IP
           username: ubuntu  # EC2 기본 사용자명
-          key: ${{ secrets.EC2_SSH_KEY }}  # GitHub Secrets에서 SSH 키 가져오기
+          key: ~/.ssh/id_rsa  # 복호화한 SSH 키 파일 경로
           port: 22  # SSH 포트
           script: |
             # EC2에서 실행할 명령어
