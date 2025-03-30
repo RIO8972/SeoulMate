@@ -37,24 +37,26 @@ jobs:
           docker push rio8972/oauthlogin
 
   deploy:
-    needs: build  # build 작업이 완료된 후 실행
-    runs-on: ubuntu-latest  # GitHub Actions의 가상 환경에서 실행
-
+    runs-on: ubuntu-latest
     steps:
-      - name: SSH into EC2 and deploy  # EC2 서버에 SSH로 접속 후 배포
+      # Step 1: Base64로 인코딩된 SSH 키 복호화
+      - name: Set up SSH key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa  # 권한 설정
+        shell: bash
+
+      # Step 2: SSH로 EC2에 접속하여 배포 작업 수행
+      - name: SSH into EC2 and deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_HOST }}  # EC2 인스턴스의 퍼블릭 IP 또는 도메인
+          host: ${{ secrets.EC2_HOST }}  # EC2 인스턴스의 퍼블릭 IP
           username: ubuntu  # EC2 기본 사용자명
-          key: ${{ secrets.EC2_SSH_KEY }}  # SSH 개인 키 ->(GitHub Secrets에 저장)
+          key: ${{ secrets.EC2_SSH_KEY }}  # GitHub Secrets에서 SSH 키 가져오기
+          port: 22  # SSH 포트
           script: |
-            cd docker-compose  # docker-compose.yml이 있는 디렉터리로 이동
-
-            # 최신 Docker 이미지 Pull
+            # EC2에서 실행할 명령어
+            cd docker-compose
             docker-compose pull
-
-            # 기존 컨테이너 중지 및 삭제
             docker-compose down
-
-            # 새로운 컨테이너 실행
             docker-compose up -d
