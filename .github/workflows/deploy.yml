@@ -40,12 +40,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-        
       - name: SSH into EC2 and deploy
         uses: appleboy/ssh-action@master
         with:
@@ -54,6 +48,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}  # Base64 없이 원본 SSH 키 사용
           port: 22
           script: |
+            # EC2에서 Docker Hub 로그인
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             cd docker-compose
             docker-compose pull
             docker-compose down
