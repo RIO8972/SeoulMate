@@ -37,6 +37,7 @@ jobs:
           docker push rio8972/oauthlogin
 
   deploy:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       # Step 1: Base64로 인코딩된 SSH 키 복호화
