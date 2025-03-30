@@ -51,4 +51,4 @@ jobs:
             cd docker-compose
             docker-compose pull
             docker-compose down
-            docker-compose up -d
+            docker-compose up -d --force-recreate  # 강제로 새로운 컨테이너로 재생성
