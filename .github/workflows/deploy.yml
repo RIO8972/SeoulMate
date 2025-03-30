@@ -40,24 +40,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Base64로 인코딩된 SSH 키 복호화
-      - name: Set up SSH key
-        run: |
-          mkdir -p ~/.ssh  # SSH 디렉터리 생성
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa  # 권한 설정
-        shell: bash
-
-      # Step 2: SSH로 EC2에 접속하여 배포 작업 수행
       - name: SSH into EC2 and deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_HOST }}  # EC2 인스턴스의 퍼블릭 IP
-          username: ubuntu  # EC2 기본 사용자명
-          key: ~/.ssh/id_rsa  # 복호화한 SSH 키 파일 경로
-          port: 22  # SSH 포트
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}  # Base64 없이 원본 SSH 키 사용
+          port: 22
           script: |
-            # EC2에서 실행할 명령어
             cd docker-compose
             docker-compose pull
             docker-compose down
