@@ -7,13 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class RedisHealthCheck implements CommandLineRunner {
-    private final RedisTemplate<String, Object> redisTemplate;
+public class RedisHealthCheck  {
 
-    @Override
-    public void run(String... args) throws Exception {
-        String result = redisTemplate.getConnectionFactory().getConnection().ping();
-        System.out.println("Redis 연결 확인: " + result);  // PONG 나와야 정상
-    }
 }
 
