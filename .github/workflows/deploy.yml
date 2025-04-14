@@ -64,4 +64,4 @@ jobs:
             cd docker-compose
             docker-compose pull
             docker-compose down
-            docker-compose up -d --force-recreat app1 cityapi # 강제로 새로운 컨테이너로 재생성
+            docker-compose up -d --force-recreate
