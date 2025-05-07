@@ -37,6 +37,8 @@ dependencies {
 
 	// Spring Boot Security starter
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// (테스트용) 보안 테스트 헬퍼
+    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 tasks.named('test') {
