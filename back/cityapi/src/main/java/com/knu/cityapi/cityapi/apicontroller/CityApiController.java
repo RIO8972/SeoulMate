@@ -1,6 +1,7 @@
 package com.knu.cityapi.cityapi.apicontroller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.knu.cityapi.cityapi.dto.region.RegionInfo;
 import com.knu.cityapi.cityapi.service.kakao.KakaoSearchService;
 import com.knu.cityapi.cityapi.service.seoul.SeoulRegionService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,13 @@ public class CityApiController {
         //log.info("seoulController");
         return seoulRegionService.searchRegion(region);
     }
+
+    @GetMapping(value = "/regions/population/color",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<Map<String, RegionInfo>> getRegionsColor() {
+        return seoulRegionService.getMaxCongestionByRegionWithColor();
+    }
+
 
     @PostMapping(
             value = "/regions/population",
