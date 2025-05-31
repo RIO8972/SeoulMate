@@ -35,6 +35,26 @@ public class SeoulRegionService {
     @Value("${seoul.api.key}")
     private String seoulApiKey;
 
+    private String decideColor(String lvl) {
+        return switch (lvl) {
+            case "붐빔"      -> "#4C75A3";
+            case "약간 붐빔" -> "#6C97BF";
+            case "보통"      -> "#89ADD3";
+            case "여유"      -> "#C3E1F3";
+            default          -> "#C3E1F3";
+        };
+    }
+
+    private int priority(String lvl) {
+        return switch (lvl) {
+            case "붐빔"      -> 4;
+            case "약간 붐빔" -> 3;
+            case "보통"      -> 2;
+            case "여유"      -> 1;
+            default          -> 0;
+        };
+    }
+
     public Mono<JsonNode> searchRegion(String region){
         //log.info("region : "+ region);
         //log.info("seoulApiKey :"+ seoulApiKey);
@@ -88,24 +108,34 @@ public class SeoulRegionService {
                 .collectMap(Tuple2::getT1, Tuple2::getT2);
     }
 
-    private String decideColor(String lvl) {
-        return switch (lvl) {
-            case "붐빔"      -> "#4C75A3";
-            case "약간 붐빔" -> "#6C97BF";
-            case "보통"      -> "#89ADD3";
-            case "여유"      -> "#C3E1F3";
-            default          -> "#C3E1F3";
-        };
+    public Mono<Map<String, List<JsonNode>>> getAllRawDataByRegion() {
+        //log.info("getAllRawDataByRegion 호출");
+        return Flux.fromIterable(getAllPlaceNames())
+                // (1) placeName마다 API 호출 → Mono<JsonNode root>
+                .flatMap(placeName ->
+                                searchRegion(placeName)
+                                        // (2) root에서 citydata_ppltn 배열의 첫 번째 요소(JsonNode)만 꺼낸다.
+                                        .map(root -> root.path("SeoulRtd.citydata_ppltn").get(0))
+                                        // (3) 각 장소 JsonNode에서 regionCode를 조회하고 Tuple로 묶는다.
+                                        .map(elem -> {
+                                            String name = elem.path("AREA_NM").asText();
+                                            String regionCode = seoulPlaceRepository
+                                                    .findByPlaceName(name)
+                                                    .orElseThrow(() -> new IllegalStateException(name + " 미매핑"))
+                                                    .getRegionCode();
+                                            // 반환할 때는 Tuple2<regionCode, JsonNode(elem)> 형태로
+                                            return Tuples.of(regionCode, elem);
+                                        })
+                        , 30)  // 동시성 30으로 병렬 요청
+                // (4) regionCode별로 그룹화: Tuple2.getT1()=regionCode, Tuple2.getT2()=JsonNode(elem)
+                .groupBy(Tuple2::getT1, Tuple2::getT2)
+                .flatMap(groupedFlux ->
+                        // groupedFlux.key()가 regionCode
+                        // groupedFlux.collectList()는 List<JsonNode> (각 장소의 원본 elem)
+                        groupedFlux.collectList()
+                                .map(list -> Tuples.of(groupedFlux.key(), list))
+                )
+                // (5) 최종적으로 Map<regionCode, List<JsonNode>>로 수집해서 Mono로 반환
+                .collectMap(Tuple2::getT1, Tuple2::getT2);
     }
-
-    private int priority(String lvl) {
-        return switch (lvl) {
-            case "붐빔"      -> 4;
-            case "약간 붐빔" -> 3;
-            case "보통"      -> 2;
-            case "여유"      -> 1;
-            default          -> 0;
-        };
-    }
-
 }
