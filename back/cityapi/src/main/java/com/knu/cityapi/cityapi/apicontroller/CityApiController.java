@@ -39,13 +39,7 @@ public class CityApiController {
         return seoulRegionService.searchRegion(region);
     }
 
-    /*
     @GetMapping(value = "/regions/population/color",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<Map<String, RegionInfo>> getRegionsColor() { //캐싱데이터 호출
-        return schedulerCacheService.getCachedCongestion();
-    }*/
-    @GetMapping(value = "/regions/color",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<Map<String, RegionInfo>>> getCongestion() { //캐싱데이터
         return schedulerCacheService.getCachedColor()
@@ -70,14 +64,14 @@ public class CityApiController {
         return seoulRegionService.searchRegionsAsMap(regions);
     }
 
-    @GetMapping(value = "/regions/district",
+    @GetMapping(value = "/regions/population/district",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public  Mono<Map<String, List<JsonNode>>>getDistrictPlaceData_cash() { //캐싱데이터
         return schedulerCacheService.getCachedDistrict()
                 .doOnError(e -> log.error("혼잡도 조회 중 오류 발생", e));
     }
 
-    @GetMapping(value = "/regions/get/district/{districtName}",
+    @GetMapping(value = "/regions/population/district/{districtName}",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public List<JsonNode> getDistrict( //캐싱데이터
             @PathVariable("districtName") String districtName) {
