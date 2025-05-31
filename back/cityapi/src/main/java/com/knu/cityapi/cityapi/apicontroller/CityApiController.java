@@ -2,6 +2,7 @@ package com.knu.cityapi.cityapi.apicontroller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.knu.cityapi.cityapi.dto.region.RegionInfo;
+import com.knu.cityapi.cityapi.scheduler.SchedulerCacheService;
 import com.knu.cityapi.cityapi.service.kakao.KakaoSearchService;
 import com.knu.cityapi.cityapi.service.seoul.SeoulRegionService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.Map;
 public class CityApiController {
     private final KakaoSearchService kakaoSearchService;
     private final SeoulRegionService seoulRegionService;
+    private final SchedulerCacheService schedulerCacheService;
 
     @GetMapping(value = "/search/kakao", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> search(@RequestParam String query,
@@ -36,10 +38,15 @@ public class CityApiController {
 
     @GetMapping(value = "/regions/population/color",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<Map<String, RegionInfo>> getRegionsColor() {
+    public Mono<Map<String, RegionInfo>> getRegionsColor() { //캐싱데이터 호출
+        return schedulerCacheService.getCachedCongestion();
+    }
+    
+    @GetMapping(value = "/regions/population/color2",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<Map<String, RegionInfo>> getRegionsColor2() {
         return seoulRegionService.getMaxCongestionByRegionWithColor();
     }
-
 
     @PostMapping(
             value = "/regions/population",
