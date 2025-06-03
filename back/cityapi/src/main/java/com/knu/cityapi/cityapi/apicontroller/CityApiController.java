@@ -83,7 +83,8 @@ public class CityApiController {
         return districtCacheAccessor.getCachedDistrictData(districtName);
     }
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/search/route",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<JsonNode> searchRoute(
             @RequestParam String mode,         // "car" 또는 "public-transport"
             @RequestParam String start_x,
