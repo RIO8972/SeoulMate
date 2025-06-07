@@ -80,10 +80,16 @@ public class OAuth2JwtSuccessHandler implements AuthenticationSuccessHandler {
         res.addCookie(rtCookie);
 
         //(5) Access Token을 JSON 바디로 반환 (원한다면 Header에도 추가 가능)
-        res.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
-        res.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        Map<String, String> body = Map.of("accessToken", accessToken);
-        objectMapper.writeValue(res.getWriter(), body);
+//        res.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+//        res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+//        Map<String, String> body = Map.of("accessToken", accessToken);
+//        objectMapper.writeValue(res.getWriter(), body);
+
+        String redirectTo = UriComponentsBuilder
+                .fromUriString("http://localhost:3000/savetoken")
+                .queryParam("accessToken", accessToken)
+                .build().toUriString();
+        res.sendRedirect(redirectTo);
     }
 }
 
