@@ -72,7 +72,7 @@ public class OAuth2JwtSuccessHandler implements AuthenticationSuccessHandler {
         Cookie rtCookie = new Cookie("refreshToken", refreshToken);
         rtCookie.setHttpOnly(true);
         rtCookie.setSecure(true); //Secure 옵션 때문에 HTTP 연결에서는 쿠키가 무시 => false로 임시 변경
-        rtCookie.setPath("/auth/refresh");                 // /auth/refresh 요청에만 자동 전송
+        rtCookie.setPath("/");                 // /auth/refresh 요청에만 자동 전송
         rtCookie.setMaxAge((int) ( (savedRt.getExpiryDate().toEpochMilli() - System.currentTimeMillis()) / 1000 ));
         // SameSite 설정이 필요하면, 별도 헤더 조작이 필요. (서블릿 표준 쿠키엔 없으므로 응답 헤더에 수동 추가)
         // 예: res.addHeader("Set-Cookie", "refreshToken=" + refreshToken + "; HttpOnly; Secure; SameSite=Strict; Path=/auth/refresh; Max-Age=...");
