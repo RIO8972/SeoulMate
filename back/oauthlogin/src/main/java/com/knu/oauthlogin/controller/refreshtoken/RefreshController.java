@@ -5,23 +5,18 @@ import com.knu.oauthlogin.domain.user.User;
 import com.knu.oauthlogin.domain.user.UserRepository;
 import com.knu.oauthlogin.service.token.JwtService;
 import com.knu.oauthlogin.service.token.RefreshTokenService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.servlet.http.Cookie;
-
 import java.util.Map;
-import java.io.IOException;
 import java.util.Optional;
 
 @RestController
@@ -31,13 +26,14 @@ public class RefreshController {
 
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
-    //private final UserDetailsService userDetailsService; // UserDetailsService 구현체 (username→UserDetails)
     private final UserRepository userRepository;
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshAccessToken(HttpServletRequest request,
-                                                HttpServletResponse response) throws IOException {
-        // 1) 쿠키에서 refreshToken 가져오기
+    public ResponseEntity<?> refreshAccessToken(
+            HttpServletRequest request,
+            HttpServletResponse response) {
+
+        // 1) 쿠키에서 기존 리프레시 토큰(rawRefreshToken) 꺼내기
         String rawRefreshToken = null;
         if (request.getCookies() != null) {
             for (Cookie c : request.getCookies()) {
@@ -48,40 +44,58 @@ public class RefreshController {
             }
         }
         if (rawRefreshToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity
+                    .status(401)
                     .body(Map.of("error", "리프레시 토큰이 없습니다."));
         }
 
-        // 2) DB + JWT 유효성 검사
+        // 2) DB + JWT 검증
         Optional<RefreshToken> optionalRt = refreshTokenService.verifyRefreshToken(rawRefreshToken);
         if (optionalRt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity
+                    .status(401)
                     .body(Map.of("error", "리프레시 토큰이 유효하지 않습니다."));
         }
 
-        // 3) 토큰 페이로드에서 username(subject, 여기서는 userId) 추출
-        String username = jwtService.validateToken(rawRefreshToken).getBody().getSubject();
+        // 3) 기존 토큰의 서브젝트(username)를 꺼내서 User 조회
+        String subject = jwtService.validateToken(rawRefreshToken)
+                .getBody()
+                .getSubject();
         Long userId;
         try {
-            userId = Long.valueOf(username);
+            userId = Long.valueOf(subject);
         } catch (NumberFormatException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity
+                    .status(401)
                     .body(Map.of("error", "잘못된 토큰 서브젝트입니다."));
         }
 
-        // 4) UserRepository로 사용자 조회 (email 대신 ID로 조회)
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: userId=" + userId));
 
-        // 5) 새로운 Access Token 발급 (필요한 필드를 직접 넣어주면 됨)
+        // 4) 새로운 Access Token 발급
         String newAccessToken = jwtService.generateAccessToken(
                 user.getId().toString(),
-                user.getUsername(),  // 또는 이름(name) 필드가 있다면 그 값을
+                user.getUsername(),
                 user.getEmail()
         );
 
-        // 6) JSON 바디로 새 Access Token 반환
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+        // 5) 새로운 Refresh Token 발급 및 DB 저장
+        RefreshToken newRtEntity = refreshTokenService.createRefreshToken(user.getId().toString());
+        String newRefreshToken = newRtEntity.getToken();
+        long maxAge = (newRtEntity.getExpiryDate().toEpochMilli() - System.currentTimeMillis()) / 1000;
+
+        // 6) Set-Cookie 헤더로 SameSite=None; Secure 쿠키 추가
+        String cookieHeader = String.format(
+                "refreshToken=%s; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=%d",
+                newRefreshToken,
+                maxAge
+        );
+
+        // 7) 응답 헤더에 Set-Cookie 추가하고 Access Token 반환
+        return ResponseEntity.ok()
+                .header("Set-Cookie", cookieHeader)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("accessToken", newAccessToken));
     }
 }
