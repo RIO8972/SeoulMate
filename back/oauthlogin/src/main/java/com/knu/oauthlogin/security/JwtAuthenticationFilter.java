@@ -24,7 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //    public JwtAuthenticationFilter(JwtService jwtService) {
 //        this.jwtService = jwtService;
 //    }
-    @Override
+    @Override //이거 필요없음 -> 지우기
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
         // /auth/refresh 요청은 필터 실행 안 함
