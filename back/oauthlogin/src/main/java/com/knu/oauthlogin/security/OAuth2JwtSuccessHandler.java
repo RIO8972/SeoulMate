@@ -86,7 +86,7 @@ public class OAuth2JwtSuccessHandler implements AuthenticationSuccessHandler {
 //        objectMapper.writeValue(res.getWriter(), body);
         // ← 여기에 Set-Cookie 헤더 직접 조립
         String cookie = String.format(
-                "refreshToken=%s; Domain=seoul-mate.co.kr; Path=/; Max-Age=%d; HttpOnly; Secure; SameSite=None",
+                "refreshToken=%s; Domain=.seoul-mate.co.kr; Path=/; Max-Age=%d; HttpOnly; Secure; SameSite=None",
                 refreshToken,
                 maxAge
         );
