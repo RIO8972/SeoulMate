@@ -87,7 +87,7 @@ public class RefreshController {
 
         // 6) Set-Cookie 헤더로 SameSite=None; Secure 쿠키 추가
         String cookieHeader = String.format(
-                "refreshToken=%s; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=%d",
+                "refreshToken=%s; Domain=.seoul-mate.co.kr; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=%d",
                 newRefreshToken,
                 maxAge
         );
