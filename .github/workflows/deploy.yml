@@ -66,5 +66,5 @@ jobs:
             #docker-compose down
             #docker-compose up -d --force-recreate
             docker-compose pull login cityapi nginx
-            docker-compose up -d --no-deps --force-recreate login cityapi nginx
+            docker-compose up -d --force-recreate login cityapi nginx
             docker image prune -a
