@@ -62,9 +62,7 @@ jobs:
             # EC2에서 Docker Hub 로그인
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             cd docker-compose
-            #docker-compose pull
-            #docker-compose down
-            #docker-compose up -d --force-recreate
-            docker-compose pull login cityapi nginx
-            docker-compose up -d --force-recreate login cityapi nginx
+            docker-compose pull
+            docker-compose down
+            docker-compose up -d --force-recreate
             docker image prune -a
