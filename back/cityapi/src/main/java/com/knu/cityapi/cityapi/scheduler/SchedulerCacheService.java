@@ -28,30 +28,44 @@ public class SchedulerCacheService {
     @Scheduled(fixedRate = 10 * 60 * 1000)  // 10분 = 600,000ms
     public void refreshCacheForced() {
         CaffeineCache colorCache = (CaffeineCache) cacheManager.getCache("colorCache");
-        if (colorCache == null) {
-            log.warn("regionsCache 캐시가 등록되지 않음");
-            return;
-        }
-        seoulRegionService.getMaxCongestionByRegionWithColor()
-                .doOnNext(latest -> {
-                    // SimpleKey.EMPTY는 파라미터가 없는 @Cacheable 호출의 기본 키
-                    colorCache.put(SimpleKey.EMPTY, latest);
-                    log.info("강제 스케줄러로 캐시 업데이트: {} entries", latest.size());
-                })
-                .subscribe();  // Reactor 비동기 방식으로 처리
-
         CaffeineCache districtCache = (CaffeineCache) cacheManager.getCache("districtCache");
-        if (districtCache == null) {
-            log.warn("districtCache 캐시가 등록되지 않음");
+
+        if (colorCache == null || districtCache == null) {
+            log.warn("캐시가 등록되지 않음");
             return;
         }
-        seoulRegionService.getAllRawDataByRegion()
-                .doOnNext(latest -> {
+        seoulRegionService.getAllRawDataByRegion()    // Mono<Map<String,List<JsonNode>>>
+                .flatMap(rawMap -> {
+                    // 1) 원본 rawMap 캐시 저장
+                    districtCache.put(SimpleKey.EMPTY, rawMap);
+                    log.info("districtCache 업데이트: {} entries", rawMap.size());
 
-                    districtCache.put(SimpleKey.EMPTY, latest);
-                    log.info("강제 스케줄러로 캐시 업데이트: {} entries", latest.size());
+                    // 2) rawMap을 파라미터로 max 혼잡도 맵 생성 리턴
+                    return seoulRegionService.getMaxCongestionByRegionWithColor(rawMap);
                 })
-                .subscribe();  // Reactor 비동기 방식으로 처리
+                .doOnNext(maxMap -> {
+                    // 3) 생성된 maxMap 캐시 저장
+                    colorCache.put(SimpleKey.EMPTY, maxMap);
+                    log.info("colorCache 업데이트: {} entries", maxMap.size());
+                })
+                .subscribe();  // subscribe 는 마지막에 한 번만
+
+//        seoulRegionService.getMaxCongestionByRegionWithColor()
+//                .doOnNext(latest -> {
+//                    // SimpleKey.EMPTY는 파라미터가 없는 @Cacheable 호출의 기본 키
+//                    colorCache.put(SimpleKey.EMPTY, latest);
+//                    log.info("강제 스케줄러로 캐시 업데이트: {} entries", latest.size());
+//                })
+//                .subscribe();  // Reactor 비동기 방식으로 처리
+//
+//
+//        seoulRegionService.getAllRawDataByRegion()
+//                .doOnNext(latest -> {
+//
+//                    districtCache.put(SimpleKey.EMPTY, latest);
+//                    log.info("강제 스케줄러로 캐시 업데이트: {} entries", latest.size());
+//                })
+//                .subscribe();  // Reactor 비동기 방식으로 처리
     }
 
     @Cacheable(value = "colorCache")

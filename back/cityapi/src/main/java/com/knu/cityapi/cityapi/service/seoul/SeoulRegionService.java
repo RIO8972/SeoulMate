@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -107,6 +108,24 @@ public class SeoulRegionService {
                 // (E) Map<regionCode, RegionInfo>로 수집
                 .collectMap(Tuple2::getT1, Tuple2::getT2);
     }
+
+    public Mono<Map<String, RegionInfo>> getMaxCongestionByRegionWithColor(Map<String, List<JsonNode>> rawDataMap) {
+        Map<String, RegionInfo> maxInfoMap = rawDataMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().stream()
+                                .map(elem -> {
+                                    String name  = elem.path("AREA_NM").asText();
+                                    String lvl   = elem.path("AREA_CONGEST_LVL").asText();
+                                    String color = decideColor(lvl);
+                                    return new RegionInfo(name, lvl, color);
+                                })
+                                .max(Comparator.comparingInt(info -> priority(info.getLevel())))
+                                .orElseThrow(() -> new IllegalStateException("빈 리스트라 처리 불가"))
+                ));
+        return Mono.just(maxInfoMap);
+    }
+
 
     public Mono<Map<String, List<JsonNode>>> getAllRawDataByRegion() {
         //log.info("getAllRawDataByRegion 호출");
