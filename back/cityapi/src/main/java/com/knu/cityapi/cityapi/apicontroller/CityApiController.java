@@ -2,16 +2,13 @@ package com.knu.cityapi.cityapi.apicontroller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.knu.cityapi.cityapi.dto.region.RegionInfo;
-import com.knu.cityapi.cityapi.scheduler.SchedulerCacheService;
 import com.knu.cityapi.cityapi.service.kakao.KakaoSearchService;
 import com.knu.cityapi.cityapi.service.odsay.RouteDurationService;
-import com.knu.cityapi.cityapi.service.seoul.DistrictCacheAccessor;
 import com.knu.cityapi.cityapi.service.seoul.SeoulRegionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
@@ -25,15 +22,12 @@ import java.util.Map;
 public class CityApiController {
     private final KakaoSearchService kakaoSearchService;
     private final SeoulRegionService seoulRegionService;
-    private final SchedulerCacheService schedulerCacheService;
-    private final DistrictCacheAccessor districtCacheAccessor;
     private  final RouteDurationService routeDurationService;
 
     @GetMapping(value = "/search/kakao", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> search(@RequestParam String query,
                                @RequestParam(required = false, defaultValue = "15") int size,
-                               @RequestParam(required = false, defaultValue = "1") int page
-    ) {
+                               @RequestParam(required = false, defaultValue = "1") int page) {
         return kakaoSearchService.searchKeyword(query,size,page);
     }
 
@@ -41,14 +35,6 @@ public class CityApiController {
     public Mono<JsonNode> seoul(@RequestParam String region) {
         //log.info("seoulController");
         return seoulRegionService.searchRegion(region);
-    }
-
-    @GetMapping(value = "/cache/regions/population/colors",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<ResponseEntity<Map<String, RegionInfo>>> getCongestion() { //캐싱데이터
-        return schedulerCacheService.getCachedColor()
-                .map(map -> ResponseEntity.ok(map))
-                .doOnError(e -> log.error("혼잡도 조회 중 오류 발생", e));
     }
 
     @GetMapping(value = "/regions/population/colors",
@@ -66,21 +52,6 @@ public class CityApiController {
         log.info("dd");
         log.info(regions.toString());
         return seoulRegionService.searchRegionsAsMap(regions);
-    }
-
-    @GetMapping(value = "/cache/regions/population/districts",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public  Mono<Map<String, List<JsonNode>>>getDistrictPlaceData_cash() { //캐싱데이터
-        return schedulerCacheService.getCachedDistrict()
-                .doOnError(e -> log.error("혼잡도 조회 중 오류 발생", e));
-    }
-
-    @GetMapping(value = "/cache/regions/population/districts/{districtName}",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<JsonNode> getDistrict( //캐싱데이터
-            @PathVariable("districtName") String districtName) {
-
-        return districtCacheAccessor.getCachedDistrictData(districtName);
     }
 
     @GetMapping(value = "/search/route",
@@ -111,5 +82,4 @@ public class CityApiController {
                     "지원하지 않는 mode 값입니다. (car 또는 public-transport)"));
         }
     }
-
 }
