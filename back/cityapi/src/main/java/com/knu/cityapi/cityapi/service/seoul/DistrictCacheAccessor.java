@@ -142,6 +142,26 @@ public class DistrictCacheAccessor {
         return districtResponse;
     }
 
+    public JsonNode getCityData(String regionCode) {
+        CaffeineCache cityCache = (CaffeineCache) cacheManager.getCache("cityCache");
+        if ( cityCache == null) { return null; }
 
+        ValueWrapper wrapper = cityCache.get(SimpleKey.EMPTY);
+        if (wrapper == null) { return null; }
+
+        // 2) 캐시에 들어 있는 값을 꺼내서 List<JsonNode> 로 캐스팅
+        Object raw = wrapper.get();
+        if (!(raw instanceof List<?>)) {
+            return null;
+        }
+        @SuppressWarnings("unchecked")
+        List<JsonNode> allCities = (List<JsonNode>) raw;
+
+        for(JsonNode city : allCities) {
+            if(regionCode.equals(city.get("AREA_CD").asText()))
+                return city;
+        }
+        return null;
+    }
 }
 

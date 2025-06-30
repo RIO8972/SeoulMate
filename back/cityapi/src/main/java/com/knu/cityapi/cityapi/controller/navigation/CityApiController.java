@@ -1,4 +1,4 @@
-package com.knu.cityapi.cityapi.apicontroller;
+package com.knu.cityapi.cityapi.controller.navigation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.knu.cityapi.cityapi.dto.region.RegionInfo;
