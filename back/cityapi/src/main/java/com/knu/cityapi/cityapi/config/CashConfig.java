@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 public class CashConfig {
     @Bean
     public CaffeineCacheManager caffeineCacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("colorCache","districtCache");
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager("colorCache","districtCache","cityCache");
 
         cacheManager.setAsyncCacheMode(true); //비동기 캐시 모드 활성화
 

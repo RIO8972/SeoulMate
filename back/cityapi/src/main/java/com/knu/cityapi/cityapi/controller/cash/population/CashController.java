@@ -1,14 +1,11 @@
-package com.knu.cityapi.cityapi.apicontroller;
+package com.knu.cityapi.cityapi.controller.cash.population;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.knu.cityapi.cityapi.dto.region.DistrictResponse;
 import com.knu.cityapi.cityapi.dto.region.RegionInfo;
-import com.knu.cityapi.cityapi.scheduler.SchedulerCacheService;
-import com.knu.cityapi.cityapi.service.kakao.KakaoSearchService;
-import com.knu.cityapi.cityapi.service.odsay.RouteDurationService;
+import com.knu.cityapi.cityapi.scheduler.population.SchedulerCacheService;
 import com.knu.cityapi.cityapi.service.seoul.DistrictCacheAccessor;
-import com.knu.cityapi.cityapi.service.seoul.SeoulRegionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;

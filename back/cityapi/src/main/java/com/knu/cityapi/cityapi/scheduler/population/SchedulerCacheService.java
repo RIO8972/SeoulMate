@@ -1,4 +1,4 @@
-package com.knu.cityapi.cityapi.scheduler;
+package com.knu.cityapi.cityapi.scheduler.population;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.knu.cityapi.cityapi.dto.region.RegionInfo;
