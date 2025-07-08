@@ -3,6 +3,7 @@ package com.knu.oauthlogin.config;
 import com.knu.oauthlogin.domain.user.UserRepository;
 import com.knu.oauthlogin.security.JwtAuthenticationFilter;
 import com.knu.oauthlogin.security.OAuth2JwtSuccessHandler;
+import com.knu.oauthlogin.service.auth.CustomUserDetailsService;
 import com.knu.oauthlogin.service.token.JwtService;
 import com.knu.oauthlogin.service.token.RefreshTokenService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,10 +14,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
@@ -30,6 +36,7 @@ import java.security.KeyPair;
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final CustomUserDetailsService customUserDetailsService;
     private final OAuth2UserService oAuth2UserService; // 기존 사용하던 서비스
     private final UserRepository userRepository;       // 사용자 조회용
     private final RefreshTokenService refreshTokenService;
@@ -40,8 +47,28 @@ public class SecurityConfig {
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtService);
     }
+    // 비밀번호 암호화용
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    // 로그인 API를 위한 AuthenticationManager
+    @Bean
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(customUserDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return new ProviderManager(provider);
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // --- DaoAuthenticationProvider를 직접 만들어서 체인에 등록 ---
+        DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider();
+        daoProvider.setUserDetailsService(customUserDetailsService);
+        daoProvider.setPasswordEncoder(passwordEncoder());
+
         return http
                 // 1) CSRF 비활성화 (stateless JWT 기반)
                 .csrf(csrf -> csrf.disable())
@@ -56,7 +83,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/controller", "/login", "/banner/**",
                                 "/oauth2/**", "/oauth-login",
-                                "/auth/refresh"   // ← 리프레시 엔드포인트는 인증 제외
+                                "/auth/refresh",   // ← 리프레시 엔드포인트는 인증 제외
+                                "/token/*"
+
                         ).permitAll()
                         // H2 콘솔도 필요시 열어둘 수 있음
                         .requestMatchers("/h2-console/**").permitAll()
