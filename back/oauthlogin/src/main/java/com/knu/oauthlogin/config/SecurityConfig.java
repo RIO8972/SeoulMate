@@ -81,10 +81,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // OAuth 로그인, 리프레시 엔드포인트, 홈 등은 모두 허용
                         .requestMatchers(
-                                "/controller", "/login", "/banner/**",
+                                "/controller","/banner/**", //나중에 지우기
+                                "/signup", "/login", //자체로그인
                                 "/oauth2/**", "/oauth-login",
-                                "/auth/refresh",   // ← 리프레시 엔드포인트는 인증 제외
-                                "/token/*"
+                                "/token/*" //refesh토큰
 
                         ).permitAll()
                         // H2 콘솔도 필요시 열어둘 수 있음
