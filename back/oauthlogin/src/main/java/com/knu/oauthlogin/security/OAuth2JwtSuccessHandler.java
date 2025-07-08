@@ -65,7 +65,9 @@ public class OAuth2JwtSuccessHandler implements AuthenticationSuccessHandler {
         } else if (principal instanceof UserDetails ud) {
             // 폼 로그인 흐름
             email = ud.getUsername();      // UserDetailsService가 설정한 username(email)
-            name  = ud.getUsername();      // 필요하면 DB에서 별도 조회해서 real name을 꺼내도 됩니다
+            name  = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException("Local user not found: " + email))
+                    .getUsername();
             User user = userRepository.findByEmailAndProvider(email, "LOCAL")
                     .orElseThrow(() -> new IllegalStateException("Local user not found: " + email));
             userIdStr = user.getId().toString();
@@ -94,11 +96,18 @@ public class OAuth2JwtSuccessHandler implements AuthenticationSuccessHandler {
         );
         res.setHeader("Set-Cookie", cookie);
 
-        String redirectTo = UriComponentsBuilder
-                .fromUriString("http://localhost:3000/savetoken")
-                .queryParam("accessToken", accessToken)
-                .build().toUriString();
-        res.sendRedirect(redirectTo);
+
+        res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        Map<String,String> body = Map.of(
+                "accessToken", accessToken
+        );
+        objectMapper.writeValue(res.getWriter(), body);
+
+//        String redirectTo = UriComponentsBuilder
+//                .fromUriString("http://localhost:3000/savetoken")
+//                .queryParam("accessToken", accessToken)
+//                .build().toUriString();
+//        res.sendRedirect(redirectTo);
     }
 }
 
