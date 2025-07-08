@@ -22,6 +22,8 @@ public class User {
     private String email; // 로그인한 사용자의 이메일
     @Column(name = "provider", nullable = false)
     private String provider; // 사용자가 로그인한 서비스(ex) google, naver..)
+    @Column
+    private String password; // 로컬 로그인용 비밀번호
 
     public User updateUser(String username, String email) {
         this.username = username;

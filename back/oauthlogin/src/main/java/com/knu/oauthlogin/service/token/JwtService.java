@@ -46,7 +46,7 @@ public class JwtService {
     public String generateAccessToken(String subject, String name, String email) {
         Date now = new Date();
         return builder
-                .setSubject(subject)
+                .setSubject(subject) //이거 user_id 값임(user테이블 id 컬럼 값)
                 .claim("name", name)
                 .claim("email", email)
                 .setIssuedAt(now)
