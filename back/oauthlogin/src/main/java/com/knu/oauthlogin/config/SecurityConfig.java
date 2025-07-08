@@ -41,6 +41,7 @@ public class SecurityConfig {
     private final UserRepository userRepository;       // 사용자 조회용
     private final RefreshTokenService refreshTokenService;
     private final JwtService jwtService;      // Bean으로 주입받은 필드
+    private final OAuth2JwtSuccessHandler oAuth2JwtSuccessHandler;
 
     /** JwtAuthenticationFilter 빈을 직접 등록 **/
     @Bean
@@ -70,6 +71,11 @@ public class SecurityConfig {
         daoProvider.setPasswordEncoder(passwordEncoder());
 
         return http
+                .authenticationProvider(
+                        new DaoAuthenticationProvider() {{
+                            setUserDetailsService(customUserDetailsService);
+                            setPasswordEncoder(passwordEncoder());
+                        }})
                 // 1) CSRF 비활성화 (stateless JWT 기반)
                 .csrf(csrf -> csrf.disable())
 
@@ -99,7 +105,15 @@ public class SecurityConfig {
                         })
                 )
                 // 5) 기본 폼 로그인( /login )을 완전히 비활성화
-                .formLogin(form -> form.disable())
+                //.formLogin(form -> form.disable())
+                .formLogin(form -> form
+                        .loginProcessingUrl("/login")
+                        .usernameParameter("email")
+                        .passwordParameter("password")
+                        .successHandler(oAuth2JwtSuccessHandler)   // 주입받은 빈 사용
+                        .failureHandler((req, res, ex) -> { /* 실패 처리 */ })
+                )
+
                 // 6) HTTP Basic 인증도 비활성화 (필요 없다면 꺼 두세요)
                 .httpBasic(basic -> basic.disable())
                 // 4) H2-console 프레임 옵션 허용(같은 origin)
@@ -114,7 +128,7 @@ public class SecurityConfig {
                         .userInfoEndpoint(ui -> ui.userService(oAuth2UserService))
                         //.successHandler(new OAuth2JwtSuccessHandler(jwtService(), userRepository))
                         // ⚠ jwtService()가 아니라 주입받은 jwtService 필드를 그대로 사용
-                        .successHandler(new OAuth2JwtSuccessHandler(jwtService,refreshTokenService ,userRepository))
+                        .successHandler(oAuth2JwtSuccessHandler)
                 )
 
                 // 7) 로그아웃 설정 (필요하다면 Refresh Token 삭제 로직 추가)
