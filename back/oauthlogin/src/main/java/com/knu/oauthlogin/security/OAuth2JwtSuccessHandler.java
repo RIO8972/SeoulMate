@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -48,15 +49,33 @@ public class OAuth2JwtSuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest req,
                                         HttpServletResponse res,
                                         Authentication auth) throws IOException {
-        OAuth2User oauthUser = (OAuth2User) auth.getPrincipal();
-        String email = oauthUser.getAttribute("email");
-        String name = oauthUser.getAttribute("name");
+        // 1) principal 타입에 따라 분기
+        String email;
+        String name;
+        String userIdStr;
 
-        // (1) DB에서 userId(또는 username) 조회
-        User user = userRepository.findByEmail(email).orElse(null);
-        String userIdStr = user.getId().toString();
+        Object principal = auth.getPrincipal();
+        if (principal instanceof OAuth2User oauthUser) {
+            // OAuth2 로그인 흐름
+            email = oauthUser.getAttribute("email");
+            name  = oauthUser.getAttribute("name");
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new IllegalStateException("OAuth2User not found: " + email));
+            userIdStr = user.getId().toString();
+        } else if (principal instanceof UserDetails ud) {
+            // 폼 로그인 흐름
+            email = ud.getUsername();      // UserDetailsService가 설정한 username(email)
+            name  = ud.getUsername();      // 필요하면 DB에서 별도 조회해서 real name을 꺼내도 됩니다
+            User user = userRepository.findByEmailAndProvider(email, "LOCAL")
+                    .orElseThrow(() -> new IllegalStateException("Local user not found: " + email));
+            userIdStr = user.getId().toString();
+        } else {
+            throw new IllegalStateException(
+                    "알 수 없는 principal 타입: " + principal.getClass().getName()
+            );
+        }
 
-        // (2) Access Token 생성
+        // 2) Access Token 생성
         String accessToken = jwtService.generateAccessToken(
                 userIdStr,
                 name,
@@ -67,24 +86,7 @@ public class OAuth2JwtSuccessHandler implements AuthenticationSuccessHandler {
         RefreshToken savedRt = refreshTokenService.createRefreshToken(userIdStr);
         String refreshToken = savedRt.getToken();
         long         maxAge       = (savedRt.getExpiryDate().toEpochMilli() - System.currentTimeMillis()) / 1000; //쿠키 유효시간
-//        // (4) Refresh Token을 HttpOnly 쿠키로 세팅
-//        // 쿠키 옵션: HttpOnly, Secure(HTTPS), Path 제한, SameSite=Strict 등
-//        Cookie rtCookie = new Cookie("refreshToken", refreshToken);
-//        rtCookie.setHttpOnly(true);
-//        rtCookie.setSecure(true); //Secure 옵션 때문에 HTTP 연결에서는 쿠키가 무시 => false로 임시 변경
-//        rtCookie.setPath("/");                 // /auth/refresh 요청에만 자동 전송
-//        rtCookie.setMaxAge((int) ( (savedRt.getExpiryDate().toEpochMilli() - System.currentTimeMillis()) / 1000 ));
-//        // SameSite 설정이 필요하면, 별도 헤더 조작이 필요. (서블릿 표준 쿠키엔 없으므로 응답 헤더에 수동 추가)
-//        // 예: res.addHeader("Set-Cookie", "refreshToken=" + refreshToken + "; HttpOnly; Secure; SameSite=Strict; Path=/auth/refresh; Max-Age=...");
-//
-//        res.addCookie(rtCookie);
 
-        //(5) Access Token을 JSON 바디로 반환 (원한다면 Header에도 추가 가능)
-//        res.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
-//        res.setContentType(MediaType.APPLICATION_JSON_VALUE);
-//        Map<String, String> body = Map.of("accessToken", accessToken);
-//        objectMapper.writeValue(res.getWriter(), body);
-        // ← 여기에 Set-Cookie 헤더 직접 조립
         String cookie = String.format(
                 "refreshToken=%s; Domain=.seoul-mate.co.kr; Path=/; Max-Age=%d; HttpOnly; Secure; SameSite=None",
                 refreshToken,
