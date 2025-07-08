@@ -48,7 +48,7 @@ public class AuthController {
             );
             log.info(">>access-----> auth OK for [{}]", dto.getEmail());
         } catch (AuthenticationException ex) {
-            log.error("🔐 로그인 실패: {}", ex.getMessage(), ex);
+            log.error("로그인 실패: {}", ex.getMessage(), ex);
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "로그인 실패: " + ex.getMessage()));
