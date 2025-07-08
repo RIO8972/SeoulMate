@@ -96,18 +96,22 @@ public class OAuth2JwtSuccessHandler implements AuthenticationSuccessHandler {
         );
         res.setHeader("Set-Cookie", cookie);
 
+        if (auth.getPrincipal() instanceof OAuth2User) {
+            // 소셜 로그인은 다시 클라이언트로 리다이렉트
+            String redirectTo = UriComponentsBuilder
+                .fromUriString("http://localhost:3000/savetoken")
+                .queryParam("accessToken", accessToken)
+                .build().toUriString();
+            res.sendRedirect(redirectTo);
+        }
+        else {
+            res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            Map<String,String> body = Map.of(
+                    "accessToken", accessToken
+            );
+            objectMapper.writeValue(res.getWriter(), body);
+        }
 
-        res.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        Map<String,String> body = Map.of(
-                "accessToken", accessToken
-        );
-        objectMapper.writeValue(res.getWriter(), body);
-
-//        String redirectTo = UriComponentsBuilder
-//                .fromUriString("http://localhost:3000/savetoken")
-//                .queryParam("accessToken", accessToken)
-//                .build().toUriString();
-//        res.sendRedirect(redirectTo);
     }
 }
 
