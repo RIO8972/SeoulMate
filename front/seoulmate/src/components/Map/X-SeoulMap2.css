@@ -1,0 +1,41 @@
+/*  {
+  box-sizing: border-box;
+  padding: 0; 
+}
+
+.map-layout {
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.map-wrapper {
+  width: 100%;
+  max-width: 1000px;
+  position: relative; 
+}
+
+.map-background {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto; 
+  padding: 50px;
+}
+
+.region {
+  position: absolute;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.region:hover {
+  transform: scale(1.1);
+}
+
+.region img {
+  width: 60px;
+  height: 60px;
+} 
+*/

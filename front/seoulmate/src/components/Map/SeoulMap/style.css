@@ -1,0 +1,92 @@
+.map-layout {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  padding: 20px;
+  flex-wrap: wrap;
+}
+
+/* 작은 화면: 세로 정렬 */
+@media (max-width: 768px) {
+  .map-layout {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .legend-title {
+    font-size: 24px;
+  }
+
+  .legend-item {
+    font-size: 16px;
+  }
+
+  .map-text {
+    font-size: 18px;
+  }
+
+  .map-svg {
+    width: 100%;
+    height: auto;
+  }
+}
+
+.map-wrapper {
+  flex-shrink: 0;
+}
+
+.legend-box {
+  min-width: 150px;
+  font-family: sans-serif;
+}
+
+.legend-title {
+  font-size: 30px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 20px;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  margin-right: 10px;
+}
+
+.map-svg {
+  width: 700px;
+  height: 700px;
+  max-width: 100%;
+}
+
+.map-text {
+  font-size: 30px;
+  font-weight: 500;
+  fill: black;
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+
+path {
+  cursor: pointer;
+  transition: fill 0.3s;
+}
+
+.map-region:hover .map-text {
+  fill: rgb(19, 40, 133);
+  font-weight: 800;
+}
+
+.map-region:hover path {
+  fill: skyblue;
+}

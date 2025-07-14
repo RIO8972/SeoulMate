@@ -1,0 +1,27 @@
+/* 전체 */
+.review-preview-wrapper {
+  padding: 60px 20px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* 상단 '리뷰 더보기' 버튼 */
+.preview-header {
+  margin-bottom: 20px;
+}
+
+.more-button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #333;
+}

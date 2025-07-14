@@ -1,0 +1,114 @@
+.layout {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.region-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+.district-wrapper {
+  padding-top: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 카드 그리드 레이아웃 */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 기본 4개 */
+  gap: 32px;
+  justify-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 1200px;
+  padding: 20px;
+}
+
+/* 태블릿 이하 (예: 1024px)에서는 3개씩 */
+@media (max-width: 1024px) {
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 모바일 이하 (예: 768px)에서는 2개씩 */
+@media (max-width: 768px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 아주 작은 화면 (예: 480px)에서는 1개 */
+@media (max-width: 480px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 개별 카드 스타일 */
+.place-card {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.place-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 카드 내 이미지 영역 */
+.card-image {
+  height: 200px;
+  overflow: hidden;
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 텍스트와 혼잡도 뱃지 영역 */
+.card-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap; /* 줄바꿈 방지 */
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 혼잡도 배지 */
+.congestion-badge {
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-align: center;
+  white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+  width: 70px;
+}

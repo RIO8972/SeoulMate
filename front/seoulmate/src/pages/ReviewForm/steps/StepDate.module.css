@@ -1,0 +1,104 @@
+.step-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.step-container-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* 날짜 */
+.step-select-box {
+  appearance: none;
+  font-family: "Noto Sans KR", sans-serif;
+  font-size: 1rem;
+  padding: 12px 16px;
+  height: 48px;
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  background-color: #f5f6fa;
+  color: #999;
+  box-sizing: border-box;
+}
+
+.step-select-box:focus {
+  outline: 2px solid #4f46e5;
+}
+
+.step-select-box::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+/* 날짜 선택 시 텍스트 색상 */
+.has-value {
+  color: #000;
+}
+
+/* 지역 (react-select 커스텀) */
+:global(.custom-select__control) {
+  background-color: #f5f6fa !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+  height: 48px !important;
+  font-family: "Pretendard", sans-serif !important;
+  font-size: 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+:global(.custom-select__control--is-focused) {
+  border: 2px solid #4f46e5 !important;
+  box-shadow: none !important;
+}
+
+:global(.custom-select__value-container) {
+  padding: 12px 0 !important;
+}
+
+:global(.custom-select__single-value),
+:global(.custom-select__placeholder) {
+  padding-left: 12px !important;
+  font-family: "Pretendard", sans-serif !important;
+}
+
+:global(.custom-select__single-value) {
+  color: #000 !important;
+}
+
+:global(.custom-select__placeholder) {
+  color: #999 !important;
+}
+
+:global(.custom-select__indicator-separator) {
+  display: none !important;
+}
+
+:global(.custom-select__dropdown-indicator) {
+  padding-right: 15px !important;
+  color: #000 !important;
+  font-size: 20px !important;
+}
+
+:global(.custom-select__menu) {
+  z-index: 20 !important;
+  font-family: "Pretendard", sans-serif !important;
+  font-size: 1rem !important;
+}
+
+:global(.custom-select__option) {
+  background-color: #f5f6fa !important;
+  color: #000 !important;
+}
+
+:global(.custom-select__option--is-focused) {
+  background-color: #ececec !important;
+}

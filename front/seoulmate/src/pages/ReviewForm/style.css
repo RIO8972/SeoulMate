@@ -1,0 +1,142 @@
+/* 기본 폼 여백 */
+.review-form {
+  padding-top: 80px;
+  padding-bottom: 100px;
+  box-sizing: border-box;
+}
+
+/* 카드 스타일 컨테이너 */
+.review-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 제목 & 부제목 */
+.review-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.review-subtitle {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+/* 공통 그리드 레이아웃 (category-grid 제거됨) */
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+/* 선택형 버튼 공통 (category-button 제거됨) */
+.review-grid button {
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #f9f9f9;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 88px;
+  box-sizing: border-box;
+}
+
+.review-grid button:hover {
+  background: #ececec;
+}
+
+/* 입력 박스 */
+.input-box {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+/* 텍스트 영역 */
+.textarea-box {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  height: 100px;
+  resize: none;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+/* 하단 버튼 영역 */
+.review-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  padding: 12px 24px;
+  border-top: 1px solid #ddd;
+  z-index: 10;
+}
+
+/* 진행 바 */
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #4f46e5;
+  transition: width 0.3s ease;
+}
+
+/* 버튼 정렬 */
+.review-button-group {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* 버튼 1개만 있을 때 오른쪽 정렬 */
+.review-button-group.single {
+  justify-content: flex-end;
+}
+
+/* 버튼 공통 */
+.review-button {
+  padding: 10px 20px;
+  font-weight: bold;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.review-button.back {
+  background-color: #e5e7eb;
+  color: #111;
+}
+
+.review-button.next,
+.review-button.submit {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.review-button:hover {
+  opacity: 0.9;
+}
