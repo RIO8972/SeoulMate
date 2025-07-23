@@ -8,6 +8,8 @@ import ReviewDetail from "./pages/ReviewDetailPage";
 import ScrollToTop from "./components/ScrollToTop";
 import MapPage from "./pages/MapPage";
 import ReviewForm from "./pages/ReviewForm";
+import DistrictMap from "./pages/DistrictMap";
+import CourseForm from "./pages/CourseForm";
 
 function App() {
   // 임시 데이터
@@ -160,12 +162,14 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/districts/:regionId" element={<DistrictPage />} />
         <Route path="/reviews" element={<ReviewPage reviews={reviews} />} />
-        <Route path="/map/:regionCode" element={<MapPage />} />
+        {/* <Route path="/map/:regionCode" element={<MapPage />} /> */}
         <Route
           path="/review/:id"
           element={<ReviewDetail reviews={reviews} />}
         />
         <Route path="/review/new" element={<ReviewForm />} />
+        <Route path="/map/:regionId" element={<DistrictMap />} />
+        <Route path="/course" element={<CourseForm />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,14 +1,14 @@
 import "./style.css";
 import { Link } from "react-router-dom";
-import Logo from "../../images/logo.png";
+import FullLogo from "../../images/full-logo.png";
 import Account from "../../images/account.png";
 import Menu from "../../images/menu.png";
 
 const Header = () => {
   return (
     <header className="header">
-      <Link to="/" className="logo">
-        <img src={Logo} alt="로고" />
+      <Link to="/" className="full-logo">
+        <img src={FullLogo} alt="로고" />
       </Link>
       <div className="header-btn-layout">
         <div className="login-btn">

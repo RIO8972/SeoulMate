@@ -21,7 +21,7 @@
 }
 
 /* 로고 이미지 */
-.logo img {
+.full-logo img {
   height: 50px;
   margin: 10px 0 0 50px; /* 위쪽과 왼쪽 마진만 */
 }

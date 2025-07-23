@@ -9,7 +9,7 @@ const SeoulMap = () => {
   const [colorMap, setColorMap] = useState({});
   const navigate = useNavigate();
   const handleRegionClick = (regionId) => {
-    navigate(`/districts/${regionId}`);
+    navigate(`/map/${regionId}`);
   };
 
   useEffect(() => {
