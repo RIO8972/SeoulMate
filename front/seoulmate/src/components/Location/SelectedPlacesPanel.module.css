@@ -1,55 +1,81 @@
-.panelContainer {
+.container {
   width: 100%;
-  padding: 16px;
-  background-color: #fff;
-  border-top: 1px solid #eee;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.panelHeader {
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
 }
 
-.panelTitle {
-  margin: 0;
+.title {
   font-size: 1rem;
-  font-weight: 600;
 }
 
-.removeAllButton {
-  font-size: 12px;
-  color: #888;
+.removeAll {
+  font-size: 0.9rem;
+  color: #d33;
   background: none;
   border: none;
   cursor: pointer;
 }
 
-.placeList {
+.list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.placeItem {
+.item {
+  margin-bottom: 12px;
+}
+
+.card {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-.placeName {
-  font-size: 0.9rem;
-  color: #333;
+.badge {
+  background-color: #6c4cf1;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
 }
 
-.removeButton {
+.info {
+  flex-grow: 1;
+}
+
+.name {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.time {
+  font-size: 13px;
+  color: #888;
+}
+
+.remove {
   background: none;
   border: none;
-  color: #d00;
+  color: #999;
+  font-size: 16px;
   cursor: pointer;
-  font-size: 0.8rem;
+}
+
+.remove:hover {
+  color: #ff5c5c;
 }

@@ -1,33 +1,30 @@
 .wrapper {
   display: flex;
-  height: calc(100vh - 100px);
+  width: 100%;
+  height: 100vh;
 }
 
 .leftPanel {
   display: flex;
   flex-direction: row;
-  width: 60%;
-  border-right: 1px solid #eee;
-  overflow: hidden;
+  width: fit-content;
+  min-width: 350px;
 }
 
 .searchPanel {
-  flex: 2;
-  padding: 24px;
+  width: 400px;
+  padding: 20px;
   overflow-y: auto;
-  border-right: 1px solid #eee;
-  display: flex;
-  flex-direction: column;
 }
 
 .selectedPanel {
-  flex: 1;
-  padding: 24px;
-  background-color: #f8f8f8;
+  width: 300px;
+  border-left: 1px solid #eee;
+  padding: 20px;
   overflow-y: auto;
 }
 
 .mapPanel {
-  width: 40%;
-  position: relative;
+  flex: 1;
+  min-width: 0;
 }

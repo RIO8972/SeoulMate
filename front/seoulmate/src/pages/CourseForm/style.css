@@ -1,0 +1,31 @@
+.course-form-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px); /* 헤더 높이 제외한 전체 높이 */
+  margin-top: 60px;
+  padding: 16px 24px;
+  background-color: #fff;
+  box-sizing: border-box;
+  overflow: hidden; /* 내부 스크롤 방지 */
+}
+
+.course-form-header {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.course-form-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.course-form-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 6px 0 0 0;
+  line-height: 1.3;
+}

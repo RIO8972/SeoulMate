@@ -152,17 +152,19 @@ function PlaceSelector({ selectedPlaces, setSelectedPlaces }) {
           </div>
         </div>
 
-        <div className={styles.selectedPanel}>
-          <SelectedPlacesPanel
-            selectedPlaces={selectedPlaces}
-            onRemoveAll={() => {
-              setSelectedPlaces([]);
-              markers.forEach((marker) => marker.setMap(null));
-              setMarkers([]);
-            }}
-            onRemove={handleRemovePlace}
-          />
-        </div>
+        {selectedPlaces.length > 0 && (
+          <div className={styles.selectedPanel}>
+            <SelectedPlacesPanel
+              selectedPlaces={selectedPlaces}
+              onRemoveAll={() => {
+                setSelectedPlaces([]);
+                markers.forEach((marker) => marker.setMap(null));
+                setMarkers([]);
+              }}
+              onRemove={handleRemovePlace}
+            />
+          </div>
+        )}
       </div>
 
       {/* 오른쪽 패널: 지도 */}
