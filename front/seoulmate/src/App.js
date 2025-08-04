@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, BrowserRouter } from "react-router-dom";
 import Home from "./pages/Home";
-import Login from "./pages/Login";
+//import Login from "./pages/Login";
 import DistrictPage from "./pages/DistrictPage";
 import ReviewPage from "./pages/ReviewPage";
 import ReviewDetail from "./pages/ReviewDetailPage";
@@ -10,6 +10,13 @@ import MapPage from "./pages/MapPage";
 import ReviewForm from "./pages/ReviewForm";
 import DistrictMap from "./pages/DistrictMap";
 import CourseForm from "./pages/CourseForm";
+
+import RequestToken from "./components/Token/RequestToken";
+import Logout from "./components/Auth/Logout";
+import SaveToken from "./components/Auth/SaveToken";
+import LoginForm from "./components/Auth/LoginForm";
+
+import SignUpForm from "./components/Auth/SignUpForm";
 
 function App() {
   // 임시 데이터
@@ -159,7 +166,7 @@ function App() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home reviews={reviews} />} />
-        <Route path="/login" element={<Login />} />
+
         <Route path="/districts/:regionId" element={<DistrictPage />} />
         <Route path="/reviews" element={<ReviewPage reviews={reviews} />} />
         {/* <Route path="/map/:regionCode" element={<MapPage />} /> */}
@@ -170,6 +177,13 @@ function App() {
         <Route path="/review/new" element={<ReviewForm />} />
         <Route path="/map/:regionId" element={<DistrictMap />} />
         <Route path="/course" element={<CourseForm />} />
+
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/logout" element={<Logout />} />
+        <Route path="/savetoken" element={<SaveToken />} />
+        <Route path="/requesttoken" element={<RequestToken />} />
+
+        <Route path="/sign" element={<SignUpForm />} />
       </Routes>
     </BrowserRouter>
   );

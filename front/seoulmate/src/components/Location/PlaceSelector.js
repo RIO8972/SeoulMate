@@ -7,7 +7,8 @@ import PlaceCard from "./PlaceCard";
 import SearchFilter from "./SearchFilter";
 import styles from "./PlaceSelector.module.css";
 
-function PlaceSelector({ selectedPlaces, setSelectedPlaces }) {
+function PlaceSelector({ data, setData }) {
+  //props값 변경
   const mapRef = useRef(null);
   const [map, setMap] = useState(null);
   const [markers, setMarkers] = useState([]);
@@ -18,53 +19,51 @@ function PlaceSelector({ selectedPlaces, setSelectedPlaces }) {
   const centerX = 126.978;
   const centerY = 37.5665;
 
+  // 부모 data.places 를 사용, 값이 없으면 빈 배열
+  const selectedPlaces = data.places || [];
+
   const isTaggedSearch = selectedTag && selectedTag !== "전체";
   const searchQuery =
     keyword.trim() + (isTaggedSearch ? ` ${selectedTag}` : "");
   const places = useSearchPlaces(searchQuery);
 
-  // 지도 생성
+  // 1) 지도 초기화
   useEffect(() => {
-    if (!window.kakao || !window.kakao.maps) return;
-
+    if (!window.kakao?.maps) return;
     const mapInstance = new kakao.maps.Map(mapRef.current, {
       center: new kakao.maps.LatLng(centerY, centerX),
       level: 5,
     });
-
     setMap(mapInstance);
   }, []);
 
-  // 검색 결과 마커
+  // 2) 검색 결과에 따라 preview 마커 찍기
   useEffect(() => {
     if (!map || places.length === 0) return;
+    previewMarkers.forEach((m) => m.setMap(null));
 
-    previewMarkers.forEach((marker) => marker.setMap(null));
-
-    let newMarkers = [];
-
-    if (isTaggedSearch) {
-      newMarkers = places.map((place) => {
-        const position = new kakao.maps.LatLng(
-          parseFloat(place.y),
-          parseFloat(place.x)
-        );
-        return new kakao.maps.Marker({
-          position,
-          map,
-          title: place.place_name,
-        });
-      });
-    } else {
-      const first = places[0];
-      const position = new kakao.maps.LatLng(
-        parseFloat(first.y),
-        parseFloat(first.x)
-      );
-      newMarkers = [
-        new kakao.maps.Marker({ position, map, title: first.place_name }),
-      ];
-    }
+    const newMarkers = isTaggedSearch
+      ? places.map(
+          (place) =>
+            new kakao.maps.Marker({
+              position: new kakao.maps.LatLng(
+                parseFloat(place.y),
+                parseFloat(place.x)
+              ),
+              map,
+              title: place.place_name,
+            })
+        )
+      : [
+          new kakao.maps.Marker({
+            position: new kakao.maps.LatLng(
+              parseFloat(places[0].y),
+              parseFloat(places[0].x)
+            ),
+            map,
+            title: places[0].place_name,
+          }),
+        ];
 
     setPreviewMarkers(newMarkers);
     map.setCenter(
@@ -72,13 +71,14 @@ function PlaceSelector({ selectedPlaces, setSelectedPlaces }) {
     );
   }, [places, map, selectedTag]);
 
-  // 장소 추가
+  // 3) 장소 추가
   const handleAddPlace = (place) => {
     const id = place.id || `${place.x}-${place.y}`;
-    if (selectedPlaces.find((p) => p.id === id)) return;
+    // 중복 방지 (placeId 사용)
+    if (selectedPlaces.some((p) => p.placeId === id)) return;
 
     const newPlace = {
-      id,
+      placeId: id, //키값 placeId 변경
       name: place.place_name || place.name,
       lat: parseFloat(place.y || place.lat),
       lng: parseFloat(place.x || place.lng),
@@ -86,7 +86,10 @@ function PlaceSelector({ selectedPlaces, setSelectedPlaces }) {
       url: place.place_url,
     };
 
-    setSelectedPlaces((prev) => [...prev, newPlace]);
+    setData((prev) => ({
+      ...prev,
+      places: [...(prev.places || []), newPlace],
+    }));
 
     if (map) {
       const marker = new kakao.maps.Marker({
@@ -94,24 +97,27 @@ function PlaceSelector({ selectedPlaces, setSelectedPlaces }) {
         map,
       });
       marker.placeId = id;
-
       setMarkers((prev) => [...prev, marker]);
       map.panTo(marker.getPosition());
     }
   };
 
+  // 4) 개별 제거
   const handleRemovePlace = (placeId) => {
-    setSelectedPlaces((prev) => prev.filter((p) => p.id !== placeId));
+    console.log(placeId);
+    setData((prev) => ({
+      ...prev,
+      places: prev.places.filter((p) => p.placeId !== placeId),
+    }));
 
     const markerToRemove = markers.find((m) => m.placeId === placeId);
     if (markerToRemove) markerToRemove.setMap(null);
-
     setMarkers((prev) => prev.filter((m) => m.placeId !== placeId));
   };
 
   return (
     <div className={styles.wrapper}>
-      {/* 왼쪽 패널: 검색 + 선택된 장소를 가로로 */}
+      {/* 왼쪽: 검색 + 결과 */}
       <div className={styles.leftPanel}>
         <div className={styles.searchPanel}>
           <h2 className="review-title">장소 추가</h2>
@@ -130,19 +136,15 @@ function PlaceSelector({ selectedPlaces, setSelectedPlaces }) {
             <h4>장소 검색 결과</h4>
             {places.map((place) => {
               const id = place.id || `${place.x}-${place.y}`;
-              const lat = parseFloat(place.y);
-              const lng = parseFloat(place.x);
-              const address = place.road_address_name || place.address_name;
-
               return (
                 <PlaceCard
                   key={id}
                   place={{
                     id,
                     name: place.place_name,
-                    lat,
-                    lng,
-                    address,
+                    lat: parseFloat(place.y),
+                    lng: parseFloat(place.x),
+                    address: place.road_address_name || place.address_name,
                     url: place.place_url,
                   }}
                   onAdd={handleAddPlace}
@@ -152,13 +154,14 @@ function PlaceSelector({ selectedPlaces, setSelectedPlaces }) {
           </div>
         </div>
 
+        {/* 선택된 장소 패널: 선택된 장소가 있을 때만 렌더링 */}
         {selectedPlaces.length > 0 && (
           <div className={styles.selectedPanel}>
             <SelectedPlacesPanel
               selectedPlaces={selectedPlaces}
               onRemoveAll={() => {
-                setSelectedPlaces([]);
-                markers.forEach((marker) => marker.setMap(null));
+                setData((prev) => ({ ...prev, places: [] }));
+                markers.forEach((m) => m.setMap(null));
                 setMarkers([]);
               }}
               onRemove={handleRemovePlace}
@@ -167,7 +170,7 @@ function PlaceSelector({ selectedPlaces, setSelectedPlaces }) {
         )}
       </div>
 
-      {/* 오른쪽 패널: 지도 */}
+      {/* 오른쪽: 지도 */}
       <div className={styles.mapPanel}>
         <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
       </div>

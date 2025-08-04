@@ -23,7 +23,7 @@ function SelectedPlacesPanel({ selectedPlaces, onRemoveAll, onRemove }) {
               </div>
               <button
                 className={styles.remove}
-                onClick={() => onRemove(place.id)}
+                onClick={() => onRemove(place.placeId)} // 여기!!!!!!!!! place.id. -> place.placeId로 변경, (id로 하면 테이벌 컬럼값이랑 이름충돌나서)
               >
                 ×
               </button>

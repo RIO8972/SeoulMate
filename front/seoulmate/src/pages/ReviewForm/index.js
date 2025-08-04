@@ -7,6 +7,7 @@ import StepLocation from "./steps/StepLocation";
 import StepImage from "./steps/StepImage";
 import StepDescription from "./steps/StepDescription";
 import StepCost from "./steps/StepCost";
+import axios from "axios";
 
 function ReviewForm() {
   const [step, setStep] = useState(1);
@@ -25,6 +26,56 @@ function ReviewForm() {
 
   const next = () => setStep((prev) => prev + 1);
   const prev = () => setStep((prev) => prev - 1);
+
+  /************************ 리뷰 백서버로 전송 ******************************/
+  const handleSave = () => {
+    const form = new FormData();
+
+    // 1) dto JSON Blob
+    form.append(
+      "dto",
+      new Blob(
+        [
+          JSON.stringify({
+            categories: formData.categories,
+            cost: formData.cost,
+            date: formData.date,
+            datetime: formData.datetime,
+            detail: formData.detail,
+            intro: formData.intro,
+            region: formData.region,
+            time: formData.time,
+            title: formData.title,
+            places: formData.places, // [{placeId, name, lat, …}, …]
+          }),
+        ],
+        { type: "application/json" }
+      )
+    );
+
+    // 2) images
+    formData.images.forEach((file) => form.append("images", file));
+
+    const token = localStorage.getItem("accessToken"); // 키 이름 맞게
+    console.log("토큰:", token);
+    //
+    axios
+      .post("http://localhost:8080/reviews/test/img", form, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+          // 절대 'Content-Type' 지정하지 말 것!
+        },
+      })
+      .then((res) => {
+        console.log("업로드 성공:", res.data);
+        alert("form데이터 전송이 완료되었습니다!");
+      })
+      .catch((err) => {
+        console.error("업로드 실패:", err);
+        alert("업로드 중 오류가 발생했습니다.");
+      });
+  };
+  /******************************************************************/
 
   return (
     <div className="review-form-wrapper">
@@ -66,7 +117,10 @@ function ReviewForm() {
           {step === 6 && (
             <button
               className="review-button next"
-              onClick={() => alert("등록되었습니다.")}
+              onClick={() => {
+                console.log(formData);
+                handleSave();
+              }}
             >
               완료
             </button>
