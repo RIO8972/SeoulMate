@@ -1,12 +1,14 @@
 package com.knu.cityapi.cityapi.service.seoul;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.knu.cityapi.cityapi.domain.seoulplace.SeoulPlaceRepository;
 import com.knu.cityapi.cityapi.domain.seoulplace.SeoulPlace;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -14,7 +16,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -63,22 +67,54 @@ public class SeoulCityDataService {
             default          -> 0;
         };
     }
+//    public Mono<JsonNode> searchRegion(String region) {
+//        log.info("city_region : " + region);
+//        log.info("seoulApiKey :" + seoulApiKey);
+//        log.info(">>> 실제 API 호출 – region : {}", region);
+//        /*
+//           이런식으로
+//           Webclient의 라이브러리를 사용하려면 WebClient 객체를 통해
+//           체인메서드를 구성해서 http요청/응답을 받아서 Mono<>컨테이너로 반환
+//         */
+//        return webClient.get()
+//                .uri(uriBuilder -> uriBuilder
+//                        .path("/{apiKey}/json/citydata/1/5/{region}")
+//                        .build(seoulApiKey, region))
+//                .retrieve()
+//                .bodyToMono(JsonNode.class); // 필요에 따라 DTO로 바꿔도 됨
+//        //Dto로 보내면 fetch에서 리턴받을 때 바로 json으로 받을 수 있음
+//    }
     public Mono<JsonNode> searchRegion(String region) {
-        log.info("city_region : " + region);
-        log.info("seoulApiKey :" + seoulApiKey);
-        log.info(">>> 실제 API 호출 – region : {}", region);
-        /*
-           이런식으로
-           Webclient의 라이브러리를 사용하려면 WebClient 객체를 통해
-           체인메서드를 구성해서 http요청/응답을 받아서 Mono<>컨테이너로 반환
-         */
+        log.info(">>> 실제 API 호출 – region: {}", region);
+
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/{apiKey}/json/citydata/1/5/{region}")
                         .build(seoulApiKey, region))
-                .retrieve()
-                .bodyToMono(JsonNode.class); // 필요에 따라 DTO로 바꿔도 됨
-        //Dto로 보내면 fetch에서 리턴받을 때 바로 json으로 받을 수 있음
+                .exchangeToMono(response -> {
+                    MediaType ct = response.headers()
+                            .contentType()
+                            .orElse(MediaType.APPLICATION_OCTET_STREAM);
+                    log.info("Response Content-Type for [{}]: {}", region, ct);
+
+                    if (MediaType.APPLICATION_JSON.isCompatibleWith(ct)) {
+                        return response.bodyToMono(JsonNode.class);
+                    } else {
+                        // JSON이 아니면 의도적으로 에러로 만들어 재시도 트리거
+                        return response.bodyToMono(String.class)
+                                .flatMap(body -> {
+                                    log.warn("Non-JSON 응답 – region:{} body:{}", region, body);
+                                    return Mono.error(new IllegalStateException("Non-JSON response"));
+                                });
+                    }
+                })
+                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1))
+                        .filter(ex -> ex instanceof IllegalStateException))
+                // 3회 재시도까지 모두 실패하면, 빈 객체로 폴백
+                .onErrorResume(e -> {
+                    log.error("재시도 모두 실패 – region:{}, 이유: {}", region, e.getMessage());
+                    return Mono.just(JsonNodeFactory.instance.objectNode());
+                });
     }
 
     public Mono<Map<String, JsonNode>> getAllRawDataByRegion() {
