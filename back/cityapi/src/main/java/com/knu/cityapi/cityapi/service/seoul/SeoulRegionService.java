@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.knu.cityapi.cityapi.domain.seoulplace.SeoulPlaceRepository;
 import com.knu.cityapi.cityapi.domain.seoulplace.SeoulPlace;
 import com.knu.cityapi.cityapi.dto.region.RegionInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +15,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
+import reactor.util.retry.Retry;
+import reactor.util.retry.RetryBackoffSpec;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -22,9 +26,21 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SeoulRegionService {
     private final SeoulPlaceRepository seoulPlaceRepository;
     private  final WebClient webClient = WebClient.builder().baseUrl("http://openapi.seoul.go.kr:8088/").build();
+
+    // retry 스펙: 최대 3회, 실패마다 2초씩 backoff
+    private final RetryBackoffSpec RETRY_SPEC = Retry.backoff(3, Duration.ofSeconds(2))
+            .filter(throwable -> {
+                // 네트워크 에러나 5xx 에만 재시도
+                return !(throwable instanceof IllegalArgumentException);
+            })
+            .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) ->
+                    retrySignal.failure()
+            );
+
     @Cacheable("allPlaces")
     public List<String> getAllPlaceNames() {
         return seoulPlaceRepository.findAll()
@@ -56,16 +72,34 @@ public class SeoulRegionService {
         };
     }
 
-    public Mono<JsonNode> searchRegion(String region){
-        //log.info("region : "+ region);
-        //log.info("seoulApiKey :"+ seoulApiKey);
+//    public Mono<JsonNode> searchRegion(String region){
+//        //log.info("region : "+ region);
+//        //log.info("seoulApiKey :"+ seoulApiKey);
+//        return webClient.get()
+//                .uri(uriBuilder -> uriBuilder
+//                        .path("/{apiKey}/json/citydata_ppltn/1/5/{region}")
+//                        .build(seoulApiKey, region))
+//                .retrieve()
+//                .bodyToMono(JsonNode.class); // 필요에 따라 DTO로 바꿔도 됨
+//    }
+    public Mono<JsonNode> searchRegion(String region) {
+        //log.info("region : " + region);
+        //log.info("seoulApiKey :" + seoulApiKey);
+        //log.info(">>> 실제 API 호출 – region : {}", region);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/{apiKey}/json/citydata_ppltn/1/5/{region}")
                         .build(seoulApiKey, region))
                 .retrieve()
-                .bodyToMono(JsonNode.class); // 필요에 따라 DTO로 바꿔도 됨
+                .bodyToMono(JsonNode.class)
+                // HTTP 5xx, 네트워크 에러 등에 재시도
+                .retryWhen(RETRY_SPEC)
+                // 재시도 후에도 오류면 로그 남기고 에러 전달
+                .doOnError(err ->
+                        log.error("▶ API 호출 실패 (region={}): {}", region, err.toString())
+                );
     }
+
     public Mono<Map<String, JsonNode>> searchRegionsAsMap(List<String> regions) {
         return Flux.fromIterable(regions)
                 // 각 region마다 Mono<String> 요청을 맵핑
