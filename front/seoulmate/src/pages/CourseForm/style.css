@@ -1,8 +1,9 @@
 .course-form-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 60px); /* 헤더 높이 제외한 전체 높이 */
-  margin-top: 60px;
+  height: 100vh;
+  margin-top: 10px;
+  margin-left: 80px;
   padding: 16px 24px;
   background-color: #fff;
   box-sizing: border-box;

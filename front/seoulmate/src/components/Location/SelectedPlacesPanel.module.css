@@ -26,18 +26,34 @@
   padding: 0;
   margin: 0;
 }
-
 .item {
   margin-bottom: 12px;
 }
 
+/* 카드 */
 .card {
+  position: relative; /* X 절대배치용 */
   display: flex;
   align-items: center;
-  background-color: #fff;
+  gap: 10px; /* 핸들↔배지 간격 */
+  background: #fff;
   border-radius: 12px;
   padding: 12px 16px;
+  padding-right: 46px; /* 오른쪽 X 공간 */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* 맨 앞 드래그 핸들 */
+.dragHandle {
+  cursor: grab;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  padding: 4px;
+  margin-left: -10px;
+}
+.dragHandle:active {
+  cursor: grabbing;
 }
 
 .badge {
@@ -51,31 +67,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
+  line-height: 1;
+  padding-top: -2px;
 }
-
 .info {
-  flex-grow: 1;
+  flex: 1;
+  min-width: 0;
 }
-
 .name {
-  font-weight: bold;
+  font-weight: 700;
   margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
 .time {
   font-size: 13px;
   color: #888;
 }
 
+/* X 버튼: 오른쪽 상단 */
 .remove {
-  background: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
   border: none;
   color: #999;
   font-size: 16px;
   cursor: pointer;
+  line-height: 1;
 }
-
 .remove:hover {
   color: #ff5c5c;
 }

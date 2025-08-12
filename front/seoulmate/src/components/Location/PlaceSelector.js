@@ -8,7 +8,6 @@ import SearchFilter from "./SearchFilter";
 import styles from "./PlaceSelector.module.css";
 
 function PlaceSelector({ data, setData }) {
-  //props값 변경
   const mapRef = useRef(null);
   const [map, setMap] = useState(null);
   const [markers, setMarkers] = useState([]);
@@ -19,7 +18,7 @@ function PlaceSelector({ data, setData }) {
   const centerX = 126.978;
   const centerY = 37.5665;
 
-  // 부모 data.places 를 사용, 값이 없으면 빈 배열
+  // 부모에서 관리하는 선택된 장소
   const selectedPlaces = data.places || [];
 
   const isTaggedSearch = selectedTag && selectedTag !== "전체";
@@ -35,50 +34,57 @@ function PlaceSelector({ data, setData }) {
       level: 5,
     });
     setMap(mapInstance);
+
+    // 언마운트 시 마커 정리
+    return () => {
+      markers.forEach((m) => m.setMap && m.setMap(null));
+      previewMarkers.forEach((m) => m.setMap && m.setMap(null));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 2) 검색 결과에 따라 preview 마커 찍기
+  // 2) 검색 결과에 따라 preview 마커 갱신
   useEffect(() => {
-    if (!map || places.length === 0) return;
+    if (!map) return;
+
+    // 이전 미리보기 마커 삭제
     previewMarkers.forEach((m) => m.setMap(null));
 
-    const newMarkers = isTaggedSearch
-      ? places.map(
-          (place) =>
-            new kakao.maps.Marker({
-              position: new kakao.maps.LatLng(
-                parseFloat(place.y),
-                parseFloat(place.x)
-              ),
-              map,
-              title: place.place_name,
-            })
-        )
-      : [
-          new kakao.maps.Marker({
-            position: new kakao.maps.LatLng(
-              parseFloat(places[0].y),
-              parseFloat(places[0].x)
-            ),
-            map,
-            title: places[0].place_name,
-          }),
-        ];
+    if (!places || places.length === 0) {
+      setPreviewMarkers([]);
+      return;
+    }
 
-    setPreviewMarkers(newMarkers);
+    // 태그 검색이면 결과 전체, 아니면 첫 결과만
+    const nextPreview = (isTaggedSearch ? places : [places[0]]).map((place) => {
+      const mk = new kakao.maps.Marker({
+        position: new kakao.maps.LatLng(
+          parseFloat(place.y),
+          parseFloat(place.x)
+        ),
+        map,
+        title: place.place_name,
+      });
+      return mk;
+    });
+
+    setPreviewMarkers(nextPreview);
+
+    // 중심 이동
+    const first = places[0];
     map.setCenter(
-      new kakao.maps.LatLng(parseFloat(places[0].y), parseFloat(places[0].x))
+      new kakao.maps.LatLng(parseFloat(first.y), parseFloat(first.x))
     );
-  }, [places, map, selectedTag]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [places, map, isTaggedSearch]);
 
   // 3) 장소 추가
   const handleAddPlace = (place) => {
     const id = place.id || `${place.x}-${place.y}`;
-    // 중복 방지 (placeId 사용)
     if (selectedPlaces.some((p) => p.placeId === id)) return;
 
     const newPlace = {
-      placeId: id, //키값 placeId 변경
+      placeId: id, // ✅ 고유 키
       name: place.place_name || place.name,
       lat: parseFloat(place.y || place.lat),
       lng: parseFloat(place.x || place.lng),
@@ -104,10 +110,9 @@ function PlaceSelector({ data, setData }) {
 
   // 4) 개별 제거
   const handleRemovePlace = (placeId) => {
-    console.log(placeId);
     setData((prev) => ({
       ...prev,
-      places: prev.places.filter((p) => p.placeId !== placeId),
+      places: (prev.places || []).filter((p) => p.placeId !== placeId),
     }));
 
     const markerToRemove = markers.find((m) => m.placeId === placeId);
@@ -115,9 +120,22 @@ function PlaceSelector({ data, setData }) {
     setMarkers((prev) => prev.filter((m) => m.placeId !== placeId));
   };
 
+  // 5) 전체 제거
+  const handleRemoveAll = () => {
+    setData((prev) => ({ ...prev, places: [] }));
+    markers.forEach((m) => m.setMap(null));
+    setMarkers([]);
+  };
+
+  // 6) 정렬 변경(dnd) 반영
+  const handleReorder = (newList) => {
+    setData((prev) => ({ ...prev, places: newList }));
+    // (선택) 지도 라벨/오버레이를 순서대로 다시 붙이고 싶다면 여기서 처리 가능
+  };
+
   return (
     <div className={styles.wrapper}>
-      {/* 왼쪽: 검색 + 결과 */}
+      {/* 왼쪽: 검색 + 결과 + 선택 패널 */}
       <div className={styles.leftPanel}>
         <div className={styles.searchPanel}>
           <h2 className="review-title">장소 추가</h2>
@@ -154,17 +172,14 @@ function PlaceSelector({ data, setData }) {
           </div>
         </div>
 
-        {/* 선택된 장소 패널: 선택된 장소가 있을 때만 렌더링 */}
+        {/* 선택된 장소 패널 */}
         {selectedPlaces.length > 0 && (
           <div className={styles.selectedPanel}>
             <SelectedPlacesPanel
               selectedPlaces={selectedPlaces}
-              onRemoveAll={() => {
-                setData((prev) => ({ ...prev, places: [] }));
-                markers.forEach((m) => m.setMap(null));
-                setMarkers([]);
-              }}
+              onRemoveAll={handleRemoveAll}
               onRemove={handleRemovePlace}
+              onReorder={handleReorder} // ✅ dnd 결과 반영
             />
           </div>
         )}
