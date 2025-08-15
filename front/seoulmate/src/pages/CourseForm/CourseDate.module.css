@@ -1,0 +1,50 @@
+.course-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.course-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.course-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* 제목, 날짜 input 공통 스타일 */
+.course-input {
+  appearance: none;
+  font-family: "Noto Sans KR", sans-serif;
+  font-size: 1rem;
+  padding: 12px 16px;
+  height: 48px;
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  background-color: #f5f6fa; /* ✅ 왼쪽처럼 */
+  color: #000;
+  box-sizing: border-box;
+}
+
+/* Placeholder 색상 */
+.course-input::placeholder {
+  color: #999;
+}
+
+.course-input:focus {
+  outline: 2px solid #4f46e5;
+  background-color: #fff;
+}
+
+/* datepicker 아이콘 커서 */
+.course-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+/* DatePicker 값 입력됐을 때 색상 */
+.has-value {
+  color: #000;
+}

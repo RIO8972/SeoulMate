@@ -60,7 +60,6 @@ function SortableItem({ place, index, onRemove }) {
         {/* 본문 */}
         <div className={styles.info}>
           <div className={styles.name}>{place.name}</div>
-          <div className={styles.time}>이동 시간: 00분</div>
         </div>
 
         {/* X 버튼: 오른쪽 상단 고정 */}

@@ -10,6 +10,8 @@ import MapPage from "./pages/MapPage";
 import ReviewForm from "./pages/ReviewForm";
 import DistrictMap from "./pages/DistrictMap";
 import CourseForm from "./pages/CourseForm";
+import CourseDetailPage from "./pages/CourseDetailPage";
+import MyPage from "./pages/MyPage";
 
 import RequestToken from "./components/Token/RequestToken";
 import Logout from "./components/Auth/Logout";
@@ -177,6 +179,9 @@ function App() {
         <Route path="/review/new" element={<ReviewForm />} />
         <Route path="/map/:regionId" element={<DistrictMap />} />
         <Route path="/course" element={<CourseForm />} />
+        <Route path="/courses/:courseId" element={<CourseDetailPage />} />
+
+        <Route path="/mypage" element={<MyPage reviews={reviews} />} />
 
         <Route path="/login" element={<LoginForm />} />
         <Route path="/logout" element={<Logout />} />

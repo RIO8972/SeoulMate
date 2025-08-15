@@ -81,10 +81,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.time {
-  font-size: 13px;
-  color: #888;
-}
 
 /* X 버튼: 오른쪽 상단 */
 .remove {

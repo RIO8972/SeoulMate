@@ -1,39 +1,90 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import StepBasic from "./CourseDate";
 import CourseLocation from "./CourseLocation";
-import Sidebar from "../../components/Sidebar"; // ⬅️ 재사용 사이드바
 import "./style.css";
 
-function CourseForm() {
-  const [formData, setFormData] = useState({
-    coursePlaces: [],
+export default function CourseForm({ onSubmit }) {
+  const [step, setStep] = useState(1);
+
+  const [data, setData] = useState({
     title: "",
-    description: "",
-    cost: 0,
+    datetime: null,
+    selectedPlaces: [], // 선택 중인 장소들
+    places: [], // 최종 확정된 장소들 (완료 조건용)
   });
 
-  return (
-    <div className="course-form-layout">
-      {/* 왼쪽 사이드바 (뒤로가기 버튼 모드) */}
-      <Sidebar
-        mode="course"
-        menus={[
-          { label: "리뷰", onClick: () => console.log("리뷰 패널 열기") },
-        ]}
-      />
+  const canNext = useMemo(() => {
+    if (step === 1) return data.title.trim().length > 0 && data.datetime;
+    if (step === 2) return data.places.length > 0;
+    return false;
+  }, [step, data]);
 
-      {/* 오른쪽 메인 작성 영역 */}
-      <div className="course-form-container">
-        <div className="course-form-header">
-          <h1 className="course-form-title">🗺️ 코스 작성</h1>
-          <p className="course-form-subtitle">
-            데이트 코스를 직접 만들어보세요
-          </p>
+  const handleNext = () => {
+    if (step === 1) setStep(2);
+  };
+
+  const handlePrev = () => {
+    if (step === 2) setStep(1);
+  };
+
+  const handleFinish = () => {
+    onSubmit?.(data);
+    alert("코스가 저장되었습니다!");
+  };
+
+  const progress = (step / 2) * 100;
+
+  return (
+    <div className="course-form-page">
+      {step === 1 && (
+        <div className="form-card">
+          <StepBasic data={data} setData={setData} />
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="location-step-container">
+          <CourseLocation data={data} setData={setData} />
+        </div>
+      )}
+
+      <div className="wizard-footer">
+        <div className="wizard-progress">
+          <div
+            className="wizard-progress__fill"
+            style={{ width: `${progress}%` }}
+          />
         </div>
 
-        <CourseLocation data={formData} setData={setFormData} />
+        <div
+          className="wizard-actions"
+          style={{ justifyContent: step === 1 ? "flex-end" : "space-between" }}
+        >
+          {step > 1 && (
+            <button className="btn ghost" onClick={handlePrev}>
+              이전
+            </button>
+          )}
+
+          {step < 2 ? (
+            <button
+              className="btn primary"
+              onClick={handleNext}
+              disabled={!canNext}
+            >
+              다음
+            </button>
+          ) : (
+            <button
+              className="btn primary"
+              onClick={handleFinish}
+              disabled={!canNext}
+            >
+              완료
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
-
-export default CourseForm;
