@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, BrowserRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
-//import Login from "./pages/Login";
 import DistrictPage from "./pages/DistrictPage";
+import ScrollToTop from "./components/ScrollToTop";
+// import MapPage from "./pages/MapPage";
+import ReviewForm from "./pages/ReviewForm";
+import ReviewEditPage from "./pages/ReviewEditPage";
 import ReviewPage from "./pages/ReviewPage";
 import ReviewDetail from "./pages/ReviewDetailPage";
-import ScrollToTop from "./components/ScrollToTop";
-import MapPage from "./pages/MapPage";
-import ReviewForm from "./pages/ReviewForm";
 import DistrictMap from "./pages/DistrictMap";
 import CourseForm from "./pages/CourseForm";
+import CourseEditPage from "./pages/CourseEditPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import MyPage from "./pages/MyPage";
 
@@ -168,26 +169,26 @@ function App() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home reviews={reviews} />} />
-
         <Route path="/districts/:regionId" element={<DistrictPage />} />
         <Route path="/reviews" element={<ReviewPage reviews={reviews} />} />
-        {/* <Route path="/map/:regionCode" element={<MapPage />} /> */}
         <Route
           path="/review/:id"
           element={<ReviewDetail reviews={reviews} />}
         />
         <Route path="/review/new" element={<ReviewForm />} />
         <Route path="/map/:regionId" element={<DistrictMap />} />
-        <Route path="/course" element={<CourseForm />} />
+        <Route path="/course/new" element={<CourseForm />} />
         <Route path="/courses/:courseId" element={<CourseDetailPage />} />
-
+        <Route
+          path="/courses/:courseId/edit"
+          element={<CourseEditPage />}
+        />{" "}
+        <Route path="/review/:id/edit" element={<ReviewEditPage />} />
         <Route path="/mypage" element={<MyPage reviews={reviews} />} />
-
         <Route path="/login" element={<LoginForm />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/savetoken" element={<SaveToken />} />
         <Route path="/requesttoken" element={<RequestToken />} />
-
         <Route path="/sign" element={<SignUpForm />} />
       </Routes>
     </BrowserRouter>

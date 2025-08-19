@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import styles from "./CourseDetailPage.module.css";
 import Header from "../../components/Header";
 import { FaBus } from "react-icons/fa";
 /* global kakao */
 
 export default function CourseDetailPage() {
-  // 데모용 코스 데이터
+  // ✅ URL 파라미터에서 courseId 가져오기
+  const { courseId } = useParams();
+
+  // 데모용 코스 데이터 (실사용 시 courseId로 API 호출해서 가져오면 됨)
   const course = {
     region: "종로구",
     title: "종로구 데이트 코스",
@@ -57,7 +61,7 @@ export default function CourseDetailPage() {
     // 중심 마커
     markerRef.current = new kakao.maps.Marker({ map, position: center });
 
-    // 지오코더 준비
+    // 지오코더 준비 (kakao.maps.services 스크립트 포함되어 있어야 함)
     geocoderRef.current = new kakao.maps.services.Geocoder();
 
     // 컨테이너 리사이즈 대응
@@ -111,6 +115,19 @@ export default function CourseDetailPage() {
 
           <h1 className={styles.title}>{course.region} 데이트 코스</h1>
 
+          <div className={styles.actions}>
+            {/* ✅ courseId가 있을 때만 수정 버튼 노출 (없으면 링크 깨짐 방지) */}
+            {courseId && (
+              <Link
+                to={`/courses/${courseId}/edit`}
+                state={{ course }} // ✅ 현재 코스 데이터 함께 전달
+                className={styles.editBtn}
+              >
+                수정
+              </Link>
+            )}
+          </div>
+
           <div className={styles.metaTop}>
             <div>
               <div className={styles.metaLabel}>데이트 코스 제목</div>
@@ -133,7 +150,6 @@ export default function CourseDetailPage() {
                   {/* 왼쪽: 번호 원 + 세로 라인 */}
                   <div className={styles.leftRail}>
                     <span className={styles.orderDot}>{s.order}</span>
-                    {/* 윗선/아랫선/버스 블록은 CSS 가상요소와 .transportBlock으로 표현 */}
                     {!isLast && (
                       <div className={styles.transportBlock}>
                         <FaBus className={styles.busIcon} />

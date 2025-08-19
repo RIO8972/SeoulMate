@@ -248,7 +248,7 @@
   padding: 0 14px;
   border: none;
   border-radius: 10px;
-  background: var(--ink);
+  background: #455de5;
   color: #fff;
   font-weight: 700;
   cursor: pointer;
@@ -269,6 +269,24 @@
   display: grid;
   place-items: center;
   color: var(--muted);
+}
+
+.actions {
+  margin: 8px 0 16px;
+}
+
+.editBtn {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #455de5;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.editBtn:hover {
+  opacity: 0.92;
 }
 
 /* 반응형 */

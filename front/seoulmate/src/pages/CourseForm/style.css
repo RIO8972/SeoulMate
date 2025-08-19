@@ -1,8 +1,8 @@
 /* ============ 공통 페이지 레이아웃 ============ */
-.course-form-page {
-  min-height: calc(100vh - 60px); /* 헤더 높이 고려 */
-  padding: 24px 16px 120px; /* 하단 푸터 공간 확보 */
-  background: #fff;
+.course-form {
+  padding-top: 80px;
+  padding-bottom: 100px;
+  box-sizing: border-box;
 }
 
 /* ============ Step 1: 기본 정보 입력 카드 ============ */

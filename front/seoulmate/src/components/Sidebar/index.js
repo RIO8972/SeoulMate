@@ -6,7 +6,7 @@ import { FaPen, FaArrowLeft } from "react-icons/fa";
 
 function Sidebar({
   mode = "map", // "map" | "course"
-  toWhenMap = "/course",
+  toWhenMap = "/course/new",
   onBack,
   setActivePanel = () => {}, // 기존 호환용
   menus, // [{ label, onClick }]
