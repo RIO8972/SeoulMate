@@ -17,7 +17,7 @@ public class JwtTokenProvider {
     // RS256 검증에 사용할 공개키 (PEM 파일, JWK URL 등에서 로드)
     private final PublicKey publicKey;
 
-    public JwtTokenProvider(@Value("${jwt.public-key-location}") Resource pubKeyResource) throws Exception {
+    public JwtTokenProvider(@Value("${jwt.public-key-path}") Resource pubKeyResource) throws Exception {
         String pem = new String(pubKeyResource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         String publicKeyPem = pem
                 .replace("-----BEGIN PUBLIC KEY-----", "")
