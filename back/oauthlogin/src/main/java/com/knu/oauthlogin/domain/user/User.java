@@ -24,6 +24,8 @@ public class User {
     private String provider; // 사용자가 로그인한 서비스(ex) google, naver..)
     @Column
     private String password; // 로컬 로그인용 비밀번호
+    @Column(name = "img_url", length = 512)
+    private String imgUrl;
 
     public User updateUser(String username, String email) {
         this.username = username;

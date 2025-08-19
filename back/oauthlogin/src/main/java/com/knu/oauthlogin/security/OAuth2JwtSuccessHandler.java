@@ -99,7 +99,8 @@ public class OAuth2JwtSuccessHandler implements AuthenticationSuccessHandler {
         if (auth.getPrincipal() instanceof OAuth2User) {
             // 소셜 로그인은 다시 클라이언트로 리다이렉트
             String redirectTo = UriComponentsBuilder
-                .fromUriString("http://localhost:3000/savetoken")
+                //.fromUriString("http://localhost:3000/savetoken")
+                .fromUriString("https://seoul-mate.co.kr/savetoken")
                 .queryParam("accessToken", accessToken)
                 .build().toUriString();
             res.sendRedirect(redirectTo);
