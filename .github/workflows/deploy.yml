@@ -1,51 +1,68 @@
-name: Deploy to EC2  # GitHub Actions의 워크플로 이름
+name: Deploy to EC2
 
 on:
   push:
     branches:
-      - main  # main 브랜치에 push될 때 실행
+      - main
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # GitHub Actions에서 사용할 가상 환경 (Ubuntu 최신 버전)
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository  # GitHub 리포지토리 코드 가져오기
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up JDK 17  # Java 17 환경 설정
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build oauthlogin with Gradle  # oauthlogin 프로젝트 빌드 (테스트 제외)
+      # --- Gradle build (tests skip) ---
+      - name: Build oauthlogin with Gradle
         run: |
           cd back/oauthlogin
+          chmod +x ./gradlew
           ./gradlew clean build -x test
 
-      - name: Build cityapi with Gradle  # cityapi 프로젝트 빌드 (테스트 제외)
+      - name: Build cityapi with Gradle
         run: |
           cd back/cityapi
+          chmod +x ./gradlew
           ./gradlew clean build -x test
 
-      - name: Login to Docker Hub  # Docker Hub 로그인
+      - name: Build contentapi with Gradle
+        run: |
+          cd back/contentapi
+          chmod +x ./gradlew
+          ./gradlew clean build -x test
+
+      # --- Docker Hub login ---
+      - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push oauthlogin Docker image  # oauthlogin Docker 이미지 빌드 및 푸시
+      # --- Build & Push images ---
+      - name: Build and Push oauthlogin image
         run: |
           cd back/oauthlogin
           docker build --no-cache -t rio8972/oauthlogin:latest .
           docker push rio8972/oauthlogin:latest
 
-      - name: Build and Push cityapi Docker image  # cityapi Docker 이미지 빌드 및 푸시
+      - name: Build and Push cityapi image
         run: |
           cd back/cityapi
           docker build --no-cache -t rio8972/cityapi:latest .
           docker push rio8972/cityapi:latest
+
+      - name: Build and Push contentapi image
+        run: |
+          cd back/contentapi
+          docker build --no-cache -t rio8972/contentapi:latest .
+          docker push rio8972/contentapi:latest
 
   deploy:
     needs: build
@@ -56,13 +73,12 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}  # Base64 없이 원본 SSH 키 사용
+          key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script: |
-            # EC2에서 Docker Hub 로그인
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             cd docker-compose
             docker-compose pull
             docker-compose down
             docker-compose up -d --force-recreate
-            docker image prune -a
+            docker image prune -a -f
