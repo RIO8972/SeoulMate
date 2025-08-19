@@ -7,7 +7,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
@@ -17,15 +21,20 @@ public class JwtTokenProvider {
     // RS256 검증에 사용할 공개키 (PEM 파일, JWK URL 등에서 로드)
     private final PublicKey publicKey;
 
-    public JwtTokenProvider(@Value("${jwt.public-key-path}") Resource pubKeyResource) throws Exception {
-        String pem = new String(pubKeyResource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        String publicKeyPem = pem
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replace("-----END PUBLIC KEY-----", "")
-                .replaceAll("\\s+", "");
-        byte[] decoded = Base64.getDecoder().decode(publicKeyPem);
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
-        this.publicKey = KeyFactory.getInstance("RSA").generatePublic(spec);
+    public JwtTokenProvider(@Value("${jwt.public-key-path}") String path) {
+        try {
+            Path p = path.startsWith("file:") ? Paths.get(URI.create(path)) : Paths.get(path);
+            String pem = Files.readString(p, StandardCharsets.UTF_8);
+
+            String body = pem.replace("-----BEGIN PUBLIC KEY-----", "")
+                    .replace("-----END PUBLIC KEY-----", "")
+                    .replaceAll("\\s+", "");
+            byte[] der = Base64.getDecoder().decode(body);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(der);
+            this.publicKey = KeyFactory.getInstance("RSA").generatePublic(spec);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load JWT public key from " + path, e);
+        }
     }
 
     // 토큰 유효성 검사 (서명+만료)
