@@ -9,11 +9,36 @@ export default function CourseDetailPage() {
   // ✅ URL 파라미터에서 courseId 가져오기
   const { courseId } = useParams();
 
-  // 데모용 코스 데이터 (실사용 시 courseId로 API 호출해서 가져오면 됨)
+  // 날짜/시간 포맷터
+  const formatDateTime = (v) => {
+    if (!v) return "-";
+    const pad = (n) => String(n).padStart(2, "0");
+    const onlyDateStr = typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+    const d =
+      v instanceof Date ? v : new Date(onlyDateStr ? `${v}T00:00:00` : v);
+
+    if (isNaN(+d)) {
+      // 파싱이 안 되면 원문 노출 (예: 이미 "YYYY-MM-DD HH:mm" 형태일 수 있음)
+      return String(v).replace("T", " ").slice(0, 16);
+    }
+
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+
+    if (onlyDateStr) return `${yyyy}-${mm}-${dd}`; // 시간 정보 없으면 날짜만
+
+    const HH = pad(d.getHours());
+    const MM = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd} ${HH}:${MM}`; // 날짜 + 시간
+  };
+
+  // 데모용 코스 데이터 (실사용 시 courseId로 API 호출)
   const course = {
     region: "종로구",
     title: "종로구 데이트 코스",
-    date: "2025-06-10",
+    datetime: "2025-06-10T14:30:00",
     steps: [
       {
         id: 1,
@@ -42,14 +67,13 @@ export default function CourseDetailPage() {
     ],
   };
 
-  // ── Kakao 지도 (DistrictMap 패턴 그대로) ──────────────────────────────
+  // ── Kakao 지도 (DistrictMap 패턴) ──────────────────────────────
   const mapRef = useRef(null); // 지도 컨테이너 DOM
   const mapObjRef = useRef(null); // kakao.maps.Map
   const markerRef = useRef(null); // 중심 마커
   const geocoderRef = useRef(null); // 지오코더
   const [addr, setAddr] = useState(""); // 주소 입력 상태
 
-  // 지도 초기화
   useEffect(() => {
     if (!window.kakao?.maps || !mapRef.current) return;
 
@@ -61,7 +85,7 @@ export default function CourseDetailPage() {
     // 중심 마커
     markerRef.current = new kakao.maps.Marker({ map, position: center });
 
-    // 지오코더 준비 (kakao.maps.services 스크립트 포함되어 있어야 함)
+    // 지오코더 준비
     geocoderRef.current = new kakao.maps.services.Geocoder();
 
     // 컨테이너 리사이즈 대응
@@ -96,7 +120,7 @@ export default function CourseDetailPage() {
       }
     });
   };
-  // ────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────
 
   return (
     <div className={styles.page}>
@@ -113,19 +137,20 @@ export default function CourseDetailPage() {
             ← 뒤로
           </button>
 
-          <h1 className={styles.title}>{course.region} 데이트 코스</h1>
+          <div className={styles.titleBar}>
+            <h1 className={styles.title}>{course.region} 데이트 코스</h1>
 
-          <div className={styles.actions}>
-            {/* ✅ courseId가 있을 때만 수정 버튼 노출 (없으면 링크 깨짐 방지) */}
-            {courseId && (
-              <Link
-                to={`/courses/${courseId}/edit`}
-                state={{ course }} // ✅ 현재 코스 데이터 함께 전달
-                className={styles.editBtn}
-              >
-                수정
-              </Link>
-            )}
+            <div className={styles.actions}>
+              {courseId && (
+                <Link
+                  to={`/courses/${courseId}/edit`}
+                  state={{ course }}
+                  className={styles.editBtn}
+                >
+                  수정
+                </Link>
+              )}
+            </div>
           </div>
 
           <div className={styles.metaTop}>
@@ -134,8 +159,10 @@ export default function CourseDetailPage() {
               <div className={styles.metaValue}>{course.title}</div>
             </div>
             <div>
-              <div className={styles.metaLabel}>데이트 예정 날짜</div>
-              <div className={styles.metaValue}>{course.date}</div>
+              <div className={styles.metaLabel}>데이트 예정 일시</div>
+              <div className={styles.metaValue}>
+                {formatDateTime(course.datetime ?? course.date)}
+              </div>
             </div>
           </div>
 

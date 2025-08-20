@@ -78,10 +78,7 @@ const Header = () => {
                 관심있는 장소
               </Link>
               <Link to="/courses" className="drawer-link">
-                나의 데이트 코스
-              </Link>
-              <Link to="/settings" className="drawer-link">
-                설정
+                리뷰
               </Link>
             </nav>
           </aside>

@@ -80,16 +80,18 @@ function PlaceSelector({ data, setData }) {
 
   // 3) 장소 추가
   const handleAddPlace = (place) => {
-    const id = place.id || `${place.x}-${place.y}`;
-    if (selectedPlaces.some((p) => p.placeId === id)) return;
+    const id = String(place.id || `${place.x}-${place.y}`);
+    if (selectedPlaces.some((p) => (p.placeId ?? p.id) === id)) return;
 
     const newPlace = {
-      placeId: id, // ✅ 고유 키
-      name: place.place_name || place.name,
-      lat: parseFloat(place.y || place.lat),
-      lng: parseFloat(place.x || place.lng),
-      address: place.road_address_name || place.address_name,
-      url: place.place_url,
+      placeId: id, // ✅ 고유 키 보장
+      name: place.place_name || place.name || "",
+      lat: parseFloat(place.y || place.lat) || 0,
+      lng: parseFloat(place.x || place.lng) || 0,
+      address: place.road_address_name || place.address_name || "",
+      url: place.place_url || place.url || "",
+      category: place.category_group_name || place.category || "",
+      stay: place.stay || "",
     };
 
     setData((prev) => ({
@@ -108,16 +110,22 @@ function PlaceSelector({ data, setData }) {
     }
   };
 
-  // 4) 개별 제거
-  const handleRemovePlace = (placeId) => {
+  // 4) 개별 제거 (id/ placeId 모두 허용)
+  const handleRemovePlace = (idOrPlaceId) => {
     setData((prev) => ({
       ...prev,
-      places: (prev.places || []).filter((p) => p.placeId !== placeId),
+      places: (prev.places || []).filter(
+        (p) => (p.placeId ?? p.id) !== idOrPlaceId
+      ),
     }));
 
-    const markerToRemove = markers.find((m) => m.placeId === placeId);
+    const markerToRemove = markers.find(
+      (m) => (m.placeId ?? m.id) === idOrPlaceId
+    );
     if (markerToRemove) markerToRemove.setMap(null);
-    setMarkers((prev) => prev.filter((m) => m.placeId !== placeId));
+    setMarkers((prev) =>
+      prev.filter((m) => (m.placeId ?? m.id) !== idOrPlaceId)
+    );
   };
 
   // 5) 전체 제거
@@ -130,7 +138,6 @@ function PlaceSelector({ data, setData }) {
   // 6) 정렬 변경(dnd) 반영
   const handleReorder = (newList) => {
     setData((prev) => ({ ...prev, places: newList }));
-    // (선택) 지도 라벨/오버레이를 순서대로 다시 붙이고 싶다면 여기서 처리 가능
   };
 
   return (
@@ -153,7 +160,7 @@ function PlaceSelector({ data, setData }) {
           <div className={styles.resultList}>
             <h4>장소 검색 결과</h4>
             {places.map((place) => {
-              const id = place.id || `${place.x}-${place.y}`;
+              const id = String(place.id || `${place.x}-${place.y}`);
               return (
                 <PlaceCard
                   key={id}
@@ -179,7 +186,7 @@ function PlaceSelector({ data, setData }) {
               selectedPlaces={selectedPlaces}
               onRemoveAll={handleRemoveAll}
               onRemove={handleRemovePlace}
-              onReorder={handleReorder} // ✅ dnd 결과 반영
+              onReorder={handleReorder}
             />
           </div>
         )}

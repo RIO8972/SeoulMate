@@ -37,7 +37,18 @@
   cursor: pointer;
   margin-bottom: 6px;
 }
+/* 제목과 수정 버튼을 한 줄로 */
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 
+/* 필요시 버튼이 줄바꿈 안 되도록 보장 */
+.actions {
+  flex: 0 0 auto;
+}
 .title {
   font-size: 20px;
   font-weight: 800;
