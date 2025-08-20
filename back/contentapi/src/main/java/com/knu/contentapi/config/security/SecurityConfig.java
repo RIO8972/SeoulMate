@@ -33,6 +33,20 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/h2-console/**")   // CSRF 예외
                         .disable()                                     // 전체 비활성도 OK
                 )
+                .cors(cors -> cors.configurationSource(request -> {
+                    var c = new CorsConfiguration();
+                    c.setAllowedOrigins(List.of(
+                            "http://localhost:3000",
+                            "https://seoul-mate.co.kr"
+                    ));
+                    c.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+                    c.setAllowedHeaders(List.of(
+                            "Authorization","Content-Type","DNT","User-Agent",
+                            "If-Modified-Since","Cache-Control","X-Requested-With"
+                    ));
+                    c.setAllowCredentials(true);
+                    return c;
+                }))
                 .headers(h -> h.frameOptions(f -> f.sameOrigin())) // iframe 허용
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(reg -> reg
