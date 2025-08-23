@@ -8,8 +8,10 @@ import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.cache.interceptor.SimpleKey;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class DistrictCacheAccessor {
@@ -20,9 +22,7 @@ public class DistrictCacheAccessor {
     }
 
     public String getRegionName(String regionCode ) {
-        if (regionCode == null) {
-            return "";
-        }
+        if (regionCode == null) return "";
         switch (regionCode) {
             case "Gangnam-gu":       return "강남구";
             case "Gangdong-gu":      return "강동구";
@@ -51,117 +51,71 @@ public class DistrictCacheAccessor {
         }
     }
 
-    /**
-     * 1) SimpleKey.EMPTY를 키로 사용해 저장된 데이터를 꺼내는 방법
-     */
     @SuppressWarnings("unchecked")
     public Map<String, List<JsonNode>> getCachedDistrictAllData() {
-        // 1) CacheManager에서 "districtCache"라는 이름으로 캐시 객체를 얻는다
         CaffeineCache districtCache = (CaffeineCache) cacheManager.getCache("districtCache");
-        if (districtCache == null) {
-            // 캐시가 등록되지 않았거나 잘못된 이름으로 조회했을 때
-            return null;
-        }
+        if (districtCache == null) return Collections.emptyMap();
 
-        // 2) 파라미터가 없는 @Cacheable 호출의 기본 키는 SimpleKey.EMPTY 이므로, 이 키로 가져온다
         ValueWrapper wrapper = districtCache.get(SimpleKey.EMPTY);
-        if (wrapper == null) {
-            // 아직 캐시에 값이 채워지지 않은 상태
-            return null;
-        }
+        if (wrapper == null) return Collections.emptyMap();
 
-        // 3) ValueWrapper.get()으로 실제 Map<String, List<JsonNode>> 객체를 꺼낸다
         Object value = wrapper.get();
+        if (!(value instanceof Map)) return Collections.emptyMap();
+
         return (Map<String, List<JsonNode>>) value;
     }
 
-
     @SuppressWarnings("unchecked")
     public List<JsonNode> getCachedDistrictPlaces(String regionCode) {
-        // 1) CacheManager에서 "districtCache"라는 이름으로 캐시 객체를 얻는다
         CaffeineCache districtCache = (CaffeineCache) cacheManager.getCache("districtCache");
-        if (districtCache == null) {
-            // 캐시가 등록되지 않았거나 잘못된 이름으로 조회했을 때
-            return null;
-        }
+        if (districtCache == null) return Collections.emptyList();
 
-        // 2) 파라미터가 없는 @Cacheable 호출의 기본 키는 SimpleKey.EMPTY 이므로, 이 키로 가져온다
         ValueWrapper wrapper = districtCache.get(SimpleKey.EMPTY);
-        if (wrapper == null) {
-            // 아직 캐시에 값이 채워지지 않은 상태
-            return null;
-        }
+        if (wrapper == null) return Collections.emptyList();
 
-        // 3) ValueWrapper.get()으로 전체 Map<String, List<JsonNode>>를 꺼낸다
         Object raw = wrapper.get();
-        if (!(raw instanceof Map)) {
-            // 캐시된 값이 Map이 아닌 경우 방어 코드
-            return null;
-        }
-        Map<String, List<JsonNode>> fullMap = (Map<String, List<JsonNode>>) raw;
+        if (!(raw instanceof Map)) return Collections.emptyList();
 
-        // 4) 원하는 regionCode에 해당하는 List<JsonNode>만 꺼내서 반환
-        //    (해당 key가 없으면 빈 리스트 혹은 null을 반환할 수도 있음)
-        return fullMap.getOrDefault(regionCode, List.of());
+        Map<String, List<JsonNode>> fullMap = (Map<String, List<JsonNode>>) raw;
+        return fullMap.getOrDefault(regionCode, Collections.emptyList());
     }
 
     public DistrictResponse getCachedDistrictResponse(String regionCode) {
-        // 1) CacheManager에서 "districtCache"라는 이름으로 캐시 객체를 얻는다
-        CaffeineCache districtCache = (CaffeineCache) cacheManager.getCache("districtCache");
+        Map<String, List<JsonNode>> fullMap = getCachedDistrictAllData();
         String regionName = getRegionName(regionCode);
+        List<JsonNode> list = fullMap.getOrDefault(regionCode, Collections.emptyList());
 
-        if (districtCache == null) {
-            // 캐시가 등록되지 않았거나 잘못된 이름으로 조회했을 때
-            return null;
-        }
-
-        // 2) 파라미터가 없는 @Cacheable 호출의 기본 키는 SimpleKey.EMPTY 이므로, 이 키로 가져온다
-        ValueWrapper wrapper = districtCache.get(SimpleKey.EMPTY);
-        if (wrapper == null) {
-            // 아직 캐시에 값이 채워지지 않은 상태
-            return null;
-        }
-
-        // 3) ValueWrapper.get()으로 전체 Map<String, List<JsonNode>>를 꺼낸다
-        Object raw = wrapper.get();
-        if (!(raw instanceof Map)) {
-            // 캐시된 값이 Map이 아닌 경우 방어 코드
-            return null;
-        }
-        Map<String, List<JsonNode>> fullMap = (Map<String, List<JsonNode>>) raw;
-
-        // 4) 원하는 regionCode에 해당하는 List<JsonNode>만 꺼내서 반환
-        //    해당 key가 없으면 빈 리스트 혹은 null
-        List<JsonNode>list = fullMap.getOrDefault(regionCode, List.of());
-
-        DistrictResponse districtResponse = DistrictResponse.builder()
+        return DistrictResponse.builder()
                 .regionName(regionName)
                 .regionCode(regionCode)
                 .places(list)
                 .build();
-        return districtResponse;
     }
 
-    public JsonNode getCityData(String regionCode) {
+    /**
+     * 선택지 2) 핵심: Optional로 감싸서 null 직접 반환하지 않음.
+     * 또한 JsonNode.get(...) 대신 path(...) 사용으로 NPE 방지.
+     */
+    @SuppressWarnings("unchecked")
+    public Optional<JsonNode> getCityData(String regionCode) {
         CaffeineCache cityCache = (CaffeineCache) cacheManager.getCache("cityCache");
-        if ( cityCache == null) { return null; }
+        if (cityCache == null) return Optional.empty();
 
         ValueWrapper wrapper = cityCache.get(SimpleKey.EMPTY);
-        if (wrapper == null) { return null; }
+        if (wrapper == null) return Optional.empty();
 
-        // 2) 캐시에 들어 있는 값을 꺼내서 List<JsonNode> 로 캐스팅
         Object raw = wrapper.get();
-        if (!(raw instanceof List<?>)) {
-            return null;
-        }
-        @SuppressWarnings("unchecked")
+        if (!(raw instanceof List<?>)) return Optional.empty();
+
         List<JsonNode> allCities = (List<JsonNode>) raw;
 
-        for(JsonNode city : allCities) {
-            if(regionCode.equals(city.get("AREA_CD").asText()))
-                return city;
+        for (JsonNode city : allCities) {
+            if (city == null) continue;
+            String code = city.path("AREA_CD").asText(null); // 안전 접근
+            if (code != null && code.equals(regionCode)) {
+                return Optional.of(city);
+            }
         }
-        return null;
+        return Optional.empty();
     }
 }
-

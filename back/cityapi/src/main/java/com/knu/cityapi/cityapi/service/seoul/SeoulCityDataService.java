@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
@@ -27,8 +28,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class SeoulCityDataService {
+
     private final SeoulPlaceRepository seoulPlaceRepository;
-    private  final WebClient webClient = WebClient.builder()
+
+    // WebClient: JSON 우선, 메모리 제한 확대
+    private final WebClient webClient = WebClient.builder()
             .exchangeStrategies(ExchangeStrategies.builder()
                     .codecs(configurer ->
                             configurer.defaultCodecs()
@@ -37,6 +41,7 @@ public class SeoulCityDataService {
                     .build()
             )
             .baseUrl("http://openapi.seoul.go.kr:8088/")
+            .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
             .build();
 
     @Cacheable("allPlaces")
@@ -46,44 +51,10 @@ public class SeoulCityDataService {
                 .map(SeoulPlace::getPlaceName)
                 .collect(Collectors.toList());
     }
+
     @Value("${seoul.api.key}")
     private String seoulApiKey;
 
-    private String decideColor(String lvl) {
-        return switch (lvl) {
-            case "붐빔"      -> "#4C75A3";
-            case "약간 붐빔" -> "#6C97BF";
-            case "보통"      -> "#89ADD3";
-            case "여유"      -> "#C3E1F3";
-            default          -> "#C3E1F3";
-        };
-    }
-    private int priority(String lvl) {
-        return switch (lvl) {
-            case "붐빔"      -> 4;
-            case "약간 붐빔" -> 3;
-            case "보통"      -> 2;
-            case "여유"      -> 1;
-            default          -> 0;
-        };
-    }
-//    public Mono<JsonNode> searchRegion(String region) {
-//        log.info("city_region : " + region);
-//        log.info("seoulApiKey :" + seoulApiKey);
-//        log.info(">>> 실제 API 호출 – region : {}", region);
-//        /*
-//           이런식으로
-//           Webclient의 라이브러리를 사용하려면 WebClient 객체를 통해
-//           체인메서드를 구성해서 http요청/응답을 받아서 Mono<>컨테이너로 반환
-//         */
-//        return webClient.get()
-//                .uri(uriBuilder -> uriBuilder
-//                        .path("/{apiKey}/json/citydata/1/5/{region}")
-//                        .build(seoulApiKey, region))
-//                .retrieve()
-//                .bodyToMono(JsonNode.class); // 필요에 따라 DTO로 바꿔도 됨
-//        //Dto로 보내면 fetch에서 리턴받을 때 바로 json으로 받을 수 있음
-//    }
     public Mono<JsonNode> searchRegion(String region) {
         log.info(">>> 실제 API 호출 – region: {}", region);
 
@@ -100,7 +71,7 @@ public class SeoulCityDataService {
                     if (MediaType.APPLICATION_JSON.isCompatibleWith(ct)) {
                         return response.bodyToMono(JsonNode.class);
                     } else {
-                        // JSON이 아니면 의도적으로 에러로 만들어 재시도 트리거
+                        // JSON이 아니면 재시도 트리거를 위해 에러로 전환
                         return response.bodyToMono(String.class)
                                 .flatMap(body -> {
                                     log.warn("Non-JSON 응답 – region:{} body:{}", region, body);
@@ -108,41 +79,48 @@ public class SeoulCityDataService {
                                 });
                     }
                 })
+                // 비-JSON(IllegalStateException)에 대해 3회 재시도 (필요 시 필터 범위를 넓히세요)
                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1))
                         .filter(ex -> ex instanceof IllegalStateException))
-                // 3회 재시도까지 모두 실패하면, 빈 객체로 폴백
+                // 재시도 모두 실패 → 빈 객체로 폴백
                 .onErrorResume(e -> {
                     log.error("재시도 모두 실패 – region:{}, 이유: {}", region, e.getMessage());
                     return Mono.just(JsonNodeFactory.instance.objectNode());
                 });
     }
 
+    /**
+     * 지역 코드 → CITYDATA 매핑 맵. (DB placeName 매칭 실패 시 스킵)
+     */
     public Mono<Map<String, JsonNode>> getAllRawDataByRegion() {
         return Flux.fromIterable(getAllPlaceNames())
                 .flatMap(placeName ->
                                 searchRegion(placeName)
-                                        // CITYDATA 전체 노드
                                         .map(root -> root.path("CITYDATA"))
-                                        // regionCode 매핑
                                         .map(cityData -> {
-                                            String name = cityData.path("AREA_NM").asText();
+                                            String name = cityData.path("AREA_NM").asText("").trim();
                                             String regionCode = seoulPlaceRepository
                                                     .findByPlaceName(name)
-                                                    .orElseThrow()
-                                                    .getRegionCode();
+                                                    .map(SeoulPlace::getRegionCode)
+                                                    .orElse(null); // 매칭 실패 시 null
                                             return Tuples.of(regionCode, cityData);
-                                        })
-                        , 30)
+                                        }),
+                        30)
+                .filter(t -> t.getT1() != null) // 매칭 실패 건은 스킵
                 .collectMap(Tuple2::getT1, Tuple2::getT2);
     }
+
+    /**
+     * CITYDATA 리스트(캐시 적재용). 필수 키(AREA_CD) 없는 항목은 걸러낸다.
+     */
     public Mono<List<JsonNode>> getAllDataByRegion() {
         return Flux.fromIterable(getAllPlaceNames())
                 .flatMap(placeName ->
                                 searchRegion(placeName)
-                                        .map(root -> root.path("CITYDATA"))
-                        , 30)
+                                        .map(root -> root.path("CITYDATA")),
+                        30)
+                // 불량 항목 필터링(AREA_CD 없는 것 제거)
+                .filter(node -> node != null && node.path("AREA_CD").isTextual())
                 .collectList();
     }
-
-    // public Mono<Map>
 }

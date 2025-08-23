@@ -7,6 +7,7 @@ import com.knu.cityapi.cityapi.service.seoul.SeoulCityDataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -41,10 +42,21 @@ public class CityCashController {
         return cityCacheScheduler.getCachedCity()
                 .doOnError(e -> log.error("혼잡도 조회 중 오류 발생", e));
     }
-
     @GetMapping(value = "/cache/regions/city/districts/{regionCode}",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public JsonNode getSeoulCityData( @PathVariable("regionCode") String regionCode){
-        return districtCacheAccessor.getCityData(regionCode);
+    public ResponseEntity<JsonNode> getSeoulCityData(@PathVariable("regionCode") String regionCode){
+        return districtCacheAccessor.getCityData(regionCode)
+                .map(body -> ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(body))
+                // 없으면 204 No Content (원하면 404로 바꿔도 됨)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
+
+
+//    @GetMapping(value = "/cache/regions/city/districts/{regionCode}",
+//            produces = MediaType.APPLICATION_JSON_VALUE)
+//    public JsonNode getSeoulCityData( @PathVariable("regionCode") String regionCode){
+//        return districtCacheAccessor.getCityData(regionCode);
+//    }
 }
