@@ -55,10 +55,28 @@
 }
 
 .see-all-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
   font-size: 13px;
-  color: #6658d3;
-  text-decoration: none;
   font-weight: 500;
+  color: #6658d3;
+  background: #f1f0fb;
+  border-radius: 20px;
+  text-decoration: none;
+  border: 1px solid #e0def7;
+  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+}
+
+.see-all-link:hover {
+  background: #6658d3;
+  color: #fff;
+}
+
+.see-all-link:active {
+  transform: scale(0.96);
 }
 
 .course-list {

@@ -6,8 +6,40 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 function StepDate({ data, setData }) {
-  const handleChange = (field) => (value) => {
-    setData((prev) => ({ ...prev, [field]: value.value }));
+  // data.date: "YYYY-MM-DD", data.time: "HH:mm"
+  const toDateObj = (dateStr, timeStr) => {
+    if (!dateStr) return null;
+    const t = timeStr && /^\d{2}:\d{2}$/.test(timeStr) ? timeStr : "00:00";
+    // 로컬 타임 기준 Date 객체 생성
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const [hh, mm] = t.split(":").map(Number);
+    const dt = new Date(y, m - 1, d, hh, mm, 0, 0);
+    return isNaN(dt.getTime()) ? null : dt;
+  };
+
+  const selectedDate = toDateObj(data?.date, data?.time);
+
+  const handleDateChange = (dt) => {
+    if (!dt) {
+      setData((prev) => ({ ...prev, date: "", time: "", datetime: null }));
+      return;
+    }
+    const pad = (n) => String(n).padStart(2, "0");
+    const y = dt.getFullYear();
+    const m = pad(dt.getMonth() + 1);
+    const d = pad(dt.getDate());
+    const hh = pad(dt.getHours());
+    const mm = pad(dt.getMinutes());
+
+    const date = `${y}-${m}-${d}`;
+    const time = `${hh}:${mm}`;
+    const datetime = `${date}T${time}:00`;
+
+    setData((prev) => ({ ...prev, date, time, datetime }));
+  };
+
+  const handleRegionChange = (value) => {
+    setData((prev) => ({ ...prev, region: value?.value || "" }));
   };
 
   const locationOptions = [
@@ -49,14 +81,14 @@ function StepDate({ data, setData }) {
             방문일자를 선택해주세요
           </label>
           <DatePicker
-            selected={data.datetime}
-            onChange={(date) => setData({ ...data, datetime: date })}
+            selected={selectedDate}
+            onChange={handleDateChange}
             showTimeInput
             dateFormat="yyyy-MM-dd HH:mm"
             shouldCloseOnSelect={false}
             placeholderText="날짜와 시간을 선택하세요"
             className={`${styles["step-select-box"]} ${
-              data.datetime ? styles["has-value"] : ""
+              selectedDate ? styles["has-value"] : ""
             }`}
             timeInputLabel="시간:"
           />
@@ -69,8 +101,10 @@ function StepDate({ data, setData }) {
           <Select
             classNamePrefix="custom-select"
             options={locationOptions}
-            value={locationOptions.find((opt) => opt.value === data.region)}
-            onChange={handleChange("region")}
+            value={
+              locationOptions.find((opt) => opt.value === data?.region) || null
+            }
+            onChange={handleRegionChange}
             placeholder="지역 선택"
             menuPlacement="auto"
             maxMenuHeight={160}

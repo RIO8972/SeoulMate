@@ -106,14 +106,14 @@
 }
 
 /* 버튼 정렬 */
-.review-button-group {
+.review-button-bar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
-
-/* 버튼 1개만 있을 때 오른쪽 정렬 */
-.review-button-group.single {
-  justify-content: flex-end;
+.review-button-bar .right {
+  display: flex;
+  gap: 12px;
 }
 
 /* 버튼 공통 */

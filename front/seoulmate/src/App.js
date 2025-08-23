@@ -7,7 +7,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import ReviewForm from "./pages/ReviewForm";
 import ReviewEditPage from "./pages/ReviewEditPage";
 import ReviewPage from "./pages/ReviewPage";
-import ReviewDetail from "./pages/ReviewDetailPage";
+import ReviewDetailPage from "./pages/ReviewDetailPage";
 import DistrictMap from "./pages/DistrictMap";
 import CourseForm from "./pages/CourseForm";
 import CourseEditPage from "./pages/CourseEditPage";
@@ -18,7 +18,6 @@ import RequestToken from "./components/Token/RequestToken";
 import Logout from "./components/Auth/Logout";
 import SaveToken from "./components/Auth/SaveToken";
 import LoginForm from "./components/Auth/LoginForm";
-
 import SignUpForm from "./components/Auth/SignUpForm";
 
 function App() {
@@ -37,13 +36,14 @@ function App() {
         "/images/test/cafe5.jpg",
       ],
       visitedDate: "2025.05.01",
+      time: "14:30",
       createdAt: "2025.05.03",
       cost: "10,000원",
       like: 900,
       keyword: "맛집 · 디저트",
       description: "여유로운 카페에서 디저트를 즐기는 코스입니다.",
       tips: "브런치 시간대는 붐비니 오픈 직후 추천!",
-      course: [{ place: "로맨틱카페", category: "카페", time: "60분" }],
+      course: [{ place: "스타벅스", category: "카페", time: "60분" }],
     },
     {
       id: 2,
@@ -58,6 +58,7 @@ function App() {
         "/images/test/night.jpg",
       ],
       visitedDate: "2025.03.01",
+      time: "14:30",
       createdAt: "2025.03.03",
       cost: "20,000원",
       like: 800,
@@ -73,7 +74,7 @@ function App() {
       course: [
         { place: "한강공원", category: "명소", time: "60분" },
         { place: "동작노을카페", category: "카페", time: "90분" },
-        { place: "카페", category: "카페", time: "40분" },
+        { place: "스타벅스", category: "카페", time: "40분" },
       ],
     },
     {
@@ -89,6 +90,7 @@ function App() {
         "/images/test/forest5.jpg",
       ],
       visitedDate: "2025.04.01",
+      time: "14:30",
       createdAt: "2025.04.03",
       cost: "30,000원",
       like: 700,
@@ -97,7 +99,7 @@ function App() {
       tips: "봄철 벚꽃 시즌에 특히 추천해요.",
       course: [
         { place: "서울숲", category: "공원", time: "60분" },
-        { place: "감성카페", category: "카페", time: "90분" },
+        { place: "스타벅스", category: "카페", time: "90분" },
       ],
     },
     {
@@ -113,54 +115,93 @@ function App() {
         "/images/test/date5.jpg",
       ],
       visitedDate: "2025.02.01",
+      time: "14:30",
       createdAt: "2025.02.03",
       cost: "40,000원",
       like: 600,
       keyword: "맛집 · 디저트",
+      description: "서울숲과 인근 카페를 거니는 코스입니다.",
+      tips: "봄철 벚꽃 시즌에 특히 추천해요.",
+      course: [
+        { place: "서울숲", category: "공원", time: "60분" },
+        { place: "스타벅스", category: "카페", time: "90분" },
+      ],
     },
     {
       id: 5,
       title: "데이트5",
       region: "서대문구",
       image: "/images/test/date2.jpg",
+      images: ["/images/test/date2.jpg"],
       visitedDate: "2025.01.01",
+      time: "14:30",
       createdAt: "2025.01.03",
       cost: "50,000원",
       like: 50,
       keyword: "맛집 · 디저트",
+      description: "서울숲과 인근 카페를 거니는 코스입니다.",
+      tips: "봄철 벚꽃 시즌에 특히 추천해요.",
+      course: [
+        { place: "서울숲", category: "공원", time: "60분" },
+        { place: "스타벅스", category: "카페", time: "90분" },
+      ],
     },
     {
       id: 6,
       title: "데이트6",
       region: "구로구",
       image: "/images/test/date3.jpg",
+      images: ["/images/test/date3.jpg"],
       visitedDate: "2025.03.05",
+      time: "14:30",
       createdAt: "2025.03.05",
       cost: "60,000원",
       like: 60,
       keyword: "맛집 · 디저트",
+      description: "서울숲과 인근 카페를 거니는 코스입니다.",
+      tips: "봄철 벚꽃 시즌에 특히 추천해요.",
+      course: [
+        { place: "서울숲", category: "공원", time: "60분" },
+        { place: "스타벅스", category: "카페", time: "90분" },
+      ],
     },
     {
       id: 7,
       title: "데이트7",
       region: "강서구",
       image: "/images/test/date4.jpg",
+      images: ["/images/test/date4.jpg"],
       visitedDate: "2025.05.05",
+      time: "14:30",
       createdAt: "2025.05.08",
       cost: "70,000원",
       like: 70,
       keyword: "야경",
+      description: "서울숲과 인근 카페를 거니는 코스입니다.",
+      tips: "봄철 벚꽃 시즌에 특히 추천해요.",
+      course: [
+        { place: "서울숲", category: "공원", time: "60분" },
+        { place: "스타벅스", category: "카페", time: "90분" },
+      ],
     },
     {
       id: 8,
       title: "데이트8",
       region: "관악구",
       image: "/images/test/date5.jpg",
+      images: ["/images/test/date5.jpg"],
       visitedDate: "2025.05.10",
+      time: "14:30",
       createdAt: "2025.05.11",
       cost: "80,000원",
       like: 0,
       keyword: "맛집",
+      description: "서울숲과 인근 카페를 거니는 코스입니다.",
+      tips: "봄철 벚꽃 시즌에 특히 추천해요.",
+      course: [
+        { place: "서울숲", category: "공원", time: "60분" },
+        { place: "스타벅스", category: "카페", time: "90분" },
+      ],
     },
   ]);
 
@@ -172,9 +213,14 @@ function App() {
         <Route path="/districts/:regionId" element={<DistrictPage />} />
         <Route path="/reviews" element={<ReviewPage reviews={reviews} />} />
         <Route
-          path="/review/:id"
-          element={<ReviewDetail reviews={reviews} />}
+          path="/reviews/:id"
+          element={<ReviewDetailPage reviews={reviews} />}
         />
+        <Route path="/reviews/:id/edit" element={<ReviewEditPage />} />
+        <Route
+          path="/review/:id"
+          element={<Navigate to="/reviews/:id" replace />}
+        />{" "}
         <Route path="/review/new" element={<ReviewForm />} />
         <Route path="/map/:regionId" element={<DistrictMap />} />
         <Route path="/course/new" element={<CourseForm />} />
@@ -183,7 +229,6 @@ function App() {
           path="/courses/:courseId/edit"
           element={<CourseEditPage />}
         />{" "}
-        <Route path="/review/:id/edit" element={<ReviewEditPage />} />
         <Route path="/mypage" element={<MyPage reviews={reviews} />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/logout" element={<Logout />} />

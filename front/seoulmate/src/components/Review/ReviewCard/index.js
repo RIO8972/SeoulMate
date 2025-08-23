@@ -1,37 +1,32 @@
-// 리뷰 카드 구성
-import React from "react";
+import { Link } from "react-router-dom";
 import "./style.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faCreditCard } from "@fortawesome/free-regular-svg-icons";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
-import { useNavigate } from "react-router-dom";
 
-const ReviewCard = ({ review }) => {
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    navigate(`/review/${review.id}`);
-  };
-
-  return (
-    <div className="review-card" onClick={handleClick}>
+export default function ReviewCard({ review, to, state }) {
+  const card = (
+    <div className="review-card-inner">
       <div className="image-wrapper">
         <div className="region-badge">{review.region}</div>
         <img src={review.image} alt={review.title} />
       </div>
+
       <div className="text-wrapper">
         <div className="info-top">
-          <h3 className="info-title">{`${review.title}`}</h3>
+          <h3 className="info-title">{review.title}</h3>
 
           <div className="info-item">
             <FontAwesomeIcon icon={faClock} className="info-icon" />
             <span>{review.visitedDate}</span>
           </div>
+
           <div className="info-item">
             <FontAwesomeIcon icon={faCreditCard} className="info-icon" />
             <span>{review.cost}</span>
           </div>
         </div>
+
         <div className="info-bottom">
           <p className="keywords">{review.keyword}</p>
           <div className="likes">
@@ -42,6 +37,15 @@ const ReviewCard = ({ review }) => {
       </div>
     </div>
   );
-};
 
-export default ReviewCard;
+  // 항상 Link 하나만 사용(이중 네비게이션 방지)
+  return (
+    <Link
+      to={to ?? `/reviews/${review.id}`}
+      state={state}
+      className="review-card"
+    >
+      {card}
+    </Link>
+  );
+}

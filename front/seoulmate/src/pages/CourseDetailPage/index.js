@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import styles from "./CourseDetailPage.module.css";
 import Header from "../../components/Header";
 import { FaBus } from "react-icons/fa";
+
 /* global kakao */
 
 export default function CourseDetailPage() {
@@ -79,7 +80,10 @@ export default function CourseDetailPage() {
 
     // 초기 중심: 서울시청
     const center = new kakao.maps.LatLng(37.5665, 126.978);
-    const map = new kakao.maps.Map(mapRef.current, { center, level: 5 });
+    const map = new kakao.maps.Map(mapRef.current, {
+      center,
+      level: 5,
+    });
     mapObjRef.current = map;
 
     // 중심 마커
@@ -104,6 +108,7 @@ export default function CourseDetailPage() {
 
     geocoderRef.current.addressSearch(q, (result, status) => {
       if (status !== kakao.maps.services.Status.OK || !result?.length) return;
+
       const { x, y } = result[0]; // x=lng, y=lat
       const ll = new kakao.maps.LatLng(Number(y), Number(x));
 
@@ -158,6 +163,7 @@ export default function CourseDetailPage() {
               <div className={styles.metaLabel}>데이트 코스 제목</div>
               <div className={styles.metaValue}>{course.title}</div>
             </div>
+
             <div>
               <div className={styles.metaLabel}>데이트 예정 일시</div>
               <div className={styles.metaValue}>
@@ -177,11 +183,13 @@ export default function CourseDetailPage() {
                   {/* 왼쪽: 번호 원 + 세로 라인 */}
                   <div className={styles.leftRail}>
                     <span className={styles.orderDot}>{s.order}</span>
+
                     {!isLast && (
                       <div className={styles.transportBlock}>
                         <FaBus className={styles.busIcon} />
                       </div>
                     )}
+
                     {isLast && <span className={styles.endDot} />}
                   </div>
 
@@ -189,6 +197,7 @@ export default function CourseDetailPage() {
                   <div className={styles.stepBody}>
                     <div className={styles.badgeRow}>
                       <span className={styles.catBadge}>{s.category}</span>
+
                       {!isLast && (
                         <>
                           <span className={styles.sep}>·</span>

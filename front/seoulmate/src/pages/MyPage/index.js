@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import styles from "./MyPage.module.css";
 import Header from "../../components/Header";
 import Account from "../../images/account.png";
@@ -73,7 +73,6 @@ export default function MyPage({ reviews = [] }) {
     likedReviews: likedReviews.length,
   };
 
-  // ───────────────── 액션들
   const openOnMap = (place) => {
     alert(`${place.title} 지도로 이동 (연결 예정)`);
   };
@@ -251,7 +250,12 @@ export default function MyPage({ reviews = [] }) {
             <h2 className={styles.sectionTitle}>내가 쓴 리뷰 목록</h2>
             <div className={styles.reviewGrid}>
               {myReviews.map((r) => (
-                <ReviewCard key={r.id} review={toReviewCardData(r)} />
+                <ReviewCard
+                  key={r.id}
+                  review={toReviewCardData(r)}
+                  to={`/reviews/${r.id}`}
+                  state={{ canEdit: true, from: "mypage" }}
+                />
               ))}
             </div>
           </>
@@ -263,7 +267,11 @@ export default function MyPage({ reviews = [] }) {
             <h2 className={styles.sectionTitle}>좋아요 누른 리뷰 목록</h2>
             <div className={styles.reviewGrid}>
               {likedReviews.map((r) => (
-                <ReviewCard key={r.id} review={toReviewCardData(r)} />
+                <ReviewCard
+                  key={r.id}
+                  review={toReviewCardData(r)}
+                  to={`/reviews/${r.id}`}
+                />
               ))}
             </div>
           </>
