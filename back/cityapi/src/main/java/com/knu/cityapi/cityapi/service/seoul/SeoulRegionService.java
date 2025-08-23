@@ -2,6 +2,7 @@ package com.knu.cityapi.cityapi.service.seoul;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.knu.cityapi.cityapi.domain.seoulplace.SeoulPlaceRepository;
 import com.knu.cityapi.cityapi.domain.seoulplace.SeoulPlace;
 import com.knu.cityapi.cityapi.dto.region.RegionInfo;
@@ -9,8 +10,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -22,24 +28,44 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class SeoulRegionService {
-    private final SeoulPlaceRepository seoulPlaceRepository;
-    private  final WebClient webClient = WebClient.builder().baseUrl("http://openapi.seoul.go.kr:8088/").build();
 
-    // retry 스펙: 최대 3회, 실패마다 2초씩 backoff
+    private final SeoulPlaceRepository seoulPlaceRepository;
+
+    // WebClient: JSON 우선 요청 + 메모리 한도
+    private final WebClient webClient = WebClient.builder()
+            .baseUrl("http://openapi.seoul.go.kr:8088/")
+            .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+            .exchangeStrategies(ExchangeStrategies.builder()
+                    .codecs(cfg -> cfg.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                    .build())
+            .build();
+
+    // retry: 최대 3회, 2초 backoff. (IllegalArgumentException만 제외하고 대부분 재시도)
     private final RetryBackoffSpec RETRY_SPEC = Retry.backoff(3, Duration.ofSeconds(2))
-            .filter(throwable -> {
-                // 네트워크 에러나 5xx 에만 재시도
-                return !(throwable instanceof IllegalArgumentException);
-            })
-            .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) ->
-                    retrySignal.failure()
-            );
+            .filter(ex ->
+                    !(ex instanceof IllegalArgumentException)
+                            // 네트워크/응답 오류/비-JSON 처리용 사용자 에러 등은 재시도
+                            && (ex instanceof WebClientRequestException
+                            || ex instanceof WebClientResponseException
+                            || ex instanceof IllegalStateException
+                            || true) // 필요시 더 좁혀도 됨
+            )
+            .doBeforeRetry(sig ->
+                    log.warn("[Retry] citydata_ppltn 시도 #{}: {}",
+                            sig.totalRetriesInARow() + 1,
+                            sig.failure() == null ? "unknown" : sig.failure().toString()))
+            .onRetryExhaustedThrow((spec, sig) -> {
+                log.error("[RetryExhausted] 총 {}회 재시도 후 실패: {}",
+                        sig.totalRetries(), sig.failure() == null ? "unknown" : sig.failure().toString());
+                return sig.failure();
+            });
 
     @Cacheable("allPlaces")
     public List<String> getAllPlaceNames() {
@@ -53,142 +79,149 @@ public class SeoulRegionService {
     private String seoulApiKey;
 
     private String decideColor(String lvl) {
-        return switch (lvl) {
-            case "붐빔"      -> "#4C75A3";
-            case "약간 붐빔" -> "#6C97BF";
-            case "보통"      -> "#89ADD3";
-            case "여유"      -> "#C3E1F3";
-            default          -> "#C3E1F3";
-        };
+        switch (lvl) {
+            case "붐빔":      return "#4C75A3";
+            case "약간 붐빔": return "#6C97BF";
+            case "보통":      return "#89ADD3";
+            case "여유":      return "#C3E1F3";
+            default:          return "#C3E1F3";
+        }
     }
-
     private int priority(String lvl) {
-        return switch (lvl) {
-            case "붐빔"      -> 4;
-            case "약간 붐빔" -> 3;
-            case "보통"      -> 2;
-            case "여유"      -> 1;
-            default          -> 0;
-        };
+        switch (lvl) {
+            case "붐빔":      return 4;
+            case "약간 붐빔": return 3;
+            case "보통":      return 2;
+            case "여유":      return 1;
+            default:          return 0;
+        }
     }
 
-//    public Mono<JsonNode> searchRegion(String region){
-//        //log.info("region : "+ region);
-//        //log.info("seoulApiKey :"+ seoulApiKey);
-//        return webClient.get()
-//                .uri(uriBuilder -> uriBuilder
-//                        .path("/{apiKey}/json/citydata_ppltn/1/5/{region}")
-//                        .build(seoulApiKey, region))
-//                .retrieve()
-//                .bodyToMono(JsonNode.class); // 필요에 따라 DTO로 바꿔도 됨
-//    }
+    /** 비-JSON 응답(XML/HTML 등)일 때 재시도를 트리거하기 위해 에러로 전환하는 searchRegion */
     public Mono<JsonNode> searchRegion(String region) {
-        //log.info("region : " + region);
-        //log.info("seoulApiKey :" + seoulApiKey);
-        //log.info(">>> 실제 API 호출 – region : {}", region);
+        log.info(">>> (ppltn) 실제 API 호출 – region: {}", region);
         return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/{apiKey}/json/citydata_ppltn/1/5/{region}")
+                .uri(b -> b.path("/{apiKey}/json/citydata_ppltn/1/5/{region}")
                         .build(seoulApiKey, region))
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                // HTTP 5xx, 네트워크 에러 등에 재시도
+                .exchangeToMono(resp -> {
+                    MediaType ct = resp.headers().contentType().orElse(MediaType.APPLICATION_OCTET_STREAM);
+                    log.info("[ppltn] Response Content-Type for [{}]: {}", region, ct);
+                    if (MediaType.APPLICATION_JSON.isCompatibleWith(ct)) {
+                        return resp.bodyToMono(JsonNode.class);
+                    } else {
+                        return resp.bodyToMono(String.class)
+                                .flatMap(body -> {
+                                    log.warn("[ppltn] Non-JSON 응답 – region:{} body:{}", region, body);
+                                    return Mono.error(new IllegalStateException("Non-JSON response"));
+                                });
+                    }
+                })
                 .retryWhen(RETRY_SPEC)
-                // 재시도 후에도 오류면 로그 남기고 에러 전달
-                .doOnError(err ->
-                        log.error("▶ API 호출 실패 (region={}): {}", region, err.toString())
-                );
+                .onErrorResume(e -> {
+                    log.error("[ppltn] 재시도 모두 실패 – region:{} 이유: {}", region, e.toString());
+                    // 빈 객체로 폴백해서 downstream이 끊기지 않도록
+                    return Mono.just(JsonNodeFactory.instance.objectNode());
+                });
     }
 
+    /** 배열의 첫 요소 안전 추출: 비어있으면 empty */
+    private Mono<JsonNode> firstPpltnElem(JsonNode root, String placeName) {
+        JsonNode arr = root.path("SeoulRtd.citydata_ppltn");
+        if (!arr.isArray() || arr.size() == 0) {
+            log.warn("[ppltn] citydata_ppltn 비어있음 – place:'{}'", placeName);
+            return Mono.empty(); // 스킵
+        }
+        return Mono.just(arr.get(0));
+    }
+
+    /** 다수 지역 조회 → Map<placeName, JsonNode(첫 elem)> */
     public Mono<Map<String, JsonNode>> searchRegionsAsMap(List<String> regions) {
         return Flux.fromIterable(regions)
-                // 각 region마다 Mono<String> 요청을 맵핑
-                .flatMap(region ->
-                        searchRegion(region)
-                                // 응답값에 region 키를 함께 묶어서 Tuple2로 방출
-                                .map(result -> Tuples.of(region, result))
-                )
-                // Tuple2(region, result)들을 Map으로 수집
+                .flatMap(place ->
+                                searchRegion(place)
+                                        .flatMap(root -> firstPpltnElem(root, place))
+                                        .map(elem -> Tuples.of(place, elem)),
+                        40)
                 .collectMap(Tuple2::getT1, Tuple2::getT2);
     }
 
+    /** 색상 맵 구성: 매핑 실패는 스킵 (unknown 제외) */
+    public Mono<Map<String, String>> setRegionColor(List<String> regions) {
+        return Flux.fromIterable(regions)
+                .flatMap(place ->
+                                searchRegion(place)
+                                        .flatMap(root -> firstPpltnElem(root, place))
+                                        .map(elem -> {
+                                            String placeName = elem.path("AREA_NM").asText("");
+                                            String regionCode = seoulPlaceRepository.findByPlaceName(placeName)
+                                                    .map(SeoulPlace::getRegionCode)
+                                                    .orElse("unknown");
+                                            String color = decideColor(elem.path("AREA_CONGEST_LVL").asText(""));
+                                            return Tuples.of(regionCode, color);
+                                        }),
+                        60)
+                .filter(t -> !"unknown".equals(t.getT1()))
+                .collectMap(Tuple2::getT1, Tuple2::getT2);
+    }
+
+    /** 같은 구 내 여러 장소 → 가장 혼잡 우선순위 높은 것만 남기기 */
     public Mono<Map<String, RegionInfo>> getMaxCongestionByRegionWithColor() {
         return Flux.fromIterable(getAllPlaceNames())
-                .flatMap(placeName ->
-                                searchRegion(placeName)
-                                        .map(root -> root.path("SeoulRtd.citydata_ppltn").get(0))
+                .flatMap(place ->
+                                searchRegion(place)
+                                        .flatMap(root -> firstPpltnElem(root, place))
                                         .map(elem -> {
-                                            // (A) 기본 데이터 추출
-                                            String name       = elem.path("AREA_NM").asText();
-                                            String level      = elem.path("AREA_CONGEST_LVL").asText();
-                                            String regionCode = seoulPlaceRepository
-                                                    .findByPlaceName(name)
-                                                    .orElseThrow(() -> new IllegalStateException(name + " 미매핑"))
-                                                    .getRegionCode();
-                                            // (B) 색상 결정
-                                            String color      = decideColor(level);
-                                            // (C) DTO 생성
-                                            return Tuples.of(regionCode, new RegionInfo(name, level, color));
-                                        })
-                        , 30)
-                // (D) 같은 구별로 가장 priority가 높은 DTO 하나만 남기기
+                                            String name  = elem.path("AREA_NM").asText("");
+                                            String lvl   = elem.path("AREA_CONGEST_LVL").asText("");
+                                            String code  = seoulPlaceRepository.findByPlaceName(name)
+                                                    .map(SeoulPlace::getRegionCode)
+                                                    .orElse(null); // 매핑 실패 시 스킵
+                                            return (code == null) ? null : Tuples.of(code, new RegionInfo(name, lvl, decideColor(lvl)));
+                                        }),
+                        30)
+                .filter(Objects::nonNull)
                 .groupBy(Tuple2::getT1, Tuple2::getT2)
-                .flatMap(gf ->
-                        gf.reduce((r1, r2) ->
-                                        priority(r1.getLevel()) >= priority(r2.getLevel()) ? r1 : r2
-                                )
-                                .map(maxInfo -> Tuples.of(gf.key(), maxInfo))
-                )
-                // (E) Map<regionCode, RegionInfo>로 수집
+                .flatMap(g ->
+                        g.reduce((r1, r2) -> priority(r1.getLevel()) >= priority(r2.getLevel()) ? r1 : r2)
+                                .map(max -> Tuples.of(g.key(), max)))
                 .collectMap(Tuple2::getT1, Tuple2::getT2);
     }
 
+    /** 원본 elem들을 지역코드별로 모아 Map<String, List<JsonNode>> */
+    public Mono<Map<String, List<JsonNode>>> getAllRawDataByRegion() {
+        log.info("[ppltn] getAllRawDataByRegion 호출");
+        return Flux.fromIterable(getAllPlaceNames())
+                .flatMap(place ->
+                                searchRegion(place)
+                                        .flatMap(root -> firstPpltnElem(root, place))
+                                        .map(elem -> {
+                                            String name = elem.path("AREA_NM").asText("");
+                                            String regionCode = seoulPlaceRepository.findByPlaceName(name)
+                                                    .map(SeoulPlace::getRegionCode)
+                                                    .orElse(null); // 매칭 실패는 스킵
+                                            return (regionCode == null) ? null : Tuples.of(regionCode, elem);
+                                        }),
+                        30)
+                .filter(Objects::nonNull)
+                .groupBy(Tuple2::getT1, Tuple2::getT2)
+                .flatMap(g -> g.collectList().map(list -> Tuples.of(g.key(), list)))
+                .collectMap(Tuple2::getT1, Tuple2::getT2);
+    }
+
+    /** 외부에서 주입된 rawDataMap으로 최대 혼잡 DTO 생성 */
     public Mono<Map<String, RegionInfo>> getMaxCongestionByRegionWithColor(Map<String, List<JsonNode>> rawDataMap) {
         Map<String, RegionInfo> maxInfoMap = rawDataMap.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> entry.getValue().stream()
+                        e -> e.getValue().stream()
                                 .map(elem -> {
-                                    String name  = elem.path("AREA_NM").asText();
-                                    String lvl   = elem.path("AREA_CONGEST_LVL").asText();
-                                    String color = decideColor(lvl);
-                                    return new RegionInfo(name, lvl, color);
+                                    String name  = elem.path("AREA_NM").asText("");
+                                    String lvl   = elem.path("AREA_CONGEST_LVL").asText("");
+                                    return new RegionInfo(name, lvl, decideColor(lvl));
                                 })
-                                .max(Comparator.comparingInt(info -> priority(info.getLevel())))
-                                .orElseThrow(() -> new IllegalStateException("빈 리스트라 처리 불가"))
+                                .max(Comparator.comparingInt(o -> priority(o.getLevel())))
+                                .orElse(new RegionInfo("N/A", "N/A", decideColor("N/A")))
                 ));
         return Mono.just(maxInfoMap);
-    }
-
-
-    public Mono<Map<String, List<JsonNode>>> getAllRawDataByRegion() {
-        //log.info("getAllRawDataByRegion 호출");
-        return Flux.fromIterable(getAllPlaceNames())
-                // (1) placeName마다 API 호출 → Mono<JsonNode root>
-                .flatMap(placeName ->
-                                searchRegion(placeName)
-                                        // (2) root에서 citydata_ppltn 배열의 첫 번째 요소(JsonNode)만 꺼낸다.
-                                        .map(root -> root.path("SeoulRtd.citydata_ppltn").get(0))
-                                        // (3) 각 장소 JsonNode에서 regionCode를 조회하고 Tuple로 묶는다.
-                                        .map(elem -> {
-                                            String name = elem.path("AREA_NM").asText();
-                                            String regionCode = seoulPlaceRepository
-                                                    .findByPlaceName(name)
-                                                    .orElseThrow(() -> new IllegalStateException(name + " 미매핑"))
-                                                    .getRegionCode();
-                                            // 반환할 때는 Tuple2<regionCode, JsonNode(elem)> 형태로
-                                            return Tuples.of(regionCode, elem);
-                                        })
-                        , 30)  // 동시성 30으로 병렬 요청
-                // (4) regionCode별로 그룹화: Tuple2.getT1()=regionCode, Tuple2.getT2()=JsonNode(elem)
-                .groupBy(Tuple2::getT1, Tuple2::getT2)
-                .flatMap(groupedFlux ->
-                        // groupedFlux.key()가 regionCode
-                        // groupedFlux.collectList()는 List<JsonNode> (각 장소의 원본 elem)
-                        groupedFlux.collectList()
-                                .map(list -> Tuples.of(groupedFlux.key(), list))
-                )
-                // (5) 최종적으로 Map<regionCode, List<JsonNode>>로 수집해서 Mono로 반환
-                .collectMap(Tuple2::getT1, Tuple2::getT2);
     }
 }
