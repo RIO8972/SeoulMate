@@ -20,6 +20,7 @@ public class UserProfileDto {//응답용
 
     public static UserProfileDto from(User user) { //id는 일단 null로
         return UserProfileDto.builder()
+                .id(user.getId())
                 .imgUrl(user.getImgUrl())
                 .username(user.getUsername())
                 .email(user.getEmail())

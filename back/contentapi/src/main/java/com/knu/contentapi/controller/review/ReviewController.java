@@ -25,11 +25,13 @@ import java.util.Map;
 public class ReviewController {
     private final ReviewService reviewService;
 
-    /** 단일 리뷰 조회 */
+    /** 단일 리뷰 조회 (인증필요X) */
     @GetMapping("/{id}")
     public ResponseEntity<?> getReview(
-            @PathVariable Long id
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user
     ) {
+        // ★ 로그인 되어 있으면 likedByMe=true/false 포함, 아니면 false
         return ResponseEntity.ok(reviewService.getReview(id));
     }
 
@@ -52,19 +54,20 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getReviewPlaces(id));
     }
 
+
+
     /** 리뷰 생성 (이미지+JSON 함께 전송) */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createTestReview(  //로그인 유무판별 후 저장할 때
-            @AuthenticationPrincipal User user,
-            @RequestPart("dto")    ReviewRequestDto        dto,     // JSON 전체를 이 DTO 로 바인딩
-            @RequestPart("images") List<MultipartFile>     images   // 파일 리스트
+                                                @AuthenticationPrincipal User user,
+                                                @RequestPart("dto")    ReviewRequestDto        dto,     // JSON 전체를 이 DTO 로 바인딩
+                                                @RequestPart("images") List<MultipartFile>     images   // 파일 리스트
     ) {
         log.info("usr    = {}", user.toString());
         log.info("dto    = {}", dto);
         log.info("places = {}", dto.getPlaces());
         log.info("images = {}", images.size());
-        reviewService.createReview(dto, images, user);
-        return ResponseEntity.ok("리뷰저장성공");
+        return ResponseEntity.ok(reviewService.createReview(dto, images, user));
     }
 
     /** 리뷰 전체 삭제 */
@@ -89,7 +92,7 @@ public class ReviewController {
             @RequestPart("dto") ReviewUpdateRequestDto     dto,     // JSON 전체를 이 DTO 로 바인딩
             @RequestPart(value = "images", required = false) List<MultipartFile>     images   // 파일 리스트
     ) {
-        log.info(dto.toString());
+        log.info("UpdateRequest>>"+dto.toString());
         log.info("images count={}", images == null ? 0 : images.size()); // <-- NPE 방지
         reviewService.updateReview(id, dto, images);
         return ResponseEntity.ok("수정성공");
@@ -103,10 +106,11 @@ public class ReviewController {
             return ResponseEntity.status(401).body("로그인이 필요합니다.");
         }
         boolean liked = reviewService.toggleLike(user.getId(), id);
+        long likeCount = reviewService.getLikeCount(id); // ★ 토글 직후 최신 카운트
 
         return ResponseEntity.ok(Map.of(
-                "liked", liked
-                // , "likeCount", likeCount   // 필요하면 주석 해제
+                "liked", liked,
+                "likeCount", likeCount
         ));
     }
 }

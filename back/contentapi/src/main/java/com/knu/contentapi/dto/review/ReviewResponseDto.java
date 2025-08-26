@@ -20,6 +20,7 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class ReviewResponseDto {
+    private long id;//추가 부분
     private List<String> categories;
     private int cost;
     private String date;
@@ -33,25 +34,33 @@ public class ReviewResponseDto {
     private java.time.LocalDateTime createdAt;
     private List<PlaceResponseDto> places;   // 추가
     private List<ReviewImgDto> images;   // 추가
-
     private UserProfileDto userProfile; //추가
+    private boolean likedByMe; // 추가: 현재 로그인 사용자가 좋아요했는지
 
     public static ReviewResponseDto from(Review review) {
         return
-        ReviewResponseDto.builder()
-                .categories(review.getCategories())
-                .cost(review.getCost())
-                .datetime(review.getDatetime())
-                .detail(review.getDetail())
-                .intro(review.getIntro())
-                .region(review.getRegion())
-                .title(review.getTitle())
-                .places(review.getPlacesDto())
-                .images(review.getReviewImgDto())
-                .createdAt(review.getCreatedAt())
-                .likeCount(review.getLikeCount())
-                .userProfile(UserProfileDto.from(review.getUser()))
-                .build();
+                ReviewResponseDto.builder()
+                        .id(review.getId())
+                        .categories(review.getCategories())
+                        .cost(review.getCost())
+                        .datetime(review.getDatetime())
+                        .detail(review.getDetail())
+                        .intro(review.getIntro())
+                        .region(review.getRegion())
+                        .title(review.getTitle())
+                        .places(review.getPlacesDto())
+                        .images(review.getReviewImgDto())
+                        .createdAt(review.getCreatedAt())
+                        .likeCount(review.getLikeCount())
+                        .userProfile(UserProfileDto.from(review.getUser()))
+                        .likedByMe(false) // 기본값
+                        .build();
     }
 
+    //추가: likedByMe까지 채우는 팩토리
+    public static ReviewResponseDto from(Review review, boolean likedByMe) {
+        ReviewResponseDto dto = from(review);
+        dto.setLikedByMe(likedByMe);
+        return dto;
+    }
 }

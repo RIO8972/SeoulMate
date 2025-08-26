@@ -52,9 +52,21 @@ public class ReviewService {
         return ReviewResponseDto.from(review); // 내부는 여전히 imgUrl 사용 가능
     }
 
+    //추가: 로그인 사용자까지 받아 likedByMe 채워서 반환
+    public ReviewResponseDto getReview(Long id, User user) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "review not found: " + id));
+
+        boolean likedByMe = (user != null)
+                && reviewLikeRepository.existsByUser_IdAndReview_Id(user.getId(), id);
+
+        return ReviewResponseDto.from(review, likedByMe);
+    }
+
     public List<ReviewResponseDto> getUserReviews(User user) { //본인이 작성한 리뷰글 조회
         List<Review> reviews = reviewRepository.findAllByUser_Id(user.getId());
         return reviews.stream().map(r -> ReviewResponseDto.builder()
+                        .id(r.getId())
                         .categories(r.getCategories())
                         .cost(r.getCost())
                         .datetime(r.getDatetime())
@@ -132,18 +144,23 @@ public class ReviewService {
         reviewRepository.save(review);
         return review.getId();
     }
-
     public void deleteReview(Long id) {
         Review review = reviewRepository.findWithImgsById(id)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "review not found: " + id));
 
+        // 1) 리뷰 좋아요 선삭제 (FK 끊기)
+        reviewLikeRepository.deleteByReviewId(id);
+
+        // 2) S3 키 모으기 (지금 있는 코드 그대로)
         var keys = review.getReviewImgs().stream()
                 .map(ReviewImg::getS3Key)
                 .filter(k -> k != null && !k.isBlank())
                 .toList();
 
+        // 3) 리뷰 삭제 (이미지/장소는 orphanRemoval + cascade로 함께 정리)
         reviewRepository.delete(review);
 
+        // 4) 커밋 이후 S3에서 실제 파일 삭제
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override public void afterCommit() { keys.forEach(awsS3Service::deleteByKey); }
         });
@@ -202,8 +219,7 @@ public class ReviewService {
                 @Override public void afterCommit() { keys.forEach(awsS3Service::deleteByKey); }
             });
         }
-
-        // (필요 시 나머지 필드 업데이트는 기존대로)
+        review.updateFrom(dto);
     }
 
     /** 좋아요 토글: true=좋아요됨, false=좋아요 취소됨 */
@@ -229,5 +245,17 @@ public class ReviewService {
             reviewRepository.incrementLike(reviewId);   // like_count + 1
             return true;
         }
+    }
+    // ★ 추가: 현재 likeCount 조회용
+    @Transactional
+    public long getLikeCount(Long reviewId) {
+        return reviewRepository.findLikeCountById(reviewId);
+    }
+
+    public List<ReviewResponseDto> getLatestReviews4() {
+        return reviewRepository.findTop4ByOrderByCreatedAtDesc()
+                .stream()
+                .map(ReviewResponseDto::from)   // 이미 구현되어 있음
+                .toList();
     }
 }

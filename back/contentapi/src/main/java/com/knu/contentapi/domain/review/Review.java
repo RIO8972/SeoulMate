@@ -6,6 +6,7 @@ import com.knu.contentapi.domain.reviewPlace.ReviewPlace;
 import com.knu.contentapi.domain.users.User;
 import com.knu.contentapi.dto.places.PlaceRequestDto;
 import com.knu.contentapi.dto.places.PlaceResponseDto;
+import com.knu.contentapi.dto.review.ReviewUpdateRequestDto;
 import com.knu.contentapi.dto.reviewImg.ReviewImgDto;
 import jakarta.persistence.*;
 import lombok.*;
@@ -130,6 +131,37 @@ public class Review {
         this.categories.clear();
         if (cats != null) this.categories.addAll(cats);
     }
+    /** 메타 필드 일괄 변경 */
+    public void changeMeta(String title, String intro, String detail, int cost, Date datetime, String region) {
+        this.title = title;
+        this.intro = intro;
+        this.detail = detail;
+        this.cost = cost;
+        this.datetime = datetime;
+        this.region = region;
+    }
+    /** 리뷰 전체 갱신(메타 + 카테고리 + 장소 전량교체) */
+    public Review updateFrom(ReviewUpdateRequestDto dto) {
+        // 1) 메타
+        changeMeta(
+                dto.getTitle(),
+                dto.getIntro(),
+                dto.getDetail(),
+                dto.getCost(),
+                dto.getDatetime(),
+                dto.getRegion()
+        );
+        // 2) 카테고리
+        replaceCategories(dto.getCategories());
+        // 3) 장소 전량 교체 (orphanRemoval)
+        this.reviewPlaces.clear();
+        if (dto.getPlaces() != null) {
+            for (PlaceRequestDto p : dto.getPlaces()) {
+                this.addPlace(p);
+            }
+        }
+        return this;
+    }
 
     public List<PlaceResponseDto> getPlacesDto() {
         List<PlaceResponseDto> _places = new ArrayList<>();
@@ -159,52 +191,3 @@ public class Review {
     }
 
 }
-
-/*
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column
-    private String title;
-    @Column
-    private String content;
-
-    @JsonManagedReference
-    @OneToMany(
-            mappedBy="review",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    @Builder.Default
-    @OrderColumn(name = "image_idx")    // 이 컬럼에 List 인덱스가 저장
-    private List<ReviewImg> reviewImgs = new ArrayList<>();
-
-    @JsonManagedReference
-    @OneToMany(
-            mappedBy="review",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    @Builder.Default
-    @OrderColumn(name = "place_idx")    // 이 컬럼에 List 인덱스가 저장
-    private List<ReviewPlace> reviewPlaces = new ArrayList<>();
-
-    public void addImg(String imgUrl) {
-        log.info("addImg>>");
-        ReviewImg reviewImg = ReviewImg.builder()
-                .imgUrl(imgUrl)
-                .review(this)
-                .build();
-        reviewImgs.add(reviewImg);
-    }
-
-    public void addPlace(ReviewPlaceRequestDto reviewPlaceRequestDto) {
-        log.info("addPlace>>");
-        ReviewPlace reviewPlace = ReviewPlace.builder()
-                .placeName(reviewPlaceRequestDto.getPlaceName())
-                .address(reviewPlaceRequestDto.getAddress())
-                .review(this)
-                .build();
-        reviewPlaces.add(reviewPlace);
-    }
-*/
