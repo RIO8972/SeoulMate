@@ -8,6 +8,7 @@ import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -78,11 +79,13 @@ public class RefreshTokenService {
 //                });
     }
 
+    @Transactional
     public void revokeByToken(String token) {
         if (token == null || token.isBlank()) return;
         refreshTokenRepository.deleteByToken(token);
     }
 
+    @Transactional
     public void revokeByUsername(String username) {
         if (username == null || username.isBlank()) return;
         refreshTokenRepository.deleteByUsername(username);
