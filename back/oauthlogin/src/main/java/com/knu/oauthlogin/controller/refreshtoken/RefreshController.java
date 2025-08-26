@@ -57,6 +57,9 @@ public class RefreshController {
                     .body(Map.of("error", "리프레시 토큰이 유효하지 않습니다."));
         }
 
+        /* ✅ 여기서 이전 RT 즉시 폐기 (회전) */
+        refreshTokenService.revokeByToken(rawRefreshToken);
+
         // 3) 기존 토큰의 서브젝트(username)를 꺼내서 User 조회
         String subject = jwtService.validateToken(rawRefreshToken)
                 .getBody()

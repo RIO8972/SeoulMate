@@ -16,7 +16,6 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
-
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtService jwtService;
 
@@ -77,5 +76,15 @@ public class RefreshTokenService {
 //                        return false;
 //                    }
 //                });
+    }
+
+    public void revokeByToken(String token) {
+        if (token == null || token.isBlank()) return;
+        refreshTokenRepository.deleteByToken(token);
+    }
+
+    public void revokeByUsername(String username) {
+        if (username == null || username.isBlank()) return;
+        refreshTokenRepository.deleteByUsername(username);
     }
 }
