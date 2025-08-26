@@ -16,12 +16,14 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class CourseResponseDto {
+    private Long id;
     private Date datetime;
     private String title;
     private List<PlaceResponseDto> places;
 
     public static CourseResponseDto from(Course course) {
         return CourseResponseDto.builder()
+                .id(course.getId())
                 .datetime(course.getDatetime())
                 .title(course.getTitle())
                 // course.getPlacesDto()가 이미 List<PlaceResponseDto>면 그대로 사용

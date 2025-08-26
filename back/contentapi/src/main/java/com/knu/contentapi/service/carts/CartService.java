@@ -38,7 +38,6 @@ public class CartService {
                 .toList();
     }
 
-
     public Long createCart(PlaceRequestDto dto, User user) {
         Cart cart = Cart.builder()
                 .user(user)
@@ -51,6 +50,12 @@ public class CartService {
                 .build();
         log.info(cart.toString());
         return cartRepository.save(cart).getId();
+    }
+
+    public void createReviewPlaces(List<PlaceRequestDto> dtos, User user) {
+        dtos.stream()
+                .map(requestDto -> createCart(requestDto, user))
+                .toList();
     }
 
     public void deleteCart(Long id) {

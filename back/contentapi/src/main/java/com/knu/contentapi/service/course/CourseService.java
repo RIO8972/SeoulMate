@@ -36,6 +36,7 @@ public class CourseService {
         List<Course> carts = courseRepository.findAllByUser_Id(user.getId());
         return carts.stream()
                 .map(c -> CourseResponseDto.builder()
+                        .id(c.getId())
                         .title(c.getTitle())
                         .datetime(c.getDatetime())
                         .places(c.getPlacesDto())
@@ -66,4 +67,3 @@ public class CourseService {
         courseRepository.delete(course);
     }
 }
-

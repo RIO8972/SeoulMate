@@ -13,11 +13,13 @@ import java.util.Optional;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findAllByUser_Id(Long userId);
+
+    Optional<Review> findWithImgsAndPlacesById(@Param("id") Long id);
+    @Query("select r.likeCount from Review r where r.id = :id")
+    long findLikeCountById(@Param("id") Long id);
+
     @Query("select r from Review r left join fetch r.reviewImgs where r.id = :id")
     Optional<Review> findWithImgsById(@Param("id") Long id);
-
-
-    // ... 기존 메서드들 (예: findWithImgsById, findAllByUser_Id 등)
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update Review r set r.likeCount = r.likeCount + 1 where r.id = :id")
@@ -30,4 +32,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             where r.id = :id
            """)
     int decrementLike(@Param("id") Long id);
+
+    // 최신 4건
+    List<Review> findTop4ByOrderByCreatedAtDesc();
 }

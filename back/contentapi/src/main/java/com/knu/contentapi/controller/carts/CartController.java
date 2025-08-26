@@ -27,7 +27,7 @@ public class CartController {
     /**내 장바구니 목록*/
     @GetMapping("/mine")
     public ResponseEntity<List<PlaceResponseDto>> getUserCarts(
-        @AuthenticationPrincipal User user ) {
+            @AuthenticationPrincipal User user ) {
         return ResponseEntity.ok(cartService.getUserCarts(user));
     }
 
@@ -41,6 +41,19 @@ public class CartController {
         log.info(dto.toString());
         cartService.createCart(dto, user);
         return ResponseEntity.ok("");
+    }
+
+    /**장바구니에 추가*/
+    @PostMapping("/places")
+    public ResponseEntity<?> getReviewPlaces(
+            @AuthenticationPrincipal User user,
+            @RequestBody List<PlaceRequestDto> dtos
+
+    ) {
+        //중복일때는? placeId로 식별해서 추가x (추가예정)
+        log.info(dtos.toString());
+        cartService.createReviewPlaces(dtos, user);
+        return ResponseEntity.ok("코스장소 저장 성공");
     }
 
     /**장바구니 항목삭제*/
