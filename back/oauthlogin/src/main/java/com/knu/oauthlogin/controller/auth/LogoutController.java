@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/token")
 public class LogoutController {
 
     private final RefreshTokenService refreshTokenService;

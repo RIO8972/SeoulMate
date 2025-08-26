@@ -91,7 +91,7 @@ public class SecurityConfig {
                                 "/signup", "/login", //자체로그인
                                 "/oauth2/**", "/oauth-login",
                                 "/token/*", //refesh토큰
-                                "/logout"
+                                "token/logout"
                         ).permitAll()
                         // H2 콘솔도 필요시 열어둘 수 있음
                         .requestMatchers("/h2-console/**").permitAll()
