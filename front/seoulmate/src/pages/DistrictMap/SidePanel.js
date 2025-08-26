@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styles from "./SidePanel.module.css";
 
-function SidePanel({ title, onClose }) {
+function SidePanel({ title, onClose, children }) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -26,9 +26,9 @@ function SidePanel({ title, onClose }) {
       <button className={styles.closeButton} onClick={handleClose}>
         ×
       </button>
-      <h2 className={styles.panelTitle}>{title}</h2>
+      {/* <h2 className={styles.panelTitle}>{title}</h2> */}
       <div className={styles.content}>
-        {title}에 대한 내용을 여기에 표시합니다.
+                 {children}
       </div>
     </div>
   );

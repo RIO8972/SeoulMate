@@ -1,13 +1,44 @@
 import "./style.css";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import axios from "axios";
 import FullLogo from "../../images/full-logo.png";
 import Account from "../../images/account.png";
 import Menu from "../../images/menu.png";
+import api from "../../api/api";
 
 const Header = () => {
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const location = useLocation();
+
+  //로그인 유무에 따라 사용자 정보 가져오기
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setUser(null);
+      return;
+    }
+
+    api
+      .get(`/users/me`)
+      .then((res) => setUser(res.data))
+      .catch((err) => {
+        console.error("내 정보 조회 실패", err);
+        if (err?.response?.status === 401) {
+          // 만료/무효 토큰 정리
+          localStorage.removeItem("accessToken");
+        }
+        setUser(null);
+      });
+  }, []);
+
+  // 이미지 에러 시 기본 아이콘으로 복구
+  const handleAvatarError = (e) => {
+    e.currentTarget.src = Account;
+    e.currentTarget.onerror = null;
+  };
+  const avatarUrl = user?.imgUrl || Account; //사용자 이미지 or 기본
 
   // ESC 키로 닫기
   useEffect(() => {
@@ -29,13 +60,18 @@ const Header = () => {
         </Link>
 
         <div className="header-btn-layout">
-          {/* 프로필(로그인) 연결은 그대로 */}
+          {/*로그인 유무에 따라 링크/이미지 동적 변경 */}
           <Link
-            to="/login"
+            to={user ? "/profile" : "/login"}
             className="login-link"
-            aria-label="로그인 또는 마이페이지"
+            aria-label={user ? "마이페이지로 이동" : "로그인 페이지로 이동"}
           >
-            <img src={Account} alt="" className="header-icon" />
+            <img
+              src={avatarUrl}
+              alt="프로필"
+              className="header-icon"
+              onError={handleAvatarError}
+            />
           </Link>
 
           {/* 햄버거 → 사이드바 열기 */}

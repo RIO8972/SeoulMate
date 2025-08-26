@@ -1,131 +1,174 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+// src/pages/CourseDetailPage/index.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import styles from "./CourseDetailPage.module.css";
 import Header from "../../components/Header";
 import { FaBus } from "react-icons/fa";
+import api from "../../api/api";
 
 /* global kakao */
 
+// 날짜/시간 포맷터 -> "YYYY-MM-DD HH:mm"
+const formatDateTime = (v) => {
+  if (!v) return "-";
+  const pad = (n) => String(n).padStart(2, "0");
+  const onlyDateStr = typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const d = v instanceof Date ? v : new Date(onlyDateStr ? `${v}T00:00:00` : v);
+  if (Number.isNaN(+d)) return String(v).replace("T", " ").slice(0, 16);
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  if (onlyDateStr) return `${yyyy}-${mm}-${dd}`;
+  const HH = pad(d.getHours());
+  const MM = pad(d.getMinutes());
+  return `${yyyy}-${mm}-${dd} ${HH}:${MM}`;
+};
+
+// 주소에서 "중구" 처럼 구 이름만 추출
+const extractDistrict = (address) => {
+  if (!address) return "";
+  const parts = String(address).trim().split(/\s+/);
+  return parts[1] || "";
+};
+
+// 좌표 사이 대략적인 도보/직선거리 시간(분)
+const minutesBetween = (a, b) => {
+  if (!a || !b) return null;
+  const lat1 = Number(a.lat), lng1 = Number(a.lng);
+  const lat2 = Number(b.lat), lng2 = Number(b.lng);
+  if ([lat1, lng1, lat2, lng2].some((n) => !Number.isFinite(n))) return null;
+
+  const R = 6371; // km
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  const distKm = 2 * R * Math.asin(Math.sqrt(s));
+  const walkingKmPerMin = 4 / 60; // 시속 4km
+  return Math.round(distKm / walkingKmPerMin);
+};
+
 export default function CourseDetailPage() {
-  // ✅ URL 파라미터에서 courseId 가져오기
   const { courseId } = useParams();
+  const navigate = useNavigate();
 
-  // 날짜/시간 포맷터
-  const formatDateTime = (v) => {
-    if (!v) return "-";
-    const pad = (n) => String(n).padStart(2, "0");
-    const onlyDateStr = typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  // 서버 데이터
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
-    const d =
-      v instanceof Date ? v : new Date(onlyDateStr ? `${v}T00:00:00` : v);
+  // 지도 refs
+  const mapRef = useRef(null);
+  const mapObjRef = useRef(null);
+  const markersRef = useRef([]);
 
-    if (isNaN(+d)) {
-      // 파싱이 안 되면 원문 노출 (예: 이미 "YYYY-MM-DD HH:mm" 형태일 수 있음)
-      return String(v).replace("T", " ").slice(0, 16);
-    }
-
-    const yyyy = d.getFullYear();
-    const mm = pad(d.getMonth() + 1);
-    const dd = pad(d.getDate());
-
-    if (onlyDateStr) return `${yyyy}-${mm}-${dd}`; // 시간 정보 없으면 날짜만
-
-    const HH = pad(d.getHours());
-    const MM = pad(d.getMinutes());
-    return `${yyyy}-${mm}-${dd} ${HH}:${MM}`; // 날짜 + 시간
-  };
-
-  // 데모용 코스 데이터 (실사용 시 courseId로 API 호출)
-  const course = {
-    region: "종로구",
-    title: "종로구 데이트 코스",
-    datetime: "2025-06-10T14:30:00",
-    steps: [
-      {
-        id: 1,
-        order: 1,
-        category: "명소",
-        name: "종묘",
-        stay: "60분",
-        toNext: "15분",
-      },
-      {
-        id: 2,
-        order: 2,
-        category: "쇼핑",
-        name: "동대문 디지털 플라자",
-        stay: "90분",
-        toNext: "20분",
-      },
-      {
-        id: 3,
-        order: 3,
-        category: "음악",
-        name: "국립극장",
-        stay: "50분",
-        toNext: null,
-      }, // 마지막
-    ],
-  };
-
-  // ── Kakao 지도 (DistrictMap 패턴) ──────────────────────────────
-  const mapRef = useRef(null); // 지도 컨테이너 DOM
-  const mapObjRef = useRef(null); // kakao.maps.Map
-  const markerRef = useRef(null); // 중심 마커
-  const geocoderRef = useRef(null); // 지오코더
-  const [addr, setAddr] = useState(""); // 주소 입력 상태
-
+  // 코스 조회
   useEffect(() => {
-    if (!window.kakao?.maps || !mapRef.current) return;
+    const fetchCourse = async () => {
+      setLoading(true);
+      setErr("");
+      try {
+        const { data } = await api.get(`/courses/${courseId}`);
+        setCourse(data);
+      } catch (e) {
+        console.error("[course detail] error:", e);
+        setErr("코스를 불러오는 중 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourse();
+  }, [courseId]);
 
-    // 초기 중심: 서울시청
-    const center = new kakao.maps.LatLng(37.5665, 126.978);
-    const map = new kakao.maps.Map(mapRef.current, {
-      center,
-      level: 5,
-    });
+  // 지도 표시/마커
+  useEffect(() => {
+    const places = course?.places || [];
+    if (!window.kakao?.maps || !mapRef.current || places.length === 0) return;
+
+    const first = places[0];
+    const center = new kakao.maps.LatLng(Number(first.lat), Number(first.lng));
+    const map =
+      mapObjRef.current ||
+      new kakao.maps.Map(mapRef.current, { center, level: 5 });
     mapObjRef.current = map;
 
-    // 중심 마커
-    markerRef.current = new kakao.maps.Marker({ map, position: center });
+    // 기존 마커 제거
+    markersRef.current.forEach((m) => m.setMap(null));
+    markersRef.current = [];
 
-    // 지오코더 준비
-    geocoderRef.current = new kakao.maps.services.Geocoder();
-
-    // 컨테이너 리사이즈 대응
-    const ro = new ResizeObserver(() =>
-      kakao.maps.event.trigger(map, "resize")
-    );
-    ro.observe(mapRef.current);
-
-    return () => ro.disconnect();
-  }, []);
-
-  // 주소 검색 → 지오코딩 → 지도/마커 이동
-  const handleSearch = () => {
-    const q = addr.trim();
-    if (!q || !geocoderRef.current || !mapObjRef.current) return;
-
-    geocoderRef.current.addressSearch(q, (result, status) => {
-      if (status !== kakao.maps.services.Status.OK || !result?.length) return;
-
-      const { x, y } = result[0]; // x=lng, y=lat
-      const ll = new kakao.maps.LatLng(Number(y), Number(x));
-
-      mapObjRef.current.setLevel(5);
-      mapObjRef.current.panTo(ll);
-
-      if (markerRef.current) {
-        markerRef.current.setPosition(ll);
-      } else {
-        markerRef.current = new kakao.maps.Marker({
-          map: mapObjRef.current,
-          position: ll,
-        });
-      }
+    // 마커 + bounds
+    const bounds = new kakao.maps.LatLngBounds();
+    places.forEach((p) => {
+      const lat = Number(p.lat);
+      const lng = Number(p.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      const pos = new kakao.maps.LatLng(lat, lng);
+      const marker = new kakao.maps.Marker({ map, position: pos });
+      markersRef.current.push(marker);
+      bounds.extend(pos);
     });
+
+    if (!bounds.isEmpty()) map.setBounds(bounds);
+  }, [course]);
+
+  // 지역구
+  const region = useMemo(() => {
+    const addr = course?.places?.[0]?.address;
+    return extractDistrict(addr) || "코스";
+  }, [course]);
+
+  // 삭제 핸들러
+  const onDelete = async () => {
+    if (deleting) return;
+    if (!window.confirm("이 코스를 삭제할까요? 복구할 수 없습니다.")) return;
+
+    try {
+      setDeleting(true);
+      await api.delete(`/courses/${courseId}`);
+      alert("코스를 삭제했습니다.");
+      // 코스 탭으로 이동
+      navigate("/mypage?tab=courses", { replace: true });
+      // 또는 state 사용 시:
+      // navigate("/mypage", { replace: true, state: { initialTab: "courses" } });
+    } catch (e) {
+      console.error("[course delete] error:", e);
+      const code = e?.response?.status;
+      if (code === 401) alert("로그인이 필요합니다.");
+      else alert("코스 삭제에 실패했습니다.");
+    } finally {
+      setDeleting(false);
+    }
   };
-  // ───────────────────────────────────────────────────────────────
+
+  if (loading)
+    return (
+      <div className={styles.page}>
+        <Header />
+        <div className={styles.inner}>불러오는 중…</div>
+      </div>
+    );
+  if (err)
+    return (
+      <div className={styles.page}>
+        <Header />
+        <div className={styles.inner} style={{ color: "#d33" }}>
+          {err}
+        </div>
+      </div>
+    );
+  if (!course)
+    return (
+      <div className={styles.page}>
+        <Header />
+        <div className={styles.inner}>코스를 찾을 수 없습니다.</div>
+      </div>
+    );
+
+  const steps = Array.isArray(course.places) ? course.places : [];
+  const when = formatDateTime(course.datetime || course.date);
 
   return (
     <div className={styles.page}>
@@ -143,67 +186,64 @@ export default function CourseDetailPage() {
           </button>
 
           <div className={styles.titleBar}>
-            <h1 className={styles.title}>{course.region} 데이트 코스</h1>
-
+            <h1 className={styles.title}>{course.title}</h1>
             <div className={styles.actions}>
-              {courseId && (
-                <Link
-                  to={`/courses/${courseId}/edit`}
-                  state={{ course }}
-                  className={styles.editBtn}
-                >
-                  수정
-                </Link>
-              )}
+              <Link
+                to={`/courses/${courseId}/edit`}
+                state={{ course }}
+                className={styles.editBtn}
+              >
+                수정
+              </Link>
+              <button
+                type="button"
+                onClick={onDelete}
+                disabled={deleting}
+                className={styles.deleteBtn}
+                title={deleting ? "삭제 중..." : "삭제"}
+              >
+                삭제
+              </button>
             </div>
           </div>
 
           <div className={styles.metaTop}>
             <div>
-              <div className={styles.metaLabel}>데이트 코스 제목</div>
-              <div className={styles.metaValue}>{course.title}</div>
+              <div className={styles.metaValue}>서울시 {region || "-"}</div>
             </div>
-
             <div>
               <div className={styles.metaLabel}>데이트 예정 일시</div>
-              <div className={styles.metaValue}>
-                {formatDateTime(course.datetime ?? course.date)}
-              </div>
+              <div className={styles.metaValue}>{when}</div>
             </div>
           </div>
 
           <h2 className={styles.sectionH2}>코스 상세 정보</h2>
 
-          {/* 타임라인 */}
           <ol className={styles.timeline}>
-            {course.steps.map((s, idx) => {
-              const isLast = idx === course.steps.length - 1;
-              return (
-                <li key={s.id} className={styles.step}>
-                  {/* 왼쪽: 번호 원 + 세로 라인 */}
-                  <div className={styles.leftRail}>
-                    <span className={styles.orderDot}>{s.order}</span>
+            {steps.map((p, idx) => {
+              const isLast = idx === steps.length - 1;
+              const next = steps[idx + 1];
+              const mins = next ? minutesBetween(p, next) : null;
 
+              return (
+                <li key={p.placeId ?? p.id ?? idx} className={styles.step}>
+                  <div className={styles.leftRail}>
+                    <span className={styles.orderDot}>{idx + 1}</span>
                     {!isLast && (
                       <div className={styles.transportBlock}>
                         <FaBus className={styles.busIcon} />
                       </div>
                     )}
-
                     {isLast && <span className={styles.endDot} />}
                   </div>
 
-                  {/* 오른쪽: 내용 */}
                   <div className={styles.stepBody}>
                     <div className={styles.badgeRow}>
-                      <span className={styles.catBadge}>{s.category}</span>
-
-                      {!isLast && (
+                      <span className={styles.catBadge}>{p.category || "장소"}</span>
+                      {!isLast && mins != null && (
                         <>
                           <span className={styles.sep}>·</span>
-                          <span className={styles.move}>
-                            다음 장소까지: {s.toNext}
-                          </span>
+                          <span className={styles.move}>다음까지 약 {mins}분</span>
                           <button type="button" className={styles.linkBtn}>
                             이동수단 변경
                           </button>
@@ -211,7 +251,8 @@ export default function CourseDetailPage() {
                       )}
                     </div>
 
-                    <div className={styles.placeName}>{s.name}</div>
+                    <div className={styles.placeName}>{p.name}</div>
+                    {p.address && <div className={styles.placeAddr}>{p.address}</div>}
                   </div>
                 </li>
               );
@@ -219,29 +260,9 @@ export default function CourseDetailPage() {
           </ol>
         </aside>
 
-        {/* 우측: 검색 + 카카오 지도 */}
+        {/* 우측: 지도 */}
         <section className={styles.mapArea}>
-          <div className={styles.searchRow}>
-            <input
-              className={styles.searchInput}
-              placeholder="주소를 입력하세요"
-              value={addr}
-              onChange={(e) => setAddr(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearch();
-              }}
-            />
-            <button
-              className={styles.searchBtn}
-              type="button"
-              onClick={handleSearch}
-            >
-              검색
-            </button>
-          </div>
-
           <div className={styles.mapBox}>
-            {/* DistrictMap과 같은 방식: ref로 직접 지도 붙임 */}
             <div
               ref={mapRef}
               style={{ width: "100%", height: "100%", borderRadius: 8 }}

@@ -1,149 +1,127 @@
 // src/components/Review/ReviewSidebar.jsx
 import "./style.css";
 import { useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+// import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock } from "@fortawesome/free-regular-svg-icons";
+import api from "../../../api/api";
 
 const ReviewSidebar = ({ review, course }) => {
-  const navigate = useNavigate();
-
-  // 🔒 map 대상은 무조건 배열로 보장
+  // course가 배열이면 그대로, steps 있으면 steps, 아니면 비움
   const steps = useMemo(() => {
-    return Array.isArray(course)
-      ? course
-      : Array.isArray(course?.steps)
-      ? course.steps
-      : [];
+    if (Array.isArray(course)) return course;
+    if (Array.isArray(course?.steps)) return course.steps;
+    return [];
   }, [course]);
 
-  // ✅ step 객체에서 place 정보를 정규화
+  // place 표준화 (표시용)
   const normalizePlace = useCallback(
-    (c) => {
-      if (!c) return null;
-      const src = c.place ?? c;
-
-      const name =
-        src.name || src.title || src.placeName || c.name || c.title || "장소";
-      const lat = Number(src.lat ?? src.y ?? c.lat ?? c.y);
-      const lng = Number(src.lng ?? src.x ?? c.lng ?? c.x);
-
+    (src, idx = 0) => {
+      if (!src) return null;
+      const lat = parseFloat(src.lat ?? src.y);
+      const lng = parseFloat(src.lng ?? src.x);
       return {
-        id: src.id ?? src.placeId ?? c.id ?? `p-${Date.now()}`,
-        name,
+        id: src.id ?? src.placeId ?? `p-${idx}`,
+        name: src.name || src.title || "장소",
         lat: Number.isFinite(lat) ? lat : undefined,
         lng: Number.isFinite(lng) ? lng : undefined,
         address:
           src.address || src.roadAddress || src.addr || src.address_name || "",
-        category: src.category || src.type || (review?.categories?.[0] ?? ""),
+        category: src.category || (review?.categories?.[0] ?? ""),
         stay: src.stay || src.duration || 60,
+        time: src.time || src.visitedTime || "",
       };
     },
     [review?.categories]
   );
 
-  // ✅ 프리필 공통 만들기
-  const buildPrefill = useCallback(
-    (placeObj) => {
-      const keyword =
-        review?.categories?.[0] ||
-        (typeof review?.keyword === "string"
-          ? review.keyword.replace(/^#\s*/, "").split("·")[0]?.trim()
-          : "") ||
-        placeObj?.category ||
-        "카페"; // 기본값
+  // 장소 담기: review.places → PlaceRequestDto[] 로 매핑 후 POST
+  const handleAddAllToCart = useCallback(async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+    const srcPlaces = Array.isArray(review?.places) ? review.places : [];
+    if (srcPlaces.length === 0) {
+      alert("담을 장소가 없습니다.");
+      return;
+    }
+    const body = srcPlaces.map((p, i) => ({
+      placeId: String(p.placeId ?? p.id ?? `p-${i}`),
+      name: p.name ?? p.title ?? "",
+      lat: String(p.lat ?? p.y ?? ""),
+      lng: String(p.lng ?? p.x ?? ""),
+      address:
+        p.address ??
+        p.road_address_name ??
+        p.address_name ??
+        p.roadAddress ??
+        p.addr ??
+        "",
+      url: p.url ?? p.place_url ?? "",
+    }));
 
-      return { keyword, place: placeObj || null };
-    },
-    [review]
-  );
+    try {
+      // await api.post("/carts/places", body, { headers: { "Content-Type": "application/json" } });
+      await api.post("/carts/places", body); // 인터셉터로 토큰 자동 주입
+      alert("장소를 관심 목록에 담았습니다.");
+    } catch (e) {
+      console.error("[carts/places] error:", e);
+      const code = e?.response?.status;
+      if (code === 401) alert("로그인이 필요합니다.");
+      else alert("장소 담기 중 오류가 발생했습니다.");
+    }
+  }, [review?.places]);
 
-  // ✅ 이동 함수
-  const goEditWithPrefill = useCallback(
-    (prefill) => {
-      const rid = review?.id ?? steps?.[0]?.reviewId ?? "";
-      navigate(`/reviews/${rid}/edit?step=location`, { state: { prefill } });
-    },
-    [navigate, review?.id, steps]
-  );
-
-  // “내 코스에 추가” → 첫 장소로 프리필
-  const handleAddFirst = useCallback(() => {
-    const first = steps[0] ? normalizePlace(steps[0]) : null;
-    const prefill = buildPrefill(first);
-    goEditWithPrefill(prefill);
-  }, [steps, normalizePlace, buildPrefill, goEditWithPrefill]);
+  // 작성자 정보
+  const authorName = review?.authorName || review?.userProfile?.username || "user";
+  const authorImg =
+    review?.authorImg || review?.userProfile?.imgUrl || "/images/test/bluescreen.jpg";
 
   return (
     <div className="review-sidebar-box">
       {/* 작성자 프로필 */}
       <div className="writer-profile">
         <img
-          src="/images/test/bluescreen.jpg"
+          src={authorImg}
           alt="작성자 프로필"
           className="profile-image"
+          onError={(e) => {
+            e.currentTarget.src = "/images/test/bluescreen.jpg";
+            e.currentTarget.onerror = null;
+          }}
         />
         <div className="writer-text">
-          <p className="writer-name">{review?.authorName || "user"} 님</p>
-          <p className="writer-meta">
-            {review?.authorBio || "해시태그? 또는 설명"}
-          </p>
+          <p className="writer-name">{authorName} 님</p>
+          <p className="writer-meta">{review?.authorBio || ""}</p>
         </div>
       </div>
 
-      {/* 데이트 코스 요약 */}
+      {/* 데이트 코스 순서 (클릭시 이동 동작 제거) */}
       <div className="course-order-section">
         <div className="section-header">
           <h2>데이트 코스 순서</h2>
-          <button
-            type="button"
-            className="see-all-link"
-            // 필요 시 전체 보기 라우팅/모달 연결
-            onClick={handleAddFirst}
-            title="이 순서로 수정하기"
-          >
-            모두 보기
-          </button>
         </div>
 
         <ol className="course-list">
           {steps.map((c, i) => {
-            const place = c?.place || c?.name || c?.title || "-";
-            const category = c?.category || c?.type || "";
-            const time = c?.time || c?.visitedTime || "";
-
+            const place = normalizePlace(c, i);
             return (
-              <li
-                className="course-item"
-                key={c?.id || c?.placeId || i}
-                onClick={() =>
-                  goEditWithPrefill(buildPrefill(normalizePlace(c)))
-                }
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    goEditWithPrefill(buildPrefill(normalizePlace(c)));
-                  }
-                }}
-                title="이 장소로 수정하기"
-              >
+              <li className="course-item" key={place?.id || c?.placeId || i}>
                 <div className="step-indicator">{i + 1}</div>
                 <div className="course-content">
                   <div className="course-main">
-                    <span className="course-place">{place.name || place}</span>
-                    {category && (
-                      <span className="course-category">{category}</span>
+                    <span className="course-place">{place?.name || "-"}</span>
+                    {place?.category && (
+                      <span className="course-category">{place.category}</span>
                     )}
                   </div>
-                  {time ? (
+                  {place?.time ? (
                     <div className="course-sub">
                       <span className="course-time">
-                        <FontAwesomeIcon
-                          icon={faClock}
-                          className="clock-icon"
-                        />{" "}
-                        {time}
+                        <FontAwesomeIcon icon={faClock} className="clock-icon" />{" "}
+                        {place.time}
                       </span>
                     </div>
                   ) : null}
@@ -158,8 +136,9 @@ const ReviewSidebar = ({ review, course }) => {
         )}
       </div>
 
-      <button className="add-course-button" onClick={handleAddFirst}>
-        내 코스에 추가
+      {/* 장소 담기 → carts/places POST */}
+      <button className="add-course-button" onClick={handleAddAllToCart}>
+        장소 담기
       </button>
     </div>
   );

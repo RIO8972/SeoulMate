@@ -1,4 +1,3 @@
-// src/components/Auth/SignUpForm.js
 import React, { useState } from 'react';
 import styles from './SignUpForm.module.css';
 import axios from 'axios';
@@ -36,28 +35,32 @@ const SignUpForm = () => {
     }
   }
   return(<>
-     email{' '} 
-     <input 
-      value={email}
-      onChange={
-        (e) => {setEmail(e.target.value)}
-      }>
-        </input> <br/>
-    password{' '} 
-     <input 
-      value={password}
-      onChange={
-        (e) => {setPassword(e.target.value)}
-      }>
-        </input> <br/>
-      username {' '} 
-     <input 
-      value={username}
-      onChange={
-        (e) => {setUserName(e.target.value)}
-      }>
-        </input> <br/>
-    <button type="button" onClick={handleSignUp}>회원가입</button>
+ <div className={styles.main}>
+  <div className={styles.container}>
+    <div className={styles.wrapper}>
+      <div className={styles.heading}>
+        <h1 className={styles.title}>Create account</h1>
+        <p className={styles.subtitle}>SeoulMate에 가입하세요</p>
+      </div>
+
+      <form className={styles.form} onSubmit={(e)=>{e.preventDefault(); handleSignUp();}}>
+        <div className={styles.inputControl}>
+          <label className={styles.inputLabel}>Email</label>
+          <input className={styles.inputField} placeholder="Email Address" value={email} onChange={(e)=>setEmail(e.target.value)} />
+        </div>
+        <div className={styles.inputControl}>
+          <label className={styles.inputLabel}>Password</label>
+          <input className={styles.inputField} type="password" placeholder="Password" value={password} onChange={(e)=>setPassword(e.target.value)} />
+        </div>
+        <div className={styles.inputControl}>
+          <label className={styles.inputLabel}>Username</label>
+          <input className={styles.inputField} placeholder="Nickname" value={username} onChange={(e)=>setUserName(e.target.value)} />
+        </div>
+        <button type="submit" className={styles.inputSubmit}>회원가입</button>
+      </form>
+    </div>
+  </div>
+</div>
   </>)
 }
 export default SignUpForm

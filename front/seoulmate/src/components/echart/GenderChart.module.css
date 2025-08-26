@@ -1,0 +1,46 @@
+.container {
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px 0;
+}
+
+/* 상단 헤더 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+.title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0;
+}
+.caption { font-size: 12px; color: #6b7280; }
+
+/* 차트 영역: 높이는 인라인 style로 제어(프리셋) */
+.chart { width: 100%; }
+
+/* 인사이트 */
+.insight {
+  margin-top: 10px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+/* 강조 색상 */
+.male   { color: #5c6bc0; font-weight: 700; }
+.female { color: #EC7B76; font-weight: 700; }
+
+/* 필요 시 미니 카드 여백 타이트 */
+.container[data-size="mini"] { padding: 12px; }

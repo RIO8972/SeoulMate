@@ -1,6 +1,7 @@
 const seoulDistrict = [
   {
     id: "Gangnam-gu",
+    keyWord: "서울시 강남구",
     path: [
       [
         [127.068867296268, 37.5103060950075],
@@ -1059,6 +1060,7 @@ const seoulDistrict = [
   },
   {
     id: "Gangdong-gu",
+    keyWord: "서울시 강동구",
     path: [
       [
         [127.179319226791, 37.5683122559763],
@@ -2088,6 +2090,7 @@ const seoulDistrict = [
   },
   {
     id: "Gangbuk-gu",
+    keyWord: "서울시 강북구",
     path: [
       [
         [127.004526454336, 37.6850889120412],
@@ -3380,6 +3383,7 @@ const seoulDistrict = [
   },
   {
     id: "Gangseo-gu",
+    keyWord: "서울시 강서구",
     path: [
       [
         [126.809364608982, 37.600396173827],
@@ -5932,6 +5936,7 @@ const seoulDistrict = [
   },
   {
     id: "Gwanak-gu",
+    keyWord: "서울시 관악구",
     path: [
       [
         [126.927913460366, 37.4950780974432],
@@ -7316,6 +7321,7 @@ const seoulDistrict = [
   },
   {
     id: "Gwangjin-gu",
+    keyWord: "서울시 광진구",
     path: [
       [
         [127.10170210535, 37.5724693564337],
@@ -7851,6 +7857,7 @@ const seoulDistrict = [
   },
   {
     id: "Guro-gu",
+    keyWord: "서울시 구로구",
     path: [
       [
         [126.879357405062, 37.5179255847224],
@@ -10441,6 +10448,7 @@ const seoulDistrict = [
   },
   {
     id: "Geumcheon-gu",
+    keyWord: "서울시 금천구",
     path: [
       [
         [126.881479125601, 37.4854897418497],
@@ -11795,6 +11803,7 @@ const seoulDistrict = [
   },
   {
     id: "Nowon-gu",
+    keyWord: "서울시 노원구",
     path: [
       [
         [
@@ -13150,6 +13159,7 @@ const seoulDistrict = [
   },
   {
     id: "Dobong-gu",
+    keyWord: "서울시 도봉구",
     path: [
       [
         [127.02164765458, 37.7000002971522],
@@ -14230,6 +14240,7 @@ const seoulDistrict = [
   },
   {
     id: "Dongdaemun-gu",
+    keyWord: "서울시 동대문구",
     path: [
       [
         [127.071111042312, 37.6070618550431],
@@ -15848,6 +15859,7 @@ const seoulDistrict = [
   },
   {
     id: "Dongjak-gu",
+    keyWord: "서울시 동작구",
     path: [
       [
         [126.954703729725, 37.5160649774628],
@@ -17009,6 +17021,7 @@ const seoulDistrict = [
   },
   {
     id: "Mapo-gu",
+    keyWord: "서울시 마포구",
     path: [
       [
         [126.888886650653, 37.5846498534653],
@@ -18416,6 +18429,7 @@ const seoulDistrict = [
   },
   {
     id: "Seodaemun-gu",
+    keyWord: "서울시 서대문구",
     path: [
       [
         [126.953294404035, 37.5985853536199],
@@ -19620,6 +19634,7 @@ const seoulDistrict = [
   },
   {
     id: "Seocho-gu",
+    keyWord: "서울시 서초구",
     path: [
       [
         [127.021326343212, 37.5111015604499],
@@ -21408,6 +21423,7 @@ const seoulDistrict = [
   },
   {
     id: "Seongdong-gu",
+    keyWord: "서울시 성동구",
     path: [
       [
         [127.043529078435, 37.5722896775591],
@@ -22570,6 +22586,7 @@ const seoulDistrict = [
   },
   {
     id: "Seongbuk-gu",
+    keyWord: "서울시 성북구",
     path: [
       [
         [126.985460280192, 37.635934866059],
@@ -24753,6 +24770,7 @@ const seoulDistrict = [
   },
   {
     id: "Songpa-gu",
+    keyWord: "서울시 송파구",
     path: [
       [
         [127.115524485037, 37.5422538510984],
@@ -26161,6 +26179,7 @@ const seoulDistrict = [
   },
   {
     id: "Yangcheon-gu",
+    keyWord: "서울시 양천구",
     path: [
       [
         [126.87404939603, 37.5469362539136],
@@ -27764,6 +27783,7 @@ const seoulDistrict = [
   },
   {
     id: "Yeongdeungpo-gu",
+    keyWord: "서울시 영등포구",
     path: [
       [
         [126.885914722857, 37.5535383987743],
@@ -29109,6 +29129,7 @@ const seoulDistrict = [
   },
   {
     id: "Yongsan-gu",
+    keyWord: "서울시 용산구",
     path: [
       [
         [126.972495217603, 37.5546046844838],
@@ -30432,6 +30453,7 @@ const seoulDistrict = [
   },
   {
     id: "Eunpyeong-gu",
+    keyWord: "서울시 은평구",
     path: [
       [
         [126.951375744111, 37.6549495538625],
@@ -31769,6 +31791,7 @@ const seoulDistrict = [
   },
   {
     id: "Jongno-gu",
+    keyWord: "서울시 종로구",
     path: [
       [
         [126.975076589869, 37.6312325927945],
@@ -33366,6 +33389,7 @@ const seoulDistrict = [
   },
   {
     id: "Jung-gu",
+    keyWord: "서울시 중구",
     path: [
       [
         [127.023459062853, 37.5697289023307],
@@ -34730,6 +34754,7 @@ const seoulDistrict = [
   },
   {
     id: "Jungnang-gu",
+    keyWord: "서울시 중랑구",
     path: [
       [
         [127.111306391633, 37.6206912510967],

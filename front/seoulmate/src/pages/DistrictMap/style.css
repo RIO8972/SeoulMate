@@ -70,3 +70,37 @@
   color: #666;
   margin-bottom: 12px;
 }
+
+/* SidePanel.module.css (또는 style.css) */
+.chartWrapper {
+  margin: 0px 0;  /* 위아래 16px 간격 */
+}
+
+/* ────────────────────────────────
+   공용 팝업 디자인 (도로/주차 공통)
+   ──────────────────────────────── */
+.mapPopup{
+  position: relative;
+  background:#fff;
+  border:1px solid #d1d5db;          /* slate-300 */
+  border-radius:10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18);
+  padding:12px 14px;
+  min-width:220px;
+  max-width:280px;
+  font-size:12px;
+  line-height:1.45;
+}
+.mapPopup__close{
+  position:absolute; top:6px; right:6px;
+  background:transparent; border:none;
+  font-size:16px; color:#6b7280; cursor:pointer;
+}
+.mapPopup__title{
+  display:block; margin:0 18px 8px 0;
+  font-weight:700; font-size:13px; color:#111827;
+}
+.mapPopup__content{ display:flex; flex-direction:column; gap:6px; }
+.mapPopup__row{ display:flex; justify-content:space-between; gap:8px; }
+.mapPopup__label{ color:#6b7280; }
+.mapPopup__value{ color:#111827; font-weight:700; text-align:right; }

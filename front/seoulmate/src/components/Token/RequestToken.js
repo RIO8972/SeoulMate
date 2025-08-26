@@ -1,35 +1,23 @@
-import React from'react';
-import axios from 'axios';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-
+import React, { useEffect } from "react";
+import useRefreshToken from "../../hooks/useRefreshToken"; // 경로는 프로젝트에 맞게 조정
 
 const RequestToken = () => {
-useEffect(() => {
-  axios.post(
-    'https://seoul-mate.co.kr/auth/token/refresh',
-    {},                     // 바디가 필요 없으면 빈 객체
-    { 
-      withCredentials: true // 쿠키 포함
-    }
-  )
-  .then((res) => {
-     const token = res.data.accessToken;
-      console.log('at>>', token)
-      localStorage.setItem('accessToken', token); // at 갱신
-  })
-  .catch(err => {
-  if (err.response) {
-    console.log('status:', err.response.status);           // 401
-    console.log('response data:', err.response.data);      // 서버가 보낸 에러 메시지 객체
-    
-  } else {
-    console.error('network or other error', err); 
-  }
-});
-}, []);
+  const { refresh, loading, error } = useRefreshToken();
 
-    return <div>재발급</div>
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = await refresh();
+        console.log("at >>", token);
+      } catch (e) {
+        // 에러는 훅에서 상태로 노출됨
+      }
+    })();
+  }, [refresh]);
+
+  if (loading) return <div>재발급 중…</div>;
+  if (error)   return <div>재발급 실패</div>;
+  return <div>재발급 완료</div>;
 };
 
 export default RequestToken;

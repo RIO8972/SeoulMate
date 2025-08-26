@@ -25,3 +25,12 @@
   align-items: center;
   color: #333;
 }
+
+
+/* 카드 4개를 한 줄에 고정 배치 */
+.review-card-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: 100%;
+}

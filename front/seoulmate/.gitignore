@@ -22,5 +22,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Spring/Gradle 빌드 산출물 (이미 포함되어 있지만 유지)
+**/build/
+**/.gradle/
+**/out/
 
 .env

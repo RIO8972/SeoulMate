@@ -310,3 +310,32 @@
     min-height: 420px;
   }
 }
+
+/*취소버튼<일단 넣음>*/
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.editBtn {
+  padding: 8px 12px;
+  background: #2563eb;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.deleteBtn {
+  padding: 8px 12px;
+  background: #ef4444;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.deleteBtn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

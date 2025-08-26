@@ -1,9 +1,11 @@
+// src/pages/CourseEditPage.jsx
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState, useMemo } from "react";
+// import axios from "axios";
 import CourseForm from "./CourseForm";
+import api from "../api/api"; // ✅ pages 기준 한 단계 위
 
-// 문자열/날짜를 Date로 변환 (react-datepicker 호환)
+// 문자열/날짜 -> Date (react-datepicker 호환)
 const toDate = (v) => {
   if (!v) return null;
   if (v instanceof Date) return v;
@@ -12,14 +14,12 @@ const toDate = (v) => {
   return isNaN(+d) ? null : d;
 };
 
-// ✅ 장소 객체 표준화 (항상 placeId 보장)
+// 장소 표준화 (폼에서는 number로 보유, 서버 전송 시 문자열로 변환)
 const normPlace = (p, idx = 0) => {
   const pid =
     p.placeId ??
     p.id ??
-    (p.x && p.y
-      ? `${p.x}-${p.y}`
-      : `p-${idx}-${Math.random().toString(36).slice(2, 7)}`);
+    (p.x && p.y ? `${p.x}-${p.y}` : `p-${idx}-${Math.random().toString(36).slice(2, 7)}`);
 
   return {
     placeId: String(pid),
@@ -28,56 +28,50 @@ const normPlace = (p, idx = 0) => {
     lng: parseFloat(p.lng ?? p.x ?? 0) || 0,
     address: p.address ?? p.road_address_name ?? p.address_name ?? "",
     url: p.url ?? p.place_url ?? "",
-    category: p.category ?? p.category_group_name ?? "",
-    stay: p.stay ?? "",
   };
 };
 
-function toFormData(c) {
-  const base = Array.isArray(c.places)
-    ? c.places
-    : (c.steps ?? []).map((s) => ({
-        id: s.id,
-        name: s.name,
-        category: s.category,
-        stay: s.stay,
-      }));
-
-  // ✅ 깊은 복사 + 표준화 (places / selectedPlaces 둘 다 독립 배열)
+// 서버 응답 -> CourseForm 초기값
+const toFormData = (c) => {
+  const base = Array.isArray(c.places) ? c.places : Array.isArray(c.steps) ? c.steps : [];
   const places = base.map(normPlace);
-  const selectedPlaces = (
-    Array.isArray(c.selectedPlaces) ? c.selectedPlaces : base
-  ).map(normPlace);
+  // ★ 폼은 selectedPlaces만 기준으로 동작 → 없으면 places로 채움
+  const selectedPlaces = Array.isArray(c.selectedPlaces)
+    ? c.selectedPlaces.map(normPlace)
+    : places;
 
   return {
     title: c.title ?? "",
     datetime: toDate(c.datetime ?? c.date),
-    places,
-    selectedPlaces,
+    places,          // (참고/미리보기용)
+    selectedPlaces,  // ★ 단일 소스
   };
-}
+};
 
 export default function CourseEditPage() {
   const { courseId } = useParams();
   const nav = useNavigate();
   const { state } = useLocation();
+
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [submitting, setSubmitting] = useState(false); // 중복 전송 방지
 
+  // 1) 상세에서 넘어온 state 사용, 2) 없으면 서버 재조회
   useEffect(() => {
-    // 1) 상세에서 넘어온 데이터 우선
     if (state?.course) {
       setData(toFormData(state.course));
       setLoading(false);
       return;
     }
-    // 2) 새로고침/직접접속 시 API (연결 시 사용)
     (async () => {
       try {
-        const res = await axios.get(`/api/courses/${courseId}`);
-        setData(toFormData(res.data));
+        setLoading(true);
+        const { data: res } = await api.get(`/courses/${courseId}`);
+        setData(toFormData(res)); // { id, datetime, title, places: [...] }
       } catch (e) {
-        console.error(e);
+        console.error("[course edit] fetch error:", e);
+        alert("코스를 불러오는 중 오류가 발생했습니다.");
       } finally {
         setLoading(false);
       }
@@ -85,12 +79,34 @@ export default function CourseEditPage() {
   }, [courseId, state?.course]);
 
   const handleUpdate = async (payload) => {
-    // 백엔드 붙이면 사용
-    // await axios.put(`/api/courses/${courseId}`, {
-    //   ...payload,
-    //   datetime: payload.datetime ? payload.datetime.toISOString() : null,
-    // });
-    nav(`/courses/${courseId}`);
+    if (submitting) return;          // 더블클릭/중복 호출 차단
+    setSubmitting(true);
+    try {
+      // ★ 항상 selectedPlaces만 전송
+      const list = payload.selectedPlaces || [];
+      const body = {
+        title: payload.title,
+        datetime: payload.datetime ? payload.datetime.toISOString() : null,
+        places: list.map((p, i) => ({
+          placeId: String(p.placeId ?? p.id ?? `p-${i}`),
+          name: p.name ?? "",
+          lat: String(p.lat ?? p.y ?? ""),   // 서버 DTO(String) 맞춤
+          lng: String(p.lng ?? p.x ?? ""),
+          address: p.address ?? p.road_address_name ?? p.address_name ?? "",
+          url: p.url ?? p.place_url ?? "",
+        })),
+      };
+
+      await api.put(`/courses/${courseId}`, body); // 인터셉터로 AT 자동 주입
+
+      alert("코스가 수정되었습니다.");
+      nav(`/courses/${courseId}`);
+    } catch (e) {
+      console.error("[course edit] update error:", e);
+      alert("코스를 저장하는 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return <div>불러오는 중…</div>;
@@ -102,6 +118,7 @@ export default function CourseEditPage() {
       initialData={data}
       onSubmit={handleUpdate}
       onCancel={() => nav(-1)}
+      submitting={submitting}
     />
   );
 }

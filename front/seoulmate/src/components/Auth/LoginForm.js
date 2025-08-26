@@ -1,36 +1,23 @@
 import React, { useState } from 'react';
-import styles from './LoginForm.module.css';      // ← CSS Module import
+import styles from './LoginForm.module.css';
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import qs from 'qs';
+import useLogin from "../../hooks/useLogin"; // 추가
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { login, loading } = useLogin();        //  훅 사용
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post(
-        'https://seoul-mate.co.kr/auth/login',
-        qs.stringify({ email, password }),
-        {
-          withCredentials: true,
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-        }
-      );
-      const data = response.data;
-      const { accessToken } = data;
-      if (!data || !accessToken) {
-        return alert(`로그인 실패: ${data.message || '권한이 없습니다.'}`);
-      }
-      localStorage.setItem('accessToken', accessToken);
+      await login(email, password);             //  저장은 훅이 처리
       navigate('/');
     } catch (err) {
-      if (err.response) {
-        alert(`로그인 에러: ${err.response.data.error || '알 수 없는 오류'}`);
+      if (err?.response) {
+        alert(`로그인 에러: ${err.response.data?.error || '알 수 없는 오류'}`);
       } else {
-        alert('서버 연결에 실패했습니다.');
+        alert(err?.message || '서버 연결에 실패했습니다.');
       }
     }
   };
@@ -41,57 +28,50 @@ const LoginForm = () => {
         <section className={styles.wrapper}>
           <div className={styles.heading}>
             <h1 className={styles['text-large']}>SeoulMate</h1>
-            <p className={styles['text-normal']}>
-              <span>
-                <a href="#" className={styles['text-links']}>
-                  {/* Create an account */}
-                </a>
-              </span>
-            </p>
+            <p className={styles['text-normal']}><span><a href="#" className={styles['text-links']}></a></span></p>
           </div>
 
-          <form name="signin" className={styles.form}>
+          <form name="signin" className={styles.form} onSubmit={e => e.preventDefault()}>
             <div className={styles['input-control']}>
-              <label htmlFor="email" className={styles['input-label']} hidden>
-                Email Address
-              </label>
+              <label htmlFor="email" className={styles['input-label']} hidden>Email Address</label>
               <input
                 type="email"
                 id="email"
                 className={styles['input-field']}
                 placeholder="Email Address"
+                value={email}
                 onChange={e => setEmail(e.target.value)}
+                autoComplete="email"
               />
             </div>
 
             <div className={styles['input-control']}>
-              <label htmlFor="password" className={styles['input-label']} hidden>
-                Password
-              </label>
+              <label htmlFor="password" className={styles['input-label']} hidden>Password</label>
               <input
                 type="password"
                 id="password"
                 className={styles['input-field']}
                 placeholder="Password"
+                value={password}
                 onChange={e => setPassword(e.target.value)}
+                autoComplete="current-password"
               />
             </div>
 
             <div className={styles['input-control']}>
-              <a href="#" className={styles['text-links']}>
-                Create an account
-              </a>
+              <a href="#" className={styles['text-links']}>Create an account</a>
               <button
                 type="button"
                 className={styles['input-submit']}
                 onClick={handleLogin}
-                disabled={!email || !password}
+                disabled={!email || !password || loading}
               >
-                로그인
+                {loading ? '로그인 중…' : '로그인'}
               </button>
             </div>
           </form>
 
+          {/* 소셜 로그인 영역은 기존 그대로 */}
           <div className={styles.striped}>
             <span className={styles['striped-line']} />
             <span className={styles['striped-text']}>Or</span>
@@ -100,30 +80,18 @@ const LoginForm = () => {
 
           <div className={styles.method}>
             <div className={styles['method-control']}>
-              <a
-                href="https://seoul-mate.co.kr/auth/oauth2/authorization/google"
-                className={styles['method-action']}
-              >
-                <i className="ion ion-logo-google" />
-                <span>Sign in with Google</span>
+              <a href="https://seoul-mate.co.kr/auth/oauth2/authorization/google" className={styles['method-action']}>
+                <i className="ion ion-logo-google" /><span>Sign in with Google</span>
               </a>
             </div>
             <div className={styles['method-control']}>
-              <a
-                href="https://seoul-mate.co.kr/auth/oauth2/authorization/naver"
-                className={styles['method-action']}
-              >
-                <i className="ion ion-logo-facebook" />
-                <span>Sign in with Naver</span>
+              <a href="https://seoul-mate.co.kr/auth/oauth2/authorization/naver" className={styles['method-action']}>
+                <i className="ion ion-logo-facebook" /><span>Sign in with Naver</span>
               </a>
             </div>
             <div className={styles['method-control']}>
-              <a
-                href="https://seoul-mate.co.kr/auth/oauth2/authorization/kakao"
-                className={styles['method-action']}
-              >
-                <i className="ion ion-logo-apple" />
-                <span>Sign in with Kakao</span>
+              <a href="https://seoul-mate.co.kr/auth/oauth2/authorization/kakao" className={styles['method-action']}>
+                <i className="ion ion-logo-apple" /><span>Sign in with Kakao</span>
               </a>
             </div>
           </div>

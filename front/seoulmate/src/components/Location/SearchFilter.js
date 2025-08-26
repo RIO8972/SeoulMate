@@ -1,7 +1,8 @@
+// src/components/SearchFilter.jsx (또는 SearchFilter.module.jsx)
 import styles from "./SearchFilter.module.css";
 
 function SearchFilter({ keyword, onKeywordChange, selectedTag, onTagChange }) {
-  const tags = ["전체", "맛집", "카페", "냉면"];
+  const tags = ["전체", "맛집", "카페", "명소", "장바구니"]; // ← 추가
 
   return (
     <div>
@@ -24,6 +25,7 @@ function SearchFilter({ keyword, onKeywordChange, selectedTag, onTagChange }) {
           </button>
         ))}
       </div>
+
       <input
         type="text"
         placeholder="장소명을 입력하세요"
@@ -39,5 +41,4 @@ function SearchFilter({ keyword, onKeywordChange, selectedTag, onTagChange }) {
     </div>
   );
 }
-
 export default SearchFilter;

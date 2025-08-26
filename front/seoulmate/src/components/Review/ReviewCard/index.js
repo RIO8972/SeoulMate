@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faCreditCard } from "@fortawesome/free-regular-svg-icons";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
 
-export default function ReviewCard({ review, to, state }) {
+export default function ReviewCard({ review, to}) { //state가 마이페이 누르면 수정
   const card = (
     <div className="review-card-inner">
       <div className="image-wrapper">
@@ -42,7 +42,6 @@ export default function ReviewCard({ review, to, state }) {
   return (
     <Link
       to={to ?? `/reviews/${review.id}`}
-      state={state}
       className="review-card"
     >
       {card}
