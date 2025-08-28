@@ -76,7 +76,14 @@ export default function PlaceSelector({
 
   // 🔸 prefill 1회 적용 (선택목록에 넣기)
   useEffect(() => {
-    if (!map || !defaultPlace || !defaultPlace.lat || !defaultPlace.lng || prefillApplied) return;
+    if (
+      !map ||
+      !defaultPlace ||
+      !defaultPlace.lat ||
+      !defaultPlace.lng ||
+      prefillApplied
+    )
+      return;
 
     const lat = Number(defaultPlace.lat);
     const lng = Number(defaultPlace.lng);
@@ -91,8 +98,12 @@ export default function PlaceSelector({
 
     // 선택목록 중복 체크 후 추가
     setData((prev) => {
-      const prevSel = Array.isArray(prev.selectedPlaces) ? prev.selectedPlaces : [];
-      const id = String(defaultPlace.id || `${defaultPlace.lng}-${defaultPlace.lat}`);
+      const prevSel = Array.isArray(prev.selectedPlaces)
+        ? prev.selectedPlaces
+        : [];
+      const id = String(
+        defaultPlace.id || `${defaultPlace.lng}-${defaultPlace.lat}`
+      );
 
       const exists = prevSel.some(
         (p) =>
@@ -143,8 +154,8 @@ export default function PlaceSelector({
         // 카카오 검색 결과와 동일한 shape로 매핑
         const mapped = list.map((p, i) => ({
           id: String(p.placeId ?? p.id ?? i),
-          x: String(p.lng),                    // kakao: x = lng
-          y: String(p.lat),                    // kakao: y = lat
+          x: String(p.lng), // kakao: x = lng
+          y: String(p.lat), // kakao: y = lat
           place_name: p.name,
           road_address_name: p.address,
           address_name: p.address,
@@ -181,7 +192,10 @@ export default function PlaceSelector({
 
     const nextPreview = list.map((place) => {
       const mk = new kakao.maps.Marker({
-        position: new kakao.maps.LatLng(parseFloat(place.y), parseFloat(place.x)),
+        position: new kakao.maps.LatLng(
+          parseFloat(place.y),
+          parseFloat(place.x)
+        ),
         map,
         title: place.place_name,
       });
@@ -190,7 +204,9 @@ export default function PlaceSelector({
     setPreviewMarkers(nextPreview);
 
     const first = displayPlaces[0];
-    map.setCenter(new kakao.maps.LatLng(parseFloat(first.y), parseFloat(first.x)));
+    map.setCenter(
+      new kakao.maps.LatLng(parseFloat(first.y), parseFloat(first.x))
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayPlaces, map, isTaggedSearch, selectedTag]);
 
@@ -233,9 +249,13 @@ export default function PlaceSelector({
       ),
     }));
 
-    const markerToRemove = markers.find((m) => (m.placeId ?? m.id) === idOrPlaceId);
+    const markerToRemove = markers.find(
+      (m) => (m.placeId ?? m.id) === idOrPlaceId
+    );
     if (markerToRemove) markerToRemove.setMap(null);
-    setMarkers((prev) => prev.filter((m) => (m.placeId ?? m.id) !== idOrPlaceId));
+    setMarkers((prev) =>
+      prev.filter((m) => (m.placeId ?? m.id) !== idOrPlaceId)
+    );
   };
 
   // 전체 제거
@@ -256,7 +276,9 @@ export default function PlaceSelector({
       <div className={styles.leftPanel}>
         <div className={styles.searchPanel}>
           <h2 className="review-title">장소 추가</h2>
-          <p className="review-subtitle">데이트 코스에 포함된 장소를 선택해주세요</p>
+          <p className="review-subtitle">
+            데이트 코스에 포함된 장소를 선택해주세요
+          </p>
 
           <SearchFilter
             keyword={keyword}
@@ -279,7 +301,13 @@ export default function PlaceSelector({
                     lng: parseFloat(place.x),
                     address: place.road_address_name || place.address_name,
                     url: place.place_url,
+                    category:
+                      place.category_group_name ||
+                      place.category_name ||
+                      place.category ||
+                      "",
                   }}
+                  mode="select" // 명시해도 되고(기본값이 select)
                   onAdd={handleAddPlace}
                 />
               );

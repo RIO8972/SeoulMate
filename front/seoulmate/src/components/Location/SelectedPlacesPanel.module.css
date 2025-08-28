@@ -76,3 +76,17 @@
 .removeBtn:hover {
   color: #ef4444;
 }
+
+/* 드래그 핸들 표시 */
+.handle {
+  cursor: grab;
+}
+.handle:active {
+  cursor: grabbing;
+}
+
+/* 드래그 중 스타일 */
+.dragging {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  transform: rotate(0.1deg); /* reflow 트릭으로 부드럽게 */
+}

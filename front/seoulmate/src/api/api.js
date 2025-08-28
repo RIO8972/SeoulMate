@@ -3,11 +3,10 @@ import axios from "axios";
 
 // 이걸로 교체
 const LOCAL_BASE = "http://localhost:8080";
-const PROD_BASE  = "https://seoul-mate.co.kr/contentapi";
-
+const PROD_BASE = "https://seoul-mate.co.kr/contentapi";
 
 const api = axios.create({
-  baseURL: LOCAL_BASE,
+  baseURL: PROD_BASE,
   withCredentials: false, // content API는 쿠키 안 쓰면 false
 });
 

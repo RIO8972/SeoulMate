@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import ReviewLeftContent from "../../components/Review/ReviewLeftContent";
 import ReviewSidebar from "../../components/Review/ReviewSidebar";
+import Header from "../../components/Header";
 import api from "../../api/api";
 
 export default function ReviewDetailPage() {
@@ -28,10 +29,8 @@ export default function ReviewDetailPage() {
         setLoading(true);
         setErr("");
         const token = localStorage.getItem("accessToken");
-      
-        const { data } = await api.get(
-          `/reviews/${id}`
-        );
+
+        const { data } = await api.get(`/reviews/${id}`);
 
         setReview(data);
       } catch (e) {
@@ -59,7 +58,9 @@ export default function ReviewDetailPage() {
 
   const normalizeImages = (imgs) => {
     if (!Array.isArray(imgs)) return [];
-    return imgs.map((v) => (typeof v === "string" ? v : v?.imgUrl)).filter(Boolean);
+    return imgs
+      .map((v) => (typeof v === "string" ? v : v?.imgUrl))
+      .filter(Boolean);
   };
 
   // 표시용 안전 객체
@@ -95,6 +96,7 @@ export default function ReviewDetailPage() {
 
   return (
     <div className="review-detail-container">
+      <Header />
       <div className="review-left">
         <ReviewLeftContent review={safeReview} canEdit={canEdit} />
       </div>

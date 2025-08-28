@@ -1,64 +1,59 @@
 // src/components/Location/PlaceMapSelector.jsx
 import React, { useState, useEffect } from "react";
 import useMapSearchPlaces from "../../hooks/useMapSearchPlaces";
-import SelectedPlacesPanel from "./SelectedPlacesPanel";
 import PlaceCard from "./PlaceCard";
-import SearchMapFilter from "./SearchMapFilter"; // ✅ 변경
+import SearchMapFilter from "./SearchMapFilter";
 import styles from "./PlaceMapSelector.module.css";
 
-function PlaceMapSelector({ data, setData, regionKeyword, regionId, onPreviewPins }) {
+function PlaceMapSelector({
+  data,
+  setData,
+  regionKeyword,
+  regionId,
+  onPreviewPins,
+}) {
   const [keyword, setKeyword] = useState("");
   const [selectedTag, setSelectedTag] = useState("전체");
   const [page, setPage] = useState(1);
   const size = 15;
 
-  const selectedPlaces = data.places || [];
-  const isTaggedSearch = selectedTag && selectedTag !== "전체";
+  // ✅ 찜 상태 (이 화면 전용)
+  const [wishIds, setWishIds] = useState(new Set());
+  const toggleWishlist = (place, next) => {
+    const id = String(place.id);
+    setWishIds((prev) => {
+      const s = new Set(prev);
+      next ? s.add(id) : s.delete(id);
+      return s;
+    });
+    // TODO: 필요 시 서버 연동 (POST/DELETE /wishlist/:id)
+  };
 
-  // "강남구 카페 #디저트" 형태로 안전하게 결합 (검색창은 기존 API 사용)
-  const searchTerm = [regionKeyword?.trim(), keyword.trim(), isTaggedSearch ? selectedTag : null]
+  const isTaggedSearch = selectedTag && selectedTag !== "전체";
+  const searchTerm = [
+    regionKeyword?.trim(),
+    keyword.trim(),
+    isTaggedSearch ? selectedTag : null,
+  ]
     .filter(Boolean)
     .join(" ");
 
-  // 검색어 바뀌면 페이지 리셋
-  useEffect(() => { setPage(1); }, [searchTerm]);
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
 
-  const { places, hasMore, loading } = useMapSearchPlaces(searchTerm, page, size);
-
-  const handleAddPlace = (place) => {
-    const id = String(place.id || `${place.x}-${place.y}`);
-    if (selectedPlaces.some((p) => (p.placeId ?? p.id) === id)) return;
-
-    const newPlace = {
-      placeId: id,
-      name: place.place_name || place.name || "",
-      lat: parseFloat(place.y || place.lat) || 0,
-      lng: parseFloat(place.x || place.lng) || 0,
-      address: place.road_address_name || place.address_name || "",
-      url: place.place_url || place.url || "",
-      category: place.category_group_name || place.category || "",
-      stay: place.stay || "",
-    };
-
-    setData((prev) => ({ ...prev, places: [...(prev.places || []), newPlace] }));
-  };
-
-  const handleRemovePlace = (idOrPlaceId) => {
-    setData((prev) => ({
-      ...prev,
-      places: (prev.places || []).filter((p) => (p.placeId ?? p.id) !== idOrPlaceId),
-    }));
-  };
-
-  const handleRemoveAll = () => setData((prev) => ({ ...prev, places: [] }));
-  const handleReorder = (newList) => setData((prev) => ({ ...prev, places: newList }));
+  const { places, hasMore, loading } = useMapSearchPlaces(
+    searchTerm,
+    page,
+    size
+  );
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.leftPanel}>
         <div className={styles.searchPanel}>
           <h2 className="review-title">장소 검색</h2>
-          <p className="review-subtitle">데이트 코스에 포함된 장소를 선택해주세요</p>
+          <p className="review-subtitle">관심 있는 장소를 찜해 보세요</p>
 
           <SearchMapFilter
             keyword={keyword}
@@ -66,7 +61,7 @@ function PlaceMapSelector({ data, setData, regionKeyword, regionId, onPreviewPin
             selectedTag={selectedTag}
             onTagChange={setSelectedTag}
             regionId={regionId}
-            onPreviewPins={onPreviewPins}     // ✅ 태그 → 미리보기 마커 목록
+            onPreviewPins={onPreviewPins}
           />
 
           <div className={styles.resultList}>
@@ -83,8 +78,16 @@ function PlaceMapSelector({ data, setData, regionKeyword, regionId, onPreviewPin
                     lng: parseFloat(place.x),
                     address: place.road_address_name || place.address_name,
                     url: place.place_url,
+                    category:
+                      place.category_group_name ||
+                      place.category_name ||
+                      place.category ||
+                      "",
                   }}
-                  onAdd={() => handleAddPlace(place)}
+                  /* ⬇️ 이 화면에서는 찜 버튼만 보이게 */
+                  mode="browse"
+                  isWishlisted={wishIds.has(id)}
+                  onToggleWishlist={toggleWishlist}
                 />
               );
             })}
@@ -95,21 +98,14 @@ function PlaceMapSelector({ data, setData, regionKeyword, regionId, onPreviewPin
               onClick={() => setPage((p) => p + 1)}
               disabled={!hasMore || loading}
             >
-              {loading ? "불러오는 중..." : hasMore ? "장소 더보기" : "더 불러올 결과 없음"}
+              {loading
+                ? "불러오는 중..."
+                : hasMore
+                ? "장소 더보기"
+                : "더 불러올 결과 없음"}
             </button>
           </div>
         </div>
-
-        {selectedPlaces.length > 0 && (
-          <div className={styles.selectedPanel}>
-            <SelectedPlacesPanel
-              selectedPlaces={selectedPlaces}
-              onRemoveAll={handleRemoveAll}
-              onRemove={handleRemovePlace}
-              onReorder={handleReorder}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

@@ -57,6 +57,7 @@
 .bannerActions {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 /* CTA 버튼들 */
