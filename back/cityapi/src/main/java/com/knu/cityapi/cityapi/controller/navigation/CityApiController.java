@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
@@ -29,6 +30,15 @@ public class CityApiController {
                                @RequestParam(required = false, defaultValue = "15") int size,
                                @RequestParam(required = false, defaultValue = "1") int page) {
         return kakaoSearchService.searchKeyword(query,size,page);
+    }
+
+    @PostMapping("/search/places")
+    public Mono<ResponseEntity<?>> searchByRects(
+            @RequestBody java.util.List<String> rectList,
+            @RequestParam String query
+    ) {
+        return kakaoSearchService.searchPlace(query, rectList)
+                .map(ResponseEntity::ok);
     }
 
     @GetMapping(value = "/search/seoul", produces = MediaType.APPLICATION_JSON_VALUE)
