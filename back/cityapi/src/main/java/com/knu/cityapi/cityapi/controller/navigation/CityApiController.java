@@ -41,6 +41,20 @@ public class CityApiController {
                 .map(ResponseEntity::ok);
     }
 
+    @GetMapping("/nearest")
+    public Mono<ResponseEntity<JsonNode>> findNearest(
+            @RequestParam double x,
+            @RequestParam double y,
+            @RequestParam(name = "catRadius", defaultValue = "100") int catRadius,
+            @RequestParam(name = "kwRadius",  defaultValue = "1000") int kwRadius
+    ) {
+        log.info("[/places/nearest] x={}, y={}, catRadius={}, kwRadius={}", x, y, catRadius, kwRadius);
+
+        return kakaoSearchService.findNearestPlaceWithFallback(x, y, catRadius, kwRadius)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.noContent().build());
+    }
+
     @GetMapping(value = "/search/seoul", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<JsonNode> seoul(@RequestParam String region) {
         //log.info("seoulController");
