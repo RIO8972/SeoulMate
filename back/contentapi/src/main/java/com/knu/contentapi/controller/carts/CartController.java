@@ -95,9 +95,9 @@ public class CartController {
     }
 
     /**행사 이름으로 삭제*/
-    @DeleteMapping("/name/{name}")
-    public ResponseEntity<?> deleteByName(@AuthenticationPrincipal User user,
-                                          @PathVariable String name) {
+    @DeleteMapping("/name")
+    public ResponseEntity<Void> deleteByNameQuery(@AuthenticationPrincipal User user,
+                                                  @RequestParam String name) {
         cartService.deleteCartByName(name, user);
         return ResponseEntity.noContent().build();
     }
