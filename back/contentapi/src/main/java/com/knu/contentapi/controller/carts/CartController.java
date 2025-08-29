@@ -95,9 +95,12 @@ public class CartController {
     }
 
     /**행사 이름으로 삭제*/
-    @DeleteMapping("/name")
-    public ResponseEntity<Void> deleteByNameQuery(@AuthenticationPrincipal User user,
-                                                  @RequestParam String name) {
+    @DeleteMapping(value = "/name", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> deleteByNameBody(
+            @AuthenticationPrincipal User user,
+            @RequestBody Map<String, String> body
+    ) {
+        String name = body.getOrDefault("name", "").trim();
         cartService.deleteCartByName(name, user);
         return ResponseEntity.noContent().build();
     }
