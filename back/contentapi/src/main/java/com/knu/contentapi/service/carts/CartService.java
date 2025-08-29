@@ -63,4 +63,8 @@ public class CartService {
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "course not found: " + id));
         cartRepository.deleteById(id);
     }
+
+    public void deleteCartByPlaceId(String placeId, User user) {
+        cartRepository.deleteByUser_IdAndPlaceId(user.getId(),placeId);
+    }
 }
