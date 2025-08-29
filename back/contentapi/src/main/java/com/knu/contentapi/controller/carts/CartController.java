@@ -69,7 +69,7 @@ public class CartController {
     }
 
     /**장바구니 placeId로 항목삭제*/
-    @DeleteMapping("place/{id}")
+    @DeleteMapping("/place/{id}")
     public ResponseEntity<?> deleteCartByPlaceId (
             @AuthenticationPrincipal User user,
             @PathVariable("id") String placeId) {
