@@ -68,6 +68,16 @@ public class CartController {
         return ResponseEntity.noContent().build();
     }
 
+    /**장바구니 placeId로 항목삭제*/
+    @DeleteMapping("place/{id}")
+    public ResponseEntity<?> deleteCartByPlaceId (
+            @AuthenticationPrincipal User user,
+            @PathVariable("id") String placeId) {
+
+        cartService.deleteCartByPlaceId(placeId, user);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/check")
     public Map<String, Boolean> check(@AuthenticationPrincipal User user,
                                       @RequestBody List<String> ids) {
