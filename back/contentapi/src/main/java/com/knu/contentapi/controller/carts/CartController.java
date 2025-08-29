@@ -3,6 +3,7 @@ package com.knu.contentapi.controller.carts;
 
 import com.knu.contentapi.domain.carts.CartRepository;
 import com.knu.contentapi.domain.users.User;
+import com.knu.contentapi.dto.cart.CartResponseDto;
 import com.knu.contentapi.dto.course.CourseRequestDto;
 import com.knu.contentapi.dto.places.PlaceRequestDto;
 import com.knu.contentapi.dto.places.PlaceResponseDto;
@@ -31,7 +32,7 @@ public class CartController {
 
     /**내 장바구니 목록*/
     @GetMapping("/mine")
-    public ResponseEntity<List<PlaceResponseDto>> getUserCarts(
+    public ResponseEntity<List<CartResponseDto>> getUserCarts(
             @AuthenticationPrincipal User user ) {
         return ResponseEntity.ok(cartService.getUserCarts(user));
     }
