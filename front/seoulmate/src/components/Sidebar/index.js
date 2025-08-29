@@ -16,9 +16,9 @@ function Sidebar({
   // 기본 메뉴 (기존 동작 유지)
   const defaultMenus = [
     { label: "검색", onClick: () => setActivePanel("search") },
-    { label: "교통", onClick: () => setActivePanel("traffic") },
+    { label: "주차", onClick: () => setActivePanel("parking") },
     { label: "날씨", onClick: () => setActivePanel("weather") },
-    { label: "저장", onClick: () => setActivePanel("saved") },
+    { label: "행사", onClick: () => setActivePanel("event") },
   ];
 
   const renderMenus = menus && menus.length ? menus : defaultMenus;

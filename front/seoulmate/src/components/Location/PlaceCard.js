@@ -1,6 +1,9 @@
 // src/components/Location/PlaceCard.jsx
 import React from "react";
 import styles from "./PlaceCard.module.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHeart as solidHeart } from "@fortawesome/free-solid-svg-icons";
+import { faHeart as regularHeart } from "@fortawesome/free-regular-svg-icons";
 
 const simplifyCategory = (raw = "") => {
   const s = String(raw).trim();
@@ -60,7 +63,10 @@ function PlaceCard({
               title={isWishlisted ? "관심 해제" : "관심 등록"}
               onClick={() => onToggleWishlist?.(place, !isWishlisted)}
             >
-              ♥
+              <FontAwesomeIcon
+                icon={isWishlisted ? solidHeart : regularHeart}
+                style={{ color: isWishlisted ? "#e74c3c" : "#999" }}
+              />
             </button>
           )}
         </div>

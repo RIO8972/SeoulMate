@@ -96,6 +96,7 @@
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
+  margin-right: 8px;
 }
 .wishButton:hover {
   transform: scale(1.05);

@@ -49,6 +49,14 @@
   transform: scale(1.1);
 }
 
+.header-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
 /* 햄버거 버튼 */
 .menu-btn {
   background: none;

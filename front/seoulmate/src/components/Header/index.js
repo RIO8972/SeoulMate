@@ -69,7 +69,7 @@ const Header = () => {
             <img
               src={avatarUrl}
               alt="프로필"
-              className="header-icon"
+              className="header-avatar"
               onError={handleAvatarError}
             />
           </Link>

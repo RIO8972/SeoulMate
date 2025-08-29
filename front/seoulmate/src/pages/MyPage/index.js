@@ -6,6 +6,9 @@ import Header from "../../components/Header";
 import Account from "../../images/account.png";
 import ReviewCard from "../../components/Review/ReviewCard";
 import axios from "axios";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHeart as solidHeart } from "@fortawesome/free-solid-svg-icons";
+import { faHeart as regularHeart } from "@fortawesome/free-regular-svg-icons";
 import api from "../../api/api";
 
 /* 날짜 포맷터: 2025.08.02 형태로 변환 */
@@ -37,11 +40,14 @@ const toReviewCardData = (r) => ({
   image:
     r.image ||
     r.thumbnail ||
-    (Array.isArray(r.images) ? r.images[0]?.imgUrl || r.images[0]?.url : undefined),
+    (Array.isArray(r.images)
+      ? r.images[0]?.imgUrl || r.images[0]?.url
+      : undefined),
   visitedDate: fmtYmd(r.datetime || r.createdAt || r.created_at),
   cost: r.cost ?? 0,
   like: r.like_count ?? r.likeCount ?? r.like ?? 0,
-  keyword: r.keyword ?? (Array.isArray(r.categories) ? r.categories.join(" · ") : ""),
+  keyword:
+    r.keyword ?? (Array.isArray(r.categories) ? r.categories.join(" · ") : ""),
 });
 
 /* 카드 매퍼(코스) */
@@ -201,8 +207,12 @@ export default function MyPage() {
   const myReviews = useMemo(
     () =>
       [...fetchedReviews].sort((a, b) => {
-        const da = new Date(a.createdAt || a.created_at || a.datetime || 0).getTime();
-        const db = new Date(b.createdAt || b.created_at || b.datetime || 0).getTime();
+        const da = new Date(
+          a.createdAt || a.created_at || a.datetime || 0
+        ).getTime();
+        const db = new Date(
+          b.createdAt || b.created_at || b.datetime || 0
+        ).getTime();
         return db - da;
       }),
     [fetchedReviews]
@@ -223,7 +233,9 @@ export default function MyPage() {
   const favoritesSorted = useMemo(() => {
     const list = [...favorites];
     if (favSort === "district") {
-      return list.sort((a, b) => (a.district || "").localeCompare(b.district || ""));
+      return list.sort((a, b) =>
+        (a.district || "").localeCompare(b.district || "")
+      );
     }
     // 저장순(초기 API 순서)
     return list.sort((a, b) => (a._savedIndex ?? 0) - (b._savedIndex ?? 0));
@@ -281,7 +293,7 @@ export default function MyPage() {
             >
               데이트 코스 생성
             </button>
-              <button
+            <button
               type="button"
               className={styles.createBtn}
               onClick={() => navigate("/review/new")}
@@ -295,32 +307,44 @@ export default function MyPage() {
       {/* 탭 */}
       <nav className={`${styles.row} ${styles.tabs}`}>
         <button
-          className={`${styles.tab} ${activeTab === "favorites" ? styles.tabActive : ""}`}
+          className={`${styles.tab} ${
+            activeTab === "favorites" ? styles.tabActive : ""
+          }`}
           onClick={() => setActiveTab("favorites")}
           type="button"
         >
-          관심있는 장소 <span className={styles.tabCount}>{counts.favorites}</span>
+          관심있는 장소{" "}
+          <span className={styles.tabCount}>{counts.favorites}</span>
         </button>
         <button
-          className={`${styles.tab} ${activeTab === "courses" ? styles.tabActive : ""}`}
+          className={`${styles.tab} ${
+            activeTab === "courses" ? styles.tabActive : ""
+          }`}
           onClick={() => setActiveTab("courses")}
           type="button"
         >
-          나의 데이트 코스 <span className={styles.tabCount}>{counts.courses}</span>
+          나의 데이트 코스{" "}
+          <span className={styles.tabCount}>{counts.courses}</span>
         </button>
         <button
-          className={`${styles.tab} ${activeTab === "myReviews" ? styles.tabActive : ""}`}
+          className={`${styles.tab} ${
+            activeTab === "myReviews" ? styles.tabActive : ""
+          }`}
           onClick={() => setActiveTab("myReviews")}
           type="button"
         >
-          내가 쓴 리뷰 <span className={styles.tabCount}>{counts.myReviews}</span>
+          내가 쓴 리뷰{" "}
+          <span className={styles.tabCount}>{counts.myReviews}</span>
         </button>
         <button
-          className={`${styles.tab} ${activeTab === "likedReviews" ? styles.tabActive : ""}`}
+          className={`${styles.tab} ${
+            activeTab === "likedReviews" ? styles.tabActive : ""
+          }`}
           onClick={() => setActiveTab("likedReviews")}
           type="button"
         >
-          좋아요 누른 리뷰 <span className={styles.tabCount}>{counts.likedReviews}</span>
+          좋아요 누른 리뷰{" "}
+          <span className={styles.tabCount}>{counts.likedReviews}</span>
         </button>
       </nav>
 
@@ -333,14 +357,18 @@ export default function MyPage() {
               <h2 className={styles.sectionTitle}>관심있는 장소 목록</h2>
               <div className={styles.sortGroup}>
                 <button
-                  className={favSort === "saved" ? styles.darkBtnXS : styles.grayBtn}
+                  className={
+                    favSort === "saved" ? styles.darkBtnXS : styles.grayBtn
+                  }
                   onClick={() => setFavSort("saved")}
                   type="button"
                 >
                   저장순
                 </button>
                 <button
-                  className={favSort === "district" ? styles.darkBtnXS : styles.grayBtn}
+                  className={
+                    favSort === "district" ? styles.darkBtnXS : styles.grayBtn
+                  }
                   onClick={() => setFavSort("district")}
                   type="button"
                 >
@@ -373,11 +401,16 @@ export default function MyPage() {
                       </button>
                       <button
                         type="button"
-                        className={styles.heartBtn}
+                        className={`${styles.heartBtn} ${
+                          p.liked ? styles.active : ""
+                        }`}
                         onClick={() => toggleLike(p.id)}
                         aria-label={p.liked ? "좋아요 취소" : "좋아요"}
                       >
-                        {p.liked ? "♥" : "♡"}
+                        <FontAwesomeIcon
+                          icon={p.liked ? solidHeart : regularHeart}
+                          style={{ color: p.liked ? "#e74c3c" : "#9CA3AF" }}
+                        />
                       </button>
                     </div>
                   </li>
@@ -411,7 +444,9 @@ export default function MyPage() {
                       <div className={styles.cardBody}>
                         <div className={styles.cardRegion}>{c.region}</div>
                         <div className={styles.cardTitle}>{c.title}</div>
-                        <div className={styles.cardMeta}>선택한 장소 {c.count}개</div>
+                        <div className={styles.cardMeta}>
+                          선택한 장소 {c.count}개
+                        </div>
                       </div>
                     </button>
                   </li>

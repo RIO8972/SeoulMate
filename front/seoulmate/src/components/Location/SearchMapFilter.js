@@ -1,36 +1,40 @@
-//import  categoryPlaces  from "../../data/categoryPlaces";
-
 function SearchMapFilter({
   keyword,
   onKeywordChange,
   selectedTag,
   onTagChange,
   regionId,
-  onPreviewPins, // ← 태그 클릭 시 지도에 미리보기 마커 전달
+  onPreviewPins,
 }) {
-  const tags = ["전체", "카페", "명소", "음식점"];
+  const tags = ["카페", "명소", "음식점"];
 
   return (
     <div>
       <div style={{ marginBottom: "12px" }}>
-        {tags.map((tag) => (
-          <button
-            key={tag}
-            style={{
-              marginRight: "8px",
-              padding: "6px 12px",
-              backgroundColor: selectedTag === tag ? "#4f46e5" : "#eee",
-              color: selectedTag === tag ? "#fff" : "#000",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
-            onClick={() => onTagChange(tag)}
-          >
-            {tag}
-          </button>
-        ))}
+        {tags.map((tag) => {
+          const active = selectedTag === tag;
+          return (
+            <button
+              key={tag}
+              style={{
+                marginRight: "8px",
+                padding: "6px 12px",
+                backgroundColor: active ? "#4f46e5" : "#eee",
+                color: active ? "#fff" : "#000",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
+              // 같은 태그를 다시 누르면 해제(null)
+              onClick={() => onTagChange(active ? null : tag)}
+              aria-pressed={active}
+            >
+              {tag}
+            </button>
+          );
+        })}
       </div>
+
       <input
         type="text"
         placeholder="장소명을 입력하세요"
