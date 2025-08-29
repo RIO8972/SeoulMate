@@ -3,6 +3,7 @@ package com.knu.contentapi.service.carts;
 import com.knu.contentapi.domain.carts.Cart;
 import com.knu.contentapi.domain.carts.CartRepository;
 import com.knu.contentapi.domain.users.User;
+import com.knu.contentapi.dto.cart.CartResponseDto;
 import com.knu.contentapi.dto.places.PlaceRequestDto;
 import com.knu.contentapi.dto.places.PlaceResponseDto;
 import jakarta.transaction.Transactional;
@@ -23,10 +24,11 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 public class CartService {
     final private  CartRepository cartRepository;
 
-    public List<PlaceResponseDto> getUserCarts(User user) {
+    public List<CartResponseDto> getUserCarts(User user) {
         List<Cart> carts = cartRepository.findAllByUser_Id(user.getId());
         return carts.stream()
-                .map(c -> PlaceResponseDto.builder()
+                .map(c -> CartResponseDto.builder()
+                        .id(c.getId())
                         .placeId(c.getPlaceId())
                         .name(c.getName())
                         // lat/lng 가 String 이면 파싱 (널/빈 대비)
