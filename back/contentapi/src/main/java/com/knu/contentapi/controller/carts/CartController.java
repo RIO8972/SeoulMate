@@ -1,6 +1,7 @@
 package com.knu.contentapi.controller.carts;
 
 
+import com.knu.contentapi.domain.carts.CartRepository;
 import com.knu.contentapi.domain.users.User;
 import com.knu.contentapi.dto.course.CourseRequestDto;
 import com.knu.contentapi.dto.places.PlaceRequestDto;
@@ -13,9 +14,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "http://localhost:3000") //나중에 배포시 삭제
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/carts")
@@ -23,6 +27,7 @@ import java.util.List;
 
 public class CartController {
     final private CartService cartService;
+    final private CartRepository cartRepository;
 
     /**내 장바구니 목록*/
     @GetMapping("/mine")
@@ -61,5 +66,13 @@ public class CartController {
     public ResponseEntity<?> deleteCart (@PathVariable  Long id) {
         cartService.deleteCart(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/check")
+    public Map<String, Boolean> check(@AuthenticationPrincipal User user,
+                                      @RequestBody List<String> ids) {
+        if (ids == null || ids.isEmpty()) return Map.of();
+        var inCart = new HashSet<>(cartRepository.findPlaceIdsInCart(user.getId(), ids));
+        return ids.stream().collect(Collectors.toMap(id -> id, inCart::contains));
     }
 }
