@@ -1,12 +1,14 @@
 package com.knu.contentapi.domain.review;
 
 import com.knu.contentapi.domain.carts.Cart;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,4 +37,16 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // 최신 4건
     List<Review> findTop4ByOrderByCreatedAtDesc();
+
+    @Query("""
+    select r from Review r
+    where (:cAt is null
+           or r.createdAt < :cAt
+           or (r.createdAt = :cAt and r.id < :cId))
+    order by r.createdAt desc, r.id desc
+    """)
+    List<Review> findLatestWithCursor(
+            @Param("cAt") LocalDateTime cursorCreatedAt,
+            @Param("cId") Long cursorId,
+            Pageable pageable);
 }
