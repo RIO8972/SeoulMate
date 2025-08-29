@@ -67,4 +67,9 @@ public class CartService {
     public void deleteCartByPlaceId(String placeId, User user) {
         cartRepository.deleteByUser_IdAndPlaceId(user.getId(),placeId);
     }
+
+    //행사 장소용
+    public void deleteCartByName(String name, User user) {
+        cartRepository.deleteByUser_IdAndName(user.getId(), name);
+    }
 }
