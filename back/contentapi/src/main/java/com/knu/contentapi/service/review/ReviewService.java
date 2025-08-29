@@ -16,12 +16,15 @@ import com.knu.contentapi.dto.places.PlaceResponseDto;
 import com.knu.contentapi.dto.review.ReviewRequestDto;
 import com.knu.contentapi.dto.review.ReviewResponseDto;
 import com.knu.contentapi.dto.review.ReviewUpdateRequestDto;
+import com.knu.contentapi.dto.review.SliceResponse;
 import com.knu.contentapi.service.aws.AwsS3Service;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.Response;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -29,6 +32,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -257,5 +261,37 @@ public class ReviewService {
                 .stream()
                 .map(ReviewResponseDto::from)   // 이미 구현되어 있음
                 .toList();
+    }
+
+    /** 무한 스크롤: 최신순 커서 목록 (likeCount만 포함) */
+    public SliceResponse<ReviewResponseDto> listReviewsLatest(Integer size, String cursor) {
+        int limit = (size == null || size < 1 || size > 50) ? 12 : size;
+
+        LocalDateTime cAt = null;
+        Long cId = null;
+        if (cursor != null && !cursor.isBlank()) {
+            int i = cursor.lastIndexOf('_');
+            if (i > 0) {
+                cAt = LocalDateTime.parse(cursor.substring(0, i));
+                cId = Long.parseLong(cursor.substring(i + 1));
+            }
+        }
+
+        Pageable pageable = PageRequest.of(0, limit + 1); // +1로 hasNext 판단
+        List<Review> list = reviewRepository.findLatestWithCursor(cAt, cId, pageable);
+
+        boolean hasNext = list.size() > limit;
+        if (hasNext) list = list.subList(0, limit);
+
+        // ✅ ReviewResponseDto로 바로 변환 (images/places/likeCount/createdAt 등 포함)
+        List<ReviewResponseDto> items = list.stream()
+                .map(ReviewResponseDto::from) // likedByMe는 기본 false
+                .toList();
+
+        String nextCursor = hasNext
+                ? items.get(items.size() - 1).getCreatedAt() + "_" + items.get(items.size() - 1).getId()
+                : null;
+
+        return new SliceResponse<>(items, nextCursor, hasNext);
     }
 }
