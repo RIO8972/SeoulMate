@@ -1,98 +1,100 @@
 // src/components/Event/Event.js
-//https://dapi.kakao.com/v2/local/search/category.json?category_group_code=CT1&x=126.916493990351&y=37.5508138163956&radius=100&sort=distance&size=1
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./Event.module.css";
 
-/** yyyy-mm-dd~yyyy-mm-dd 형태를 파싱해서 진행중 여부 계산 */
+/** yyyy-mm-dd~yyyy-mm-dd → 진행중 여부 */
 const isOngoing = (periodStr) => {
   if (!periodStr || typeof periodStr !== "string") return null;
   const [s, e] = periodStr.split("~").map((x) => x?.trim());
   if (!s || !e) return null;
   const start = new Date(s);
   const end = new Date(e);
-  end.setHours(23, 59, 59, 999); // 종료일 23:59:59
+  end.setHours(23, 59, 59, 999);
   const now = new Date();
   return now >= start && now <= end;
 };
 
-const Event = ({ event = [] , onSavePlace}) => {
-  // rows: 최대 50개
+const Event = ({ event = [], onSavePlace }) => {
+  /** 최대 50개만 노출 */
   const rows = useMemo(() => {
     const list = Array.isArray(event) ? event : event?.EVENT_STTS;
     return Array.isArray(list) ? list.slice(0, 50) : [];
   }, [event]);
 
-// 카카오 카테고리 검색(전시장 CT1) → 빈 배열이면 키워드 검색으로 폴백
-const handleCategorySearch = useCallback(async (ev) => {
-  try {
-    const REST_KEY =
-      process.env.REACT_APP_KAKAO_REST_KEY ||
-      import.meta.env?.VITE_KAKAO_REST_KEY;
+  /** 행 단위 로딩 + 이미 저장된 이름 비활성화 */
+  const [busyKey, setBusyKey] = useState(null);
+  const [disabledNames, setDisabledNames] = useState(new Set());
 
-    if (!REST_KEY) {
-      console.warn("Kakao REST API Key not found in env");
-    }
-
-    const headers = { Authorization: `KakaoAK ${REST_KEY || "ecee90558612019792b396dee93aadb8"}` };
-
-    // 1) 카테고리(CT1)로 좌표 주변 1건
-    const catRes = await axios.get(
-      "https://dapi.kakao.com/v2/local/search/category.json",
-      {
-        headers,
-        params: {
-          category_group_code: "CT1",
-          x: ev.EVENT_X, // 경도
-          y: ev.EVENT_Y, // 위도
-          radius: 100,
-          sort: "distance",
-          size: 1,
-        },
-      }
-    );
-    const catDoc = catRes?.data?.documents?.[0];
-
-    if (catDoc) {
-      console.log("[Kakao CT1 nearest result]", ev.EVENT_NM, catDoc);
-      if (typeof onSavePlace === "function") {
-        onSavePlace(ev, catDoc, "category");
-      }
+  /** 화면에 보이는 행사명들로 1회 배치 체크 */
+  useEffect(() => {
+    const names = rows.map((ev) => (ev?.EVENT_NM || "").trim()).filter(Boolean);
+    if (names.length === 0) {
+      setDisabledNames(new Set());
       return;
     }
 
-    // 2) 폴백: 키워드(관광명소) + 반경 1km, 거리순 1건
-    const kwRes = await axios.get(
-      "https://dapi.kakao.com/v2/local/search/keyword.json",
-      {
+    const token = localStorage.getItem("accessToken");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    axios
+      .post("https://seoul-mate.co.kr/contentapi/carts/check/names", names, {
         headers,
-        params: {
-          query: "관광명소",
-          x: ev.EVENT_X,
-          y: ev.EVENT_Y,
-          radius: 1000,
-          sort: "distance",
-          size: 1,
-        },
+      })
+      .then((res) => {
+        const m = res?.data || {};
+        const s = new Set(
+          Object.entries(m)
+            .filter(([, v]) => v === true)
+            .map(([k]) => k)
+        );
+        setDisabledNames(s);
+      })
+      .catch((err) => {
+        console.error("[check/names] 실패:", err);
+      });
+  }, [rows]);
+
+  /** 가까운 장소 찾기 → onSavePlace 성공 시 이름 비활성화에 추가 */
+  const handleFindNearest = useCallback(
+    async (ev, key) => {
+      try {
+        setBusyKey(key);
+
+        const res = await axios.get(
+          "https://seoul-mate.co.kr/cityapi/nearest",
+          {
+            params: { x: ev.EVENT_X, y: ev.EVENT_Y },
+          }
+        );
+
+        if (res.status === 204 || !res.data) return;
+
+        const { source, document } = res.data || {};
+        if (document && typeof onSavePlace === "function") {
+          await onSavePlace(ev, document, source);
+          const name = (ev.EVENT_NM || "").trim();
+          if (name) {
+            setDisabledNames((prev) => {
+              const s = new Set(prev);
+              s.add(name);
+              return s;
+            });
+          }
+        }
+      } catch (err) {
+        console.error("[nearest] error:", err);
+      } finally {
+        setBusyKey((prev) => (prev === key ? null : prev));
       }
-    );
-    const kwDoc = kwRes?.data?.documents?.[0];
-
-    console.log("[Kakao fallback keyword result]", ev.EVENT_NM, kwDoc ?? kwRes?.data);
-
-    if (kwDoc && typeof onSavePlace === "function") {
-      onSavePlace(ev, kwDoc, "keyword");
-    }
-  } catch (err) {
-    console.error("Kakao category/keyword search error:", err);
-  }
-}, [onSavePlace]);
+    },
+    [onSavePlace]
+  );
 
   return (
     <div className={styles.container}>
       <div className={styles.headerRow}>
         <h3 className={styles.title}>문화행사</h3>
-        {/* <span className={styles.updatedAt}>최대 50건 표시</span> */}
       </div>
 
       <div className={styles.tableWrap}>
@@ -102,9 +104,11 @@ const handleCategorySearch = useCallback(async (ev) => {
               <th>행사명</th>
               <th></th>
               <th></th>
-              {/* <th>기간</th> */}
             </tr>
           </thead>
+        </table>
+
+        <table className={styles.table}>
           <tbody>
             {rows.length === 0 ? (
               <tr>
@@ -119,9 +123,23 @@ const handleCategorySearch = useCallback(async (ev) => {
                 const url = ev.URL || null;
                 const thumb = ev.THUMBNAIL || null;
                 const ongoing = isOngoing(period);
+                const rowKey = `${name}|${ev.EVENT_X},${ev.EVENT_Y}|${i}`;
+                const isBusy = busyKey === rowKey;
+                const isDisabled = disabledNames.has(
+                  (ev.EVENT_NM || "").trim()
+                );
+
+                // 상태별 버튼 클래스
+                const btnClass = [
+                  styles.addButton,
+                  isDisabled ? styles.addButtonSaved : "",
+                  isBusy ? styles.addButtonBusy : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
 
                 return (
-                  <tr key={`${name}-${i}`}>
+                  <tr key={rowKey}>
                     <td>
                       {thumb ? (
                         <img
@@ -150,266 +168,48 @@ const handleCategorySearch = useCallback(async (ev) => {
                           <span className={styles.namePlain}>{name}</span>
                         )}
                         {ongoing === true && (
-                          <span className={`${styles.badge} ${styles.badgeNow}`}>
+                          <span
+                            className={`${styles.badge} ${styles.badgeNow}`}
+                          >
                             진행중
                           </span>
                         )}
                         {ongoing === false && (
-                          <span className={`${styles.badge} ${styles.badgeDone}`}>
+                          <span
+                            className={`${styles.badge} ${styles.badgeDone}`}
+                          >
                             종료
                           </span>
+                        )}
+                        {isDisabled && (
+                          <span className={styles.badge}>저장됨</span>
                         )}
                       </div>
                     </td>
                     <td>
-                      <button className={styles.addButton} onClick={() => handleCategorySearch(ev)}>
-                        + 
+                      <button
+                        className={btnClass}
+                        onClick={() => handleFindNearest(ev, rowKey)}
+                        disabled={isBusy || isDisabled}
+                        title="가까운 장소 찾기"
+                        aria-busy={isBusy}
+                      >
+                        {isDisabled ? "✓" : isBusy ? "…" : "+"}
                       </button>
                     </td>
-                    {/* <td>{period}</td> */}
                   </tr>
                 );
               })
             )}
           </tbody>
         </table>
-        <div className={styles.note}>※ 진행 상태는 기간 기준으로 단순 계산됩니다.</div>
+
+        <div className={styles.note}>
+          ※ 진행 상태는 기간 기준으로 단순 계산됩니다.
+        </div>
       </div>
     </div>
   );
 };
 
 export default Event;
-
-
-// import React, { useMemo } from "react";
-// import styles from "./Event.module.css";
-
-// /** yyyy-mm-dd~yyyy-mm-dd 형태를 파싱해서 진행중 여부 계산 */
-// const isOngoing = (periodStr) => {
-//   if (!periodStr || typeof periodStr !== "string") return null;
-//   const [s, e] = periodStr.split("~").map((x) => x?.trim());
-//   if (!s || !e) return null;
-//   const start = new Date(s);
-//   const end = new Date(e);
-//   end.setHours(23, 59, 59, 999); // 종료일 23:59:59
-//   const now = new Date();
-//   return now >= start && now <= end;
-// };
-
-// const Event = ({ event = [] }) => {
-//   // rows: 최대 50개
-//   const rows = useMemo(() => {
-//     const list = Array.isArray(event) ? event : event?.EVENT_STTS;
-//     return Array.isArray(list) ? list.slice(0, 50) : [];
-//   }, [event]);
-
-//   return (
-//     <div className={styles.container}>
-//       <div className={styles.headerRow}>
-//         <h3 className={styles.title}>문화행사</h3>
-//         <span className={styles.updatedAt}>최대 50건 표시</span>
-//       </div>
-
-//       <div className={styles.tableWrap}>
-//         <table className={styles.table}>
-//           <thead>
-//             <tr>
-//               <th>썸네일</th>
-//               <th>행사명</th>
-//               {/* <th>기간</th> */}
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {rows.length === 0 ? (
-//               <tr>
-//                 <td colSpan={3} className={styles.empty}>데이터 없음</td>
-//               </tr>
-//             ) : (
-//               rows.map((ev, i) => {
-//                 const name = ev.EVENT_NM || "-";
-//                 const period = ev.EVENT_PERIOD || "-";
-//                 const url = ev.URL || null;
-//                 const thumb = ev.THUMBNAIL || null;
-//                 const ongoing = isOngoing(period);
-
-//                 return (
-//                   <tr key={`${name}-${i}`}>
-//                     <td>
-//                       {thumb ? (
-//                         <img
-//                           className={styles.thumb}
-//                           src={thumb}
-//                           alt={name}
-//                           loading="lazy"
-//                         />
-//                       ) : (
-//                         <div className={styles.thumbPlaceholder}>No Image</div>
-//                       )}
-//                     </td>
-//                     <td className={styles.eventName}>
-//                       <div className={styles.nameRow}>
-//                         {url ? (
-//                           <a
-//                             className={styles.link}
-//                             href={url}
-//                             target="_blank"
-//                             rel="noreferrer"
-//                             title={name}
-//                           >
-//                             {name}
-//                           </a>
-//                         ) : (
-//                           <span>{name}</span>
-//                         )}
-//                         {ongoing === true && (
-//                           <span className={`${styles.badge} ${styles.badgeNow}`}>
-//                             진행중
-//                           </span>
-//                         )}
-//                         {ongoing === false && (
-//                           <span className={`${styles.badge} ${styles.badgeDone}`}>
-//                             종료
-//                           </span>
-//                         )}
-//                       </div>
-//                     </td>
-//                     {/* <td>{period}</td> */}
-//                   </tr>
-//                 );
-//               })
-//             )}
-//           </tbody>
-//         </table>
-//         <div className={styles.note}>
-//           ※ 진행 상태는 기간 기준으로 단순 계산됩니다.
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Event;
-
-
-// import React, { useMemo } from "react";
-// import styles from "./Event.module.css";
-
-// /** 안전 숫자 파서 */
-// const toNum = (v) =>
-//   v === null || v === undefined || v === "" || isNaN(Number(v))
-//     ? null
-//     : Number(v);
-
-// /** yyyy-mm-dd~yyyy-mm-dd 형태를 파싱해서 진행중 여부 계산 */
-// const isOngoing = (periodStr) => {
-//   if (!periodStr || typeof periodStr !== "string") return null;
-//   const [s, e] = periodStr.split("~").map((x) => x?.trim());
-//   if (!s || !e) return null;
-//   const start = new Date(s);
-//   // 종료일 23:59:59 처리
-//   const end = new Date(e);
-//   end.setHours(23, 59, 59, 999);
-//   const now = new Date();
-//   return now >= start && now <= end;
-// };
-
-// const Event = ({ event = [] }) => {
-//   // rows: 최대 50개
-//   const rows = useMemo(() => {
-//     const list = Array.isArray(event) ? event : event?.EVENT_STTS;
-//     return Array.isArray(list) ? list.slice(0, 50) : [];
-//   }, [event]);
-
-//   return (
-//     <div className={styles.container}>
-//       <div className={styles.headerRow}>
-//         <h3 className={styles.title}>문화행사</h3>
-//         <span className={styles.updatedAt}>최대 50건 표시</span>
-//       </div>
-
-//       <div className={styles.tableWrap}>
-//         <table className={styles.table}>
-//           <thead>
-//             <tr>
-//               <th>썸네일</th>
-//               <th>행사명</th>
-//               <th>기간</th>
-//               <th>장소</th>
-//               <th>링크</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {rows.length === 0 ? (
-//               <tr>
-//                 <td colSpan={5} className={styles.empty}>데이터 없음</td>
-//               </tr>
-//             ) : (
-//               rows.map((ev, i) => {
-//                 const name = ev.EVENT_NM || "-";
-//                 const period = ev.EVENT_PERIOD || "-";
-//                 const place = ev.EVENT_PLACE || "-";
-//                 const url = ev.URL || null;
-//                 const thumb = ev.THUMBNAIL || null;
-//                 const ongoing = isOngoing(period);
-
-//                 return (
-//                   <tr key={`${name}-${i}`}>
-//                     <td>
-//                       {thumb ? (
-//                         <img
-//                           className={styles.thumb}
-//                           src={thumb}
-//                           alt={name}
-//                           loading="lazy"
-//                         />
-//                       ) : (
-//                         <div className={styles.thumbPlaceholder}>No Image</div>
-//                       )}
-//                     </td>
-//                     <td className={styles.eventName}>
-//                       <div className={styles.nameRow}>
-//                         <span>{name}</span>
-//                         {ongoing === true && (
-//                           <span className={`${styles.badge} ${styles.badgeNow}`}>
-//                             진행중
-//                           </span>
-//                         )}
-//                         {ongoing === false && (
-//                           <span className={`${styles.badge} ${styles.badgeDone}`}>
-//                             종료
-//                           </span>
-//                         )}
-//                       </div>
-//                     </td>
-//                     <td>{period}</td>
-//                     <td className={styles.addr}>{place}</td>
-//                     <td>
-//                       {url ? (
-//                         <a
-//                           className={styles.link}
-//                           href={url}
-//                           target="_blank"
-//                           rel="noreferrer"
-//                         >
-//                           바로가기
-//                         </a>
-//                       ) : (
-//                         "-"
-//                       )}
-//                     </td>
-//                   </tr>
-//                 );
-//               })
-//             )}
-//           </tbody>
-//         </table>
-//         <div className={styles.note}>
-//           ※ 진행 상태는 기간 기준으로 단순 계산됩니다.
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Event;
