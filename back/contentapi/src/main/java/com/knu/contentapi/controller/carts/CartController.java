@@ -85,4 +85,20 @@ public class CartController {
         var inCart = new HashSet<>(cartRepository.findPlaceIdsInCart(user.getId(), ids));
         return ids.stream().collect(Collectors.toMap(id -> id, inCart::contains));
     }
+    /**이름 목록 배치 체크: { "행사명1": true, "행사명2": false, ... }*/
+    @PostMapping("/check/names")
+    public Map<String, Boolean> checkNames(@AuthenticationPrincipal User user,
+                                           @RequestBody List<String> names) {
+        if (names == null || names.isEmpty()) return Map.of();
+        var inCart = new HashSet<>(cartRepository.findNamesInCart(user.getId(), names));
+        return names.stream().collect(Collectors.toMap(n -> n, inCart::contains));
+    }
+
+    /**행사 이름으로 삭제*/
+    @DeleteMapping("/name/{name}")
+    public ResponseEntity<?> deleteByName(@AuthenticationPrincipal User user,
+                                          @PathVariable String name) {
+        cartService.deleteCartByName(name, user);
+        return ResponseEntity.noContent().build();
+    }
 }
