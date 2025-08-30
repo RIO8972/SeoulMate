@@ -106,7 +106,7 @@ public class SecurityConfig {
                         })
                 )
                 // 5) 기본 폼 로그인( /login )을 완전히 비활성화
-                //.formLogin(form -> form.disable())
+                .formLogin(form -> form.disable())
                 .formLogin(form -> form
                         .loginProcessingUrl("/login")
                         .usernameParameter("email")
