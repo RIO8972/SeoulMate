@@ -41,4 +41,21 @@ public class RouteDurationService {
                 .retrieve()
                 .bodyToMono(JsonNode.class);
     }
+    public Mono<JsonNode> loadLane(String mapObj) {
+        // ODsay는 "0:0@" 접두어가 필요함
+        String mapObject = mapObj.startsWith("0:0@") ? mapObj : "0:0@" + mapObj;
+
+        return webClient.get()
+                .uri(uriBuilder -> {
+                    URI uri = uriBuilder
+                            .path("/v1/api/loadLane")
+                            .queryParam("mapObject", mapObject) // queryParam이 알아서 URL 인코딩
+                            .queryParam("apiKey", odsayApiKey)
+                            .build();
+                    log.info("▶▶ ODsay loadLane 호출 URI = {}", uri);
+                    return uri;
+                })
+                .retrieve()
+                .bodyToMono(JsonNode.class);
+    }
 }
