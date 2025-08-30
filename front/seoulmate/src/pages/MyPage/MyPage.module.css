@@ -1,7 +1,7 @@
 :root {
   --header-h: 70px; /* Header가 고정이라면 위 패딩 보정 */
   --gutter-x: 24px; /* 좌우 가터(섹션 내부 패딩) */
-  --brand: #93a5ff;
+  --brand: #455de5;
   --ink: #0f172a;
   --muted: #6b7280;
 }

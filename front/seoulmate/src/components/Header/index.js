@@ -1,7 +1,6 @@
 import "./style.css";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import FullLogo from "../../images/full-logo.png";
 import Account from "../../images/account.png";
 import Menu from "../../images/menu.png";
@@ -12,7 +11,7 @@ const Header = () => {
   const [user, setUser] = useState(null);
   const location = useLocation();
 
-  //로그인 유무에 따라 사용자 정보 가져오기
+  // 로그인 유무에 따라 사용자 정보 가져오기
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
@@ -26,7 +25,6 @@ const Header = () => {
       .catch((err) => {
         console.error("내 정보 조회 실패", err);
         if (err?.response?.status === 401) {
-          // 만료/무효 토큰 정리
           localStorage.removeItem("accessToken");
         }
         setUser(null);
@@ -38,7 +36,7 @@ const Header = () => {
     e.currentTarget.src = Account;
     e.currentTarget.onerror = null;
   };
-  const avatarUrl = user?.imgUrl || Account; //사용자 이미지 or 기본
+  const avatarUrl = user?.imgUrl || Account;
 
   // ESC 키로 닫기
   useEffect(() => {
@@ -60,7 +58,7 @@ const Header = () => {
         </Link>
 
         <div className="header-btn-layout">
-          {/*로그인 유무에 따라 링크/이미지 동적 변경 */}
+          {/* 로그인 유무에 따라 링크/이미지 동적 변경 */}
           <Link
             to={user ? "/profile" : "/login"}
             className="login-link"
@@ -107,15 +105,32 @@ const Header = () => {
             </div>
 
             <nav className="drawer-nav">
-              <Link to="/mypage" className="drawer-link">
+              <Link
+                to="/mypage"
+                className="drawer-link"
+                onClick={() => setOpen(false)}
+              >
                 마이페이지
               </Link>
-              <Link to="/favorites" className="drawer-link">
-                관심있는 장소
+
+              <Link
+                to="/settings"
+                className="drawer-link"
+                onClick={() => setOpen(false)}
+              >
+                설정
               </Link>
-              <Link to="/courses" className="drawer-link">
-                리뷰
-              </Link>
+
+              {/* 로그인 상태에서만 보이는 로그아웃 (Logout 컴포넌트로 라우팅) */}
+              {user && (
+                <Link
+                  to="/logout"
+                  className="drawer-link drawer-logout"
+                  onClick={() => setOpen(false)}
+                >
+                  로그아웃
+                </Link>
+              )}
             </nav>
           </aside>
         </>

@@ -1,10 +1,15 @@
+// src/pages/DistrictPage/index.jsx
 import "./style.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Header from "../../components/Header";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLocationDot } from "@fortawesome/free-solid-svg-icons";
+import {
+  faLocationDot,
+  faMap,
+  faListUl,
+} from "@fortawesome/free-solid-svg-icons";
 
 const getCardColor = (level) => {
   switch (level) {
@@ -21,8 +26,7 @@ const getCardColor = (level) => {
   }
 };
 
-const DistrictPage = () => {
-  //파라미터로 리전코드 받기
+export default function DistrictPage() {
   const { regionId } = useParams();
   const [district, setDistrict] = useState({
     regionName: "",
@@ -34,52 +38,68 @@ const DistrictPage = () => {
   useEffect(() => {
     axios
       .get(
-        "https://seoul-mate.co.kr/cityapi/cache/regions/population/districts/" +
-          regionId,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        `https://seoul-mate.co.kr/cityapi/cache/regions/population/districts/${regionId}`,
+        { headers: { "Content-Type": "application/json" } }
       )
-      .then((res) => {
-        console.log("region_data", res.data);
-        setDistrict(res.data);
-      })
+      .then((res) => setDistrict(res.data))
       .catch(console.error);
-  }, []);
+  }, [regionId]);
+
   return (
-    <>
+    <div className="district-page">
       <Header />
+
       <div className="district-wrapper">
+        {/* 🔹 제목 바로 위 토글 */}
+        <div className="list-view-toggle" role="group" aria-label="보기 전환">
+          <button
+            type="button"
+            className="vt-btn"
+            onClick={() => navigate(`/map/${encodeURIComponent(regionId)}`)}
+            aria-pressed="false"
+          >
+            <FontAwesomeIcon icon={faMap} className="vt-ico" />
+            지도로 보기
+          </button>
+          <button type="button" className="vt-btn active" aria-pressed="true">
+            <FontAwesomeIcon icon={faListUl} className="vt-ico" />
+            리스트로 보기
+          </button>
+        </div>
+
         <h1 className="region-title">
-          <FontAwesomeIcon
-            icon={faLocationDot}
-            style={{ marginRight: "8px" }}
-          />
+          <FontAwesomeIcon icon={faLocationDot} style={{ marginRight: 8 }} />
           {district.regionName} 실시간 혼잡도
         </h1>
+
         <div className="card-grid">
-          {district.places.map((place, index) => {
-            const level = place.AREA_CONGEST_LVL?.trim(); //혼잡도
-            const name = place.AREA_NM; //장소명
+          {district.places.map((place, idx) => {
+            const level = place.AREA_CONGEST_LVL?.trim();
+            const name = place.AREA_NM;
             const areaCode = place.AREA_CD;
-
             if (!level || !name) return null;
-
-            const color = getCardColor(level); //혼잡도 색
 
             return (
               <div
-                key={`${name}-${index}`}
+                key={`${name}-${idx}`}
                 className="place-card"
-                onClick={() => navigate(`/map/${encodeURIComponent(areaCode)}`)}
+                onClick={() =>
+                  navigate(
+                    `/map/${encodeURIComponent(
+                      regionId
+                    )}?place=${encodeURIComponent(
+                      areaCode
+                    )}&name=${encodeURIComponent(name)}`
+                  )
+                }
               >
                 <div className="card-image">
                   <img
                     src={`/images/${areaCode}.jpg`}
                     alt={name}
-                    onError={(e) => (e.target.src = "/images/default1.jpg")}
+                    onError={(e) =>
+                      (e.currentTarget.src = "/images/default1.jpg")
+                    }
                   />
                 </div>
                 <div className="card-content">
@@ -87,7 +107,7 @@ const DistrictPage = () => {
                   <span
                     className="congestion-badge"
                     style={{
-                      backgroundColor: color,
+                      backgroundColor: getCardColor(level),
                       color: "#fff",
                     }}
                   >
@@ -99,8 +119,6 @@ const DistrictPage = () => {
           })}
         </div>
       </div>
-    </>
+    </div>
   );
-};
-
-export default DistrictPage;
+}

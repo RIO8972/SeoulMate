@@ -1,10 +1,17 @@
+/* ───────── ReviewSidebar 전용 (불필요한 규칙 제거 버전) ───────── */
+
+/* 컨테이너(추가) */
+.review-sidebar-box {
+  display: block;
+}
+
+/* 작성자 프로필 */
 .writer-profile {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
 }
-
 .profile-image {
   width: 48px;
   height: 48px;
@@ -12,154 +19,171 @@
   object-fit: cover;
   background-color: #eee;
 }
-
 .writer-text {
   display: flex;
   flex-direction: column;
 }
-
 .writer-name {
   font-weight: 600;
   font-size: 14px;
   margin: 0;
 }
-
 .writer-meta {
   font-size: 12px;
   color: #666;
   margin: 4px 0 0;
 }
 
+/* 데이트 코스 박스 */
 .course-order-section {
-  background: #f7f8fc; /* 살짝 더 연한 보라/회색 느낌 */
+  background: #f7f8fc;
   border-radius: 16px;
   padding: 22px 20px 14px 20px;
   box-shadow: 0 6px 24px rgba(102, 88, 211, 0.07),
     0 1.5px 5px rgba(30, 36, 85, 0.04);
-  border: 1.5px solid #ececf7; /* (선택) 밝은 보라 테두리 */
+  border: 1.5px solid #ececf7;
   margin-bottom: 24px;
   transition: box-shadow 0.18s;
-}
 
+  /* 🔧 레이아웃 변수 (원/간격/선두께/패딩) */
+  --dot: 30px; /* 번호 원 지름 */
+  --gap: 16px; /* 원과 카드 사이 간격 */
+  --line: 2px; /* 세로 라인 두께 */
+  --pad: 10px; /* 각 아이템 위/아래 패딩 */
+}
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
 }
-
 .section-header h2 {
   font-size: 19px;
   font-weight: bold;
   margin: 0;
 }
 
-.see-all-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #6658d3;
-  background: #f1f0fb;
-  border-radius: 20px;
-  text-decoration: none;
-  border: 1px solid #e0def7;
-  transition: background 0.2s, color 0.2s;
-  cursor: pointer;
-}
-
-.see-all-link:hover {
-  background: #6658d3;
-  color: #fff;
-}
-
-.see-all-link:active {
-  transform: scale(0.96);
-}
-
+/* 코스 목록 */
 .course-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
+/* ✅ 정렬 고정: 그리드 레이아웃 + 중앙 기준 라인 */
 .course-item {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: var(--dot) var(--gap) 1fr; /* 원 / 간격 / 카드 */
+  align-items: center;
   position: relative;
-  padding-left: 30px;
-  min-height: 76px;
+  padding: var(--pad) 0;
 }
 
+/* 아래쪽 반쪽: 중앙(50%) → 바닥(+패딩 만큼) */
 .course-item:not(:last-child)::before {
   content: "";
   position: absolute;
-  left: 15px;
-  top: 30px;
-  width: 2px;
-  height: calc(100% + 18px - 30px);
+  left: calc(var(--dot) / 2); /* 원의 정확한 중심 */
+  top: 50%;
+  bottom: calc(-1 * var(--pad));
+  width: var(--line);
   background: #dbdbdb;
-  z-index: 0;
   border-radius: 2px;
 }
 
+/* 위쪽 반쪽: 위쪽(-패딩 만큼) → 중앙(50%) */
+.course-item:not(:first-child)::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--dot) / 2);
+  top: calc(-1 * var(--pad));
+  bottom: 50%;
+  width: var(--line);
+  background: #dbdbdb;
+  border-radius: 2px;
+}
+
+/* 번호 원 */
 .step-indicator {
-  width: 30px;
-  height: 30px;
-  background: #6658d3;
+  grid-column: 1;
+  width: var(--dot);
+  height: var(--dot);
+  background: #455de5;
   color: #fff;
   border-radius: 50%;
   font-weight: bold;
   font-size: 16px;
-  text-align: center;
-  line-height: 30px;
-  position: absolute;
-  left: 0;
-  top: 40%;
-  transform: translateY(-40%);
-  z-index: 1;
+  line-height: 1; /* Flex 중앙 정렬 사용 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1; /* 라인 위로 */
+  box-sizing: content-box; /* 테두리 추가 시 중심 보정 */
 }
 
+/* 카드(오른쪽) */
 .course-content {
-  background: #ffffff;
+  grid-column: 3;
+  margin-left: 0;
+  background: #fff;
   border-radius: 9px;
   padding: 13px 16px 10px 16px;
-  margin-left: 22px;
-  flex: 1;
-  min-width: 0;
+  box-shadow: 0 2px 8px rgba(102, 88, 211, 0.04);
   display: flex;
   flex-direction: column;
   gap: 3px;
-  box-shadow: 0 2px 8px rgba(102, 88, 211, 0.04);
 }
 
 .course-main {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
 }
-
 .course-place {
   font-weight: bold;
   font-size: 16px;
 }
-
 .course-category {
   color: #60b6d7;
   font-size: 15px;
   margin-left: 14px;
   font-weight: 500;
 }
-
 .course-sub {
   color: #848b9c;
   font-size: 14px;
 }
-
 .clock-icon {
   color: #bbb;
   font-size: 14px;
   margin-right: 2px;
+}
+
+/* 빈 상태 */
+.course-empty {
+  color: #666;
+  font-size: 14px;
+  text-align: center;
+  padding: 12px 0 4px;
+}
+
+/* 담기 버튼 */
+.add-course-button {
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #455de5;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(69, 93, 229, 0.18);
+  transition: transform 0.06s ease, opacity 0.2s ease;
+}
+.add-course-button:hover {
+  opacity: 0.95;
+}
+.add-course-button:active {
+  transform: translateY(1px);
 }

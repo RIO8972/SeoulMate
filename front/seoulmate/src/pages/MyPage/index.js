@@ -111,10 +111,12 @@ export default function MyPage() {
     api
       .get("carts/mine")
       .then((res) => {
+        console.log(res.data);
         const list = Array.isArray(res.data) ? res.data : [];
         // UI 포맷으로 변환
         const mapped = list.map((p, i) => ({
-          id: String(p.placeId),
+          id: p.id,
+          placeId: String(p.placeId),
           title: p.name,
           district: extractDistrict(p.address),
           address: p.address,
@@ -238,7 +240,7 @@ export default function MyPage() {
       );
     }
     // 저장순(초기 API 순서)
-    return list.sort((a, b) => (a._savedIndex ?? 0) - (b._savedIndex ?? 0));
+    return list.sort((a, b) => (b._savedIndex ?? 0) - (a._savedIndex ?? 0));
   }, [favorites, favSort]);
 
   // 카운트
@@ -264,11 +266,20 @@ export default function MyPage() {
   };
 
   // 하트 토글 자리 (API 연결 필요 시 구현)
-  const toggleLike = async (placeId) => {
-    // TODO: 찜 해제/추가 엔드포인트 연결되면 구현
-    alert("찜 해제/추가 기능은 추후 연결됩니다.");
-  };
+  const toggleLike = async (cartId) => {
+    try {
+      //정확한 엔드포인트: /carts/{pk}
+      await api.delete(`/carts/${cartId}`);
 
+      // UI에서 카드 제거(또는 liked=false 토글)
+      setFavorites((prev) =>
+        prev.filter((p) => String(p.id) !== String(cartId))
+      );
+    } catch (err) {
+      console.error("찜 해제 실패:", err);
+      alert("찜 해제에 실패했습니다.");
+    }
+  };
   return (
     <div className={styles.page}>
       <Header />

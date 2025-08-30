@@ -75,9 +75,12 @@ const ReviewSidebar = ({ review, course }) => {
   }, [review?.places]);
 
   // 작성자 정보
-  const authorName = review?.authorName || review?.userProfile?.username || "user";
+  const authorName =
+    review?.authorName || review?.userProfile?.username || "user";
   const authorImg =
-    review?.authorImg || review?.userProfile?.imgUrl || "/images/test/bluescreen.jpg";
+    review?.authorImg ||
+    review?.userProfile?.imgUrl ||
+    "/images/test/bluescreen.jpg";
 
   return (
     <div className="review-sidebar-box">
@@ -120,7 +123,10 @@ const ReviewSidebar = ({ review, course }) => {
                   {place?.time ? (
                     <div className="course-sub">
                       <span className="course-time">
-                        <FontAwesomeIcon icon={faClock} className="clock-icon" />{" "}
+                        <FontAwesomeIcon
+                          icon={faClock}
+                          className="clock-icon"
+                        />{" "}
                         {place.time}
                       </span>
                     </div>
