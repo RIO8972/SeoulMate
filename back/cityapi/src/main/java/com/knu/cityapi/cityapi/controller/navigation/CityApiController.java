@@ -106,4 +106,9 @@ public class CityApiController {
                     "지원하지 않는 mode 값입니다. (car 또는 public-transport)"));
         }
     }
+
+    @GetMapping(value = "/search/route/lane", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<JsonNode> loadLane(@RequestParam String mapObj) {
+        return routeDurationService.loadLane(mapObj);
+    }
 }
