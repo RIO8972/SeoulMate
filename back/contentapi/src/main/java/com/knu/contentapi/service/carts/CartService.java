@@ -36,6 +36,7 @@ public class CartService {
                         .lng(c.getLng())
                         .address(c.getAddress())
                         .url(c.getUrl())
+                        .category(c.getCategory())
                         .build())
                 .toList();
     }

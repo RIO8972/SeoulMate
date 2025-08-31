@@ -16,4 +16,5 @@ public class CartResponseDto {
     private String lng;
     private String address;
     private String url;
+    private String category;
 }

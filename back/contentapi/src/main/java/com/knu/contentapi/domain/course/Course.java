@@ -54,6 +54,7 @@ public class Course {
                 .lng(dto.getLng())
                 .address(dto.getAddress())
                 .url(dto.getUrl())
+                .category(dto.getCategory())
                 .course(this)
                 .build();
         coursePlaces.add(coursePlace);
@@ -81,6 +82,7 @@ public class Course {
                     .lng(place.getLng())
                     .address(place.getAddress())
                     .url(place.getUrl())
+                    .category(place.getCategory())
                     .build();
             _places.add(dto);
         }
