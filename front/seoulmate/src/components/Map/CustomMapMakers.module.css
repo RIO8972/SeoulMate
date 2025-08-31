@@ -1,0 +1,25 @@
+.container {
+  position: relative;
+  transform: translate(-50%, -50%);
+}
+
+.circle {
+  white-space: normal;
+  word-break: keep-all;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 95px;
+  height: 95px;
+  border-radius: 50%;
+  background: rgb(90, 75, 255);
+  border: 1px solid #4f46e5;
+  color: rgb(255, 255, 255);
+  font-size: 12px;
+  font-weight: bold;
+  padding: 6px;
+  line-height: 1.2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  opacity: 0.7; /*투명도 추가*/
+}

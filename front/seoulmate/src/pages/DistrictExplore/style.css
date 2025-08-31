@@ -1,0 +1,57 @@
+:root {
+  --header-h: 70px;
+  --brand: #455de5;
+  --line: #e5e7eb;
+}
+
+.dxp-wrap {
+  position: relative;
+  min-height: calc(100vh - var(--header-h));
+  background: #f5f7fb;
+}
+
+/* 상단 중앙 토글 */
+.dxp-toggle {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: transparent;
+}
+
+.dxp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  font-weight: 700;
+  color: #1f2937;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.dxp-btn.is-active {
+  background: var(--brand);
+  color: #fff;
+  border-color: transparent;
+}
+.dxp-ic {
+  font-size: 14px;
+}
+
+/* 본문 영역: 페이지를 꽉 채우게 */
+.dxp-body {
+  min-height: calc(100vh - var(--header-h) - 52px);
+}
+
+/* 지도 페이지가 100% 높이를 먹도록(기존 DistrictMap이 height:100%면 OK) */
+.dxp-body > div {
+  height: 100%;
+}

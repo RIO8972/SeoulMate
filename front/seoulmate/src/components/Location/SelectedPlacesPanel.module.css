@@ -1,0 +1,92 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.clearAllBtn {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #6b7280;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.clearAllBtn:hover {
+  background: #f3f4f6;
+  color: #ef4444;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* li 간격 */
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #eef2f7;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.orderDot {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.placeName {
+  flex: 1;
+  font-weight: 600;
+  color: #111827;
+}
+
+.removeBtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  color: #6b7280;
+  position: relative;
+  z-index: 2;
+}
+.removeBtn:hover {
+  color: #ef4444;
+}
+
+/* 드래그 핸들 표시 */
+.handle {
+  cursor: grab;
+}
+.handle:active {
+  cursor: grabbing;
+}
+
+/* 드래그 중 스타일 */
+.dragging {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  transform: rotate(0.1deg); /* reflow 트릭으로 부드럽게 */
+}

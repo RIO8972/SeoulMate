@@ -1,0 +1,30 @@
+.wrapper {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: row;
+  width: fit-content;
+  min-width: 350px;
+}
+
+.searchPanel {
+  width: 400px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.selectedPanel {
+  width: 300px;
+  border-left: 1px solid #eee;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.mapPanel {
+  flex: 1;
+  min-width: 0;
+}

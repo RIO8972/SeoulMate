@@ -1,0 +1,48 @@
+.priceDisplay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.currentPrice {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #000;
+}
+
+.slider {
+  width: 100%;
+  margin: 16px 0;
+  appearance: none; /* 기본 스타일 제거 */
+  height: 6px;
+  background: none;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* 트랙 (회색 바) */
+.slider::-webkit-slider-runnable-track {
+  height: 6px;
+  background: none;
+  border-radius: 3px;
+}
+
+/* 썸(조절하는 동그라미) */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #4f46e5; /* 원하는 색상으로 변경 */
+  border-radius: 50%;
+  cursor: pointer;
+  margin-top: -7px; /* 트랙과 정렬 */
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+}
+.sliderLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #999;
+}

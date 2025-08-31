@@ -1,0 +1,341 @@
+:root {
+  --header-h: 70px;
+  --brand: #455de5;
+  --ink: #0f172a;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+}
+
+/* 페이지 베이스 */
+.page {
+  padding-top: var(--header-h);
+  background: #f9fafb;
+  min-height: 100vh;
+}
+
+/* 레이아웃 */
+.inner {
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 32px;
+  padding: 24px 40px 48px;
+  width: 100%;
+}
+
+/* ───── 좌측 사이드 ───── */
+.sidebar {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px 20px;
+}
+
+.backBtn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+/* 제목과 수정 버튼을 한 줄로 */
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* 필요시 버튼이 줄바꿈 안 되도록 보장 */
+.actions {
+  flex: 0 0 auto;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 2px 0 12px;
+}
+
+.metaTop {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.metaLabel {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.metaValue {
+  font-weight: 700;
+}
+
+.sectionH2 {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 16px 0 8px;
+}
+
+/* ===== 타임라인 기본 간격 ===== */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 0;
+  display: grid;
+  row-gap: 26px; /* 스텝 간 간격 */
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  column-gap: 12px;
+  align-items: start;
+}
+
+/* ===== 왼쪽 레일 ===== */
+.leftRail {
+  position: relative;
+  width: 44px;
+
+  /* 중앙선/요소 크기/위치 변수 */
+  --rail-center: 50%;
+  --line-w: 2px;
+  --dot: 28px;
+  --bus: 18px;
+  --gap: 26px;
+  --bus-off: 16px;
+  --seg-gap: 3px;
+
+  /* 마지막 꼬리 길이 */
+  --last-tail: 28px;
+  --end-size: 6px;
+
+  /* 마지막 점 높이 조정 */
+  --end-offset: -20px; /* 음수=위로, 양수=아래로 */
+}
+
+/* 번호 원 */
+.orderDot {
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* 번호원 아래 선 (버스 전) */
+.leftRail::before {
+  content: "";
+  position: absolute;
+  left: var(--rail-center);
+  transform: translateX(calc(-1 * var(--line-w) / 2));
+  top: var(--dot);
+  height: calc(var(--bus-off) - var(--seg-gap));
+  width: var(--line-w);
+  background: #cfd8ff;
+  z-index: 1;
+}
+
+/* 버스 아이콘 */
+.transportBlock {
+  position: absolute;
+  left: var(--rail-center);
+  top: calc(var(--dot) + var(--bus-off));
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.busIcon {
+  font-size: var(--bus);
+  color: #6f8cff;
+  display: block;
+  line-height: 1;
+}
+
+/* 버스 아래 세로선 (다음 스텝까지) */
+.step:not(:last-child) .leftRail::after {
+  content: "";
+  position: absolute;
+  left: var(--rail-center);
+  transform: translateX(calc(-1 * var(--line-w) / 2));
+  top: calc(var(--dot) + var(--bus-off) + var(--bus) + var(--seg-gap));
+  height: calc(var(--gap) + (var(--dot) / 2));
+  width: var(--line-w);
+  background: #cfd8ff;
+  z-index: 1;
+}
+
+/* 마지막 스텝: 버스 밑 선 제거 */
+.step:last-child .leftRail::after {
+  display: none;
+}
+
+/* 마지막 점 */
+.step:last-child .endDot {
+  position: absolute;
+  left: var(--rail-center);
+  top: calc(
+    var(--dot) + var(--bus-off) + var(--bus) + var(--seg-gap) +
+      var(--end-offset)
+  );
+  transform: translate(-50%, -50%);
+  width: var(--end-size);
+  height: var(--end-size);
+  background: #455de5;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+/* 오른쪽 정보 */
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 13px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+
+.catBadge {
+  background: #eef2ff;
+  color: #455de5;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.sep {
+  color: #cbd5e1;
+}
+
+.linkBtn {
+  border: none;
+  background: transparent;
+  color: var(--brand);
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+}
+
+.placeName {
+  font-weight: 800;
+  font-size: 18px;
+}
+
+/* ───── 우측 지도 영역 ───── */
+.mapArea {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+}
+
+.searchRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.searchInput {
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 12px;
+  outline: none;
+  background: #fff;
+}
+
+.searchBtn {
+  height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 10px;
+  background: #455de5;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mapBox {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 560px;
+  display: grid;
+}
+
+.mapPlaceholder {
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.actions {
+  margin: 8px 0 16px;
+}
+
+.editBtn {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #455de5;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.editBtn:hover {
+  opacity: 0.92;
+}
+
+/* 반응형 */
+@media (max-width: 1080px) {
+  .inner {
+    grid-template-columns: 1fr;
+  }
+  .mapBox {
+    min-height: 420px;
+  }
+}
+
+/*취소버튼<일단 넣음>*/
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.editBtn {
+  padding: 8px 12px;
+  background: #2563eb;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.deleteBtn {
+  padding: 8px 12px;
+  background: #ef4444;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.deleteBtn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

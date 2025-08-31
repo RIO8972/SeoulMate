@@ -1,0 +1,68 @@
+/* .wrapper {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: row;
+  width: fit-content;
+  min-width: 350px;
+}
+
+.searchPanel {
+  width: 400px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.selectedPanel {
+  width: 300px;
+  border-left: 1px solid #eee;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.mapPanel {
+  flex: 1;
+  min-width: 0;
+} */
+
+
+/* PlaceMapSelector.module.css */
+
+.wrapper {
+  display: flex;
+  flex-direction: column; /* 사이드패널 안이라 세로 스택이 안정적 */
+  width: 100%;
+  height: 100%;           /* 부모 높이 따름 (SidePanel이 스크롤 담당) */
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  gap: 12px;
+}
+
+.searchPanel {
+  width: 100%;
+  padding: 20px;
+  overflow: visible;      /* 내부 스크롤 제거 */
+}
+
+.selectedPanel {
+  width: 100%;
+  border-left: 0;         /* 세로 스택이라 좌측 보더 제거 */
+  border-top: 1px solid #eee;
+  padding: 20px;
+  overflow: visible;      /* 내부 스크롤 제거 */
+}
+
+/* 혹시 mapPanel을 사용할 경우 대비 (현재 지도는 없음) */
+.mapPanel {
+  flex: 1;
+  min-width: 0;
+}

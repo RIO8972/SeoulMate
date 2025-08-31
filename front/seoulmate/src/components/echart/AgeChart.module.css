@@ -1,0 +1,39 @@
+.container {
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+  padding: 12px;
+}
+
+/* 헤더 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.title { font-size: 16px; font-weight: 700; color: #1f2937; }
+.caption { font-size: 12px; color: #6b7280; }
+
+/* 차트 영역 */
+.chart {
+  width: 100%;
+  height: 230px;              /* 필요하면 여기 수치만 조절 */
+  border-radius: 12px;
+  background: #fff;
+}
+
+/* 코멘트(인사이트) */
+.insight {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  color: #1f375a;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.insight strong { font-weight: 800; }

@@ -1,0 +1,128 @@
+/* 카드 리스트 레이아웃 */
+.review-card-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 50px;
+}
+
+/* 개별 카드 (Link 태그에 적용됨) */
+.review-card {
+  width: 100%;
+  max-width: 240px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+
+  /* 🔥 링크 기본 스타일 초기화 */
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.review-card:hover {
+  transform: translateY(-8px);
+}
+
+/* 혹시 상위 CSS 때문에 다시 밑줄이 생기는 경우 방지 */
+.review-card:link,
+.review-card:visited,
+.review-card:hover,
+.review-card:active {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 이미지 영역 */
+.image-wrapper {
+  position: relative;
+}
+
+.image-wrapper img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+/* 지역 배지 */
+.region-badge {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: bold;
+  background-color: #455de5;
+  color: white;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  z-index: 2;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* 텍스트 영역 */
+.text-wrapper {
+  padding: 10px 15px 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-top {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* 제목 */
+.info-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+/* 정보 항목 공통 */
+.info-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #444;
+}
+.info-icon {
+  font-size: 18px;
+  line-height: 1;
+  vertical-align: middle;
+  position: relative;
+  top: 1px;
+}
+
+/* 하단 키워드 + 좋아요 정렬 */
+.info-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 좋아요 배지 */
+.likes {
+  background-color: #f0f2ff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #e74c3c;
+  transition: background-color 0.2s;
+}

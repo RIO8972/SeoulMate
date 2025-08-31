@@ -1,0 +1,93 @@
+.panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 450px;
+  height: 100vh;
+  background-color: white;
+  border-right: 1px solid #ccc;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  z-index: 999;
+  pointer-events: auto;
+  /* 내용이 패널 높이를 넘을 때 세로 스크롤 */
+  overflow-y: auto;
+  /* 가로 스크롤은 방지 */
+  overflow-x: hidden;
+}
+
+/* 👇 등장 애니메이션 */
+.slideIn {
+  animation: slideBehindSidebarIn 0.3s ease forwards;
+}
+
+/* 👇 퇴장 애니메이션 */
+.slideOut {
+  animation: slideBehindSidebarOut 0.3s ease forwards;
+}
+
+@keyframes slideBehindSidebarIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(80px);
+    opacity: 1;
+  }
+}
+
+@keyframes slideBehindSidebarOut {
+  from {
+    transform: translateX(80px);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+.closeButton {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.panelTitle {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+
+/* 패널 자체는 화면 높이에 맞추고, 본문은 스크롤 막기 */
+.sidePanel {
+  width: 720px;           /* 원하면 640~760px로 조절 */
+  max-width: 90vw;
+  background: #fff;
+  border-right: 1px solid #eee;
+  height: 100vh;          /* ← 화면 높이 고정 */
+  overflow: hidden;       /* ← 패널 자체 스크롤 제거 */
+}
+
+.sidePanel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.sidePanel__body {
+  height: calc(100vh - 56px); /* 헤더 제외 높이 */
+  display: flex;
+  overflow: hidden;           /* ← 본문 전체 스크롤 제거 */
+  padding: 0;
+}
+

@@ -1,0 +1,143 @@
+/* 전체 초기화 */
+* {
+  box-sizing: border-box;
+  padding: 0;
+}
+
+/* 헤더 고정 */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 로고 */
+.full-logo img {
+  height: 50px;
+  margin: 10px 0 0 50px;
+}
+
+/* 오른쪽 버튼 그룹 */
+.header-btn-layout {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  margin-right: 50px;
+  border-radius: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 아이콘 공통 */
+.header-icon {
+  height: 32px;
+  width: 32px;
+  margin-top: 3px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.header-icon:hover {
+  transform: scale(1.1);
+}
+
+.header-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 햄버거 버튼 */
+.menu-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.menu-btn:hover {
+  opacity: 0.7;
+}
+
+/* ===== Drawer (오른쪽에서 열림, 헤더 아래에서 시작) ===== */
+:root {
+  --header-h: 70px;
+} /* 헤더 높이 */
+
+.drawer-backdrop {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--header-h);
+  height: calc(100vh - var(--header-h));
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+  z-index: 40;
+}
+
+.drawer {
+  position: fixed;
+  top: var(--header-h);
+  right: 0;
+  left: auto;
+  height: calc(100vh - var(--header-h));
+  width: 280px;
+  background: #fff;
+  box-shadow: -2px 0 16px rgba(0, 0, 0, 0.15);
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  animation: slideInRight 0.18s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(16px);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.drawer-title {
+  font-weight: 700;
+}
+.drawer-close {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.drawer-nav {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+.drawer-link {
+  padding: 10px 8px;
+  border-radius: 8px;
+  color: #111827;
+  text-decoration: none;
+}
+.drawer-link:hover {
+  background: #f3f4f6;
+}
