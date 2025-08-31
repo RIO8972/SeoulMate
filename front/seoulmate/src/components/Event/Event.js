@@ -1,7 +1,15 @@
 // src/components/Event/Event.js
 import React, { useMemo, useCallback, useState, useEffect } from "react";
-import axios from "axios";
+import axios from "axios";          // cityapi(근처 장소) 전용
+import api from "../../api/api";    // contentapi 전용 인스턴스
 import styles from "./Event.module.css";
+import requireLogin from "../../utils/requireLogin";
+
+/** 환경변수(선택) */
+const CITYAPI_BASE =
+  import.meta.env?.VITE_CITYAPI_BASE ||
+  process.env.REACT_APP_CITYAPI_BASE ||
+  "https://seoul-mate.co.kr/cityapi";
 
 /** yyyy-mm-dd~yyyy-mm-dd → 진행중 여부 */
 const isOngoing = (periodStr) => {
@@ -22,25 +30,20 @@ const Event = ({ event = [], onSavePlace }) => {
     return Array.isArray(list) ? list.slice(0, 50) : [];
   }, [event]);
 
-  /** 행 단위 로딩 + 이미 저장된 이름 비활성화 */
+  /** 저장여부, 로딩 표시 */
   const [busyKey, setBusyKey] = useState(null);
-  const [disabledNames, setDisabledNames] = useState(new Set());
+  const [savedNames, setSavedNames] = useState(new Set());
 
-  /** 화면에 보이는 행사명들로 1회 배치 체크 */
+  /** 현재 표시되는 이벤트들이 이미 저장돼있는지 일괄 체크 (api 인스턴스 사용) */
   useEffect(() => {
     const names = rows.map((ev) => (ev?.EVENT_NM || "").trim()).filter(Boolean);
     if (names.length === 0) {
-      setDisabledNames(new Set());
+      setSavedNames(new Set());
       return;
     }
 
-    const token = localStorage.getItem("accessToken");
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-    axios
-      .post("https://seoul-mate.co.kr/contentapi/carts/check/names", names, {
-        headers,
-      })
+    api
+      .post("/carts/check/names", names)   // ✅ baseURL은 src/api/api.js
       .then((res) => {
         const m = res?.data || {};
         const s = new Set(
@@ -48,48 +51,85 @@ const Event = ({ event = [], onSavePlace }) => {
             .filter(([, v]) => v === true)
             .map(([k]) => k)
         );
-        setDisabledNames(s);
+        setSavedNames(s);
       })
       .catch((err) => {
         console.error("[check/names] 실패:", err);
       });
   }, [rows]);
 
-  /** 가까운 장소 찾기 → onSavePlace 성공 시 이름 비활성화에 추가 */
-  const handleFindNearest = useCallback(
+  /** 근처 장소 검색 (axios 그대로 유지) */
+  const findNearest = useCallback(async (ev) => {
+    const res = await axios.get(`${CITYAPI_BASE}/nearest`, {
+      params: { x: ev.EVENT_X, y: ev.EVENT_Y },
+    });
+    if (res.status === 204 || !res.data) return null;
+    return res.data; // { source, document }
+  }, []);
+
+  // 저장/삭제 토글
+  const handleToggle = useCallback(
     async (ev, key) => {
+      // ⛔ 로그인 필수: 실패 시 요청 차단 + 알림
+      if (!requireLogin()) return;
+
       try {
         setBusyKey(key);
+        const name = (ev.EVENT_NM || "").trim();
+        if (!name) return;
 
-        const res = await axios.get(
-          "https://seoul-mate.co.kr/cityapi/nearest",
-          {
-            params: { x: ev.EVENT_X, y: ev.EVENT_Y },
+        const already = savedNames.has(name);
+
+        if (already) {
+          // === 삭제 ===
+          await api.delete("/carts/name", { data: { name } });
+          setSavedNames((prev) => {
+            const next = new Set(prev);
+            next.delete(name);
+            return next;
+          });
+        } else {
+          // === 추가 ===
+          const nearest = await findNearest(ev); // public cityapi (무인증)
+          if (!nearest) return;
+          const { source, document } = nearest;
+
+          if (document && typeof onSavePlace === "function") {
+            // 내부에서 contentapi 호출(인증 필요)
+            await onSavePlace(ev, document, source);
           }
-        );
 
-        if (res.status === 204 || !res.data) return;
-
-        const { source, document } = res.data || {};
-        if (document && typeof onSavePlace === "function") {
-          await onSavePlace(ev, document, source);
-          const name = (ev.EVENT_NM || "").trim();
-          if (name) {
-            setDisabledNames((prev) => {
-              const s = new Set(prev);
-              s.add(name);
-              return s;
-            });
-          }
+          setSavedNames((prev) => {
+            const next = new Set(prev);
+            next.add(name);
+            return next;
+          });
         }
       } catch (err) {
-        console.error("[nearest] error:", err);
+        const status = err?.response?.status;
+        if (status === 401) {
+          alert("로그인이 필요합니다.");
+        } else {
+          console.error("[toggle] error:", err);
+          alert("처리 중 오류가 발생했습니다.");
+        }
       } finally {
         setBusyKey((prev) => (prev === key ? null : prev));
       }
     },
-    [onSavePlace]
+    [savedNames, findNearest, onSavePlace]
   );
+
+  const makeRowKey = (ev, i) => {
+    const id =
+      ev.id ??
+      ev.EVENT_ID ??
+      ev.place_id ??
+      ev.URL ??
+      (ev.EVENT_X && ev.EVENT_Y ? `${ev.EVENT_X},${ev.EVENT_Y}` : null);
+    const name = (ev.EVENT_NM || "").trim();
+    return `ev-${id ?? name ?? i}-${i}`;
+  };
 
   return (
     <div className={styles.container}>
@@ -123,16 +163,13 @@ const Event = ({ event = [], onSavePlace }) => {
                 const url = ev.URL || null;
                 const thumb = ev.THUMBNAIL || null;
                 const ongoing = isOngoing(period);
-                const rowKey = `${name}|${ev.EVENT_X},${ev.EVENT_Y}|${i}`;
+                const rowKey = makeRowKey(ev, i);
                 const isBusy = busyKey === rowKey;
-                const isDisabled = disabledNames.has(
-                  (ev.EVENT_NM || "").trim()
-                );
+                const isSaved = savedNames.has((ev.EVENT_NM || "").trim());
 
-                // 상태별 버튼 클래스
                 const btnClass = [
                   styles.addButton,
-                  isDisabled ? styles.addButtonSaved : "",
+                  isSaved ? styles.addButtonSaved : "",
                   isBusy ? styles.addButtonBusy : "",
                 ]
                   .filter(Boolean)
@@ -168,33 +205,24 @@ const Event = ({ event = [], onSavePlace }) => {
                           <span className={styles.namePlain}>{name}</span>
                         )}
                         {ongoing === true && (
-                          <span
-                            className={`${styles.badge} ${styles.badgeNow}`}
-                          >
-                            진행중
-                          </span>
+                          <span className={`${styles.badge} ${styles.badgeNow}`}>진행중</span>
                         )}
                         {ongoing === false && (
-                          <span
-                            className={`${styles.badge} ${styles.badgeDone}`}
-                          >
-                            종료
-                          </span>
+                          <span className={`${styles.badge} ${styles.badgeDone}`}>종료</span>
                         )}
-                        {isDisabled && (
-                          <span className={styles.badge}>저장됨</span>
-                        )}
+                        {isSaved && <span className={styles.badge}>저장됨</span>}
                       </div>
                     </td>
                     <td>
                       <button
                         className={btnClass}
-                        onClick={() => handleFindNearest(ev, rowKey)}
-                        disabled={isBusy || isDisabled}
-                        title="가까운 장소 찾기"
+                        onClick={() => handleToggle(ev, rowKey)}
+                        disabled={isBusy}
+                        title={isSaved ? "저장 취소" : "가까운 장소 찾아 저장"}
+                        aria-pressed={isSaved}
                         aria-busy={isBusy}
                       >
-                        {isDisabled ? "✓" : isBusy ? "…" : "+"}
+                        {isBusy ? "…" : isSaved ? "✓" : "+"}
                       </button>
                     </td>
                   </tr>
@@ -204,9 +232,7 @@ const Event = ({ event = [], onSavePlace }) => {
           </tbody>
         </table>
 
-        <div className={styles.note}>
-          ※ 진행 상태는 기간 기준으로 단순 계산됩니다.
-        </div>
+        <div className={styles.note}>※ 진행 상태는 기간 기준으로 단순 계산됩니다.</div>
       </div>
     </div>
   );

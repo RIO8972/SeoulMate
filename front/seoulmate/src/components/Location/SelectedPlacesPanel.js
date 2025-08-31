@@ -1,3 +1,4 @@
+// src/components/Location/SelectedPlacesPanel.jsx
 import React from "react";
 import styles from "./SelectedPlacesPanel.module.css";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
@@ -20,8 +21,9 @@ export default function SelectedPlacesPanel({
     onReorder?.(next);
   };
 
-  const getId = (item, idx) =>
-    String(item.placeId ?? item.id ?? `${item.lat}-${item.lng}-${idx}`);
+  // uid를 최우선으로 사용 (없으면 placeId/id/좌표-인덱스)
+  const getKey = (item, idx) =>
+    String(item.uid ?? item.placeId ?? item.id ?? `${item.lat}-${item.lng}-${idx}`);
 
   return (
     <div>
@@ -49,9 +51,9 @@ export default function SelectedPlacesPanel({
               {...dropProvided.droppableProps}
             >
               {selectedPlaces.map((item, idx) => {
-                const id = getId(item, idx);
+                const key = getKey(item, idx); // ← uid 우선
                 return (
-                  <Draggable draggableId={id} index={idx} key={id}>
+                  <Draggable draggableId={key} index={idx} key={key}>
                     {(dragProvided, dragSnapshot) => (
                       <li
                         ref={dragProvided.innerRef}
@@ -62,7 +64,7 @@ export default function SelectedPlacesPanel({
                             dragSnapshot.isDragging ? styles.dragging : ""
                           }`}
                         >
-                          {/* ⤵ 드래그 핸들: 숫자 점에만 붙여서 끌기 */}
+                          {/* 드래그 핸들 */}
                           <span
                             className={`${styles.orderDot} ${styles.handle}`}
                             {...dragProvided.dragHandleProps}
@@ -78,7 +80,8 @@ export default function SelectedPlacesPanel({
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              onRemove(item.placeId ?? item.id ?? id);
+                              // 삭제도 uid를 최우선으로 넘김
+                              onRemove(item.uid ?? item.placeId ?? item.id ?? key);
                             }}
                             aria-label={`${item.name} 삭제`}
                           >

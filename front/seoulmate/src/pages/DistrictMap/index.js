@@ -21,6 +21,7 @@ import seoulDistrict from "../../components/Map/SeoulDistrict";
 import PlaceMapSelector from "../../components/Location/PlaceMapSelector";
 import TransportSummary from "../../components/Transport/TransportSummary";
 import Event from "../../components/Event/Event";
+import api from "../../api/api";
 
 /* global kakao */
 
@@ -37,16 +38,26 @@ const BIKE_SVG = `
   <path d="M8 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm12 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM11 14h4l2 3m-2-3-2-4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
 
-function svgToMarkerImage(svg, w = 28, h = 28) {
-  const src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
-    svg.trim()
-  )}`;
-  const size = new kakao.maps.Size(w, h);
-  const options = { offset: new kakao.maps.Point(w / 2, h) };
-  return new kakao.maps.MarkerImage(src, size, options);
-}
-const PARK_IMAGE = svgToMarkerImage(PARK_SVG, 28, 28);
-const BIKE_IMAGE = svgToMarkerImage(BIKE_SVG, 28, 28);
+// function svgToMarkerImage(svg, w = 28, h = 28) {
+//   const src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+//     svg.trim()
+//   )}`;
+//   const size = new kakao.maps.Size(w, h);
+//   const options = { offset: new kakao.maps.Point(w / 2, h) };
+//   return new kakao.maps.MarkerImage(src, size, options);
+// }
+
+ function svgToMarkerImage(svg, w = 28, h = 28) {
+   const src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg.trim())}`;
+   const size = new kakao.maps.Size(w, h);
+   const options = { offset: new kakao.maps.Point(w / 2, h) };
+   return new kakao.maps.MarkerImage(src, size, options);
+ }
+
+const PARK_IMAGE        = svgToMarkerImage(PARK_SVG, 28, 28);
+const PARK_IMAGE_HOVER  = svgToMarkerImage(PARK_SVG, 32, 32); // 조금 크게
+const BIKE_IMAGE        = svgToMarkerImage(BIKE_SVG, 28, 28);
+const BIKE_IMAGE_HOVER  = svgToMarkerImage(BIKE_SVG, 32, 32);
 
 const esc = (s) =>
   String(s ?? "")
@@ -125,8 +136,13 @@ function DistrictMap() {
   const bikeMarkersRef = useRef([]);
   const overlayRef = useRef(null);
 
+  const [panelLoading, setPanelLoading] = useState(false);
+  const reqSeqRef = useRef(0); // 빠르게 클릭할 때 이전 응답 무시용
+
   const districtData = seoulDistrict.find((i) => i.id === regionId);
   const regionKeyword = districtData?.keyWord;
+
+  useEffect(() => { if (!selectedPlace) setActivePanel(null); }, [selectedPlace]);
 
   useEffect(() => {
     previewMarkersRef.current.forEach((m) => m.setMap(null));
@@ -155,14 +171,14 @@ function DistrictMap() {
     });
   }, [districtData]);
 
-  // ✅ 리스트에서 넘어온 place 쿼리가 있으면 자동으로 패널 오픈
+  //  리스트에서 넘어온 place 쿼리가 있으면 자동으로 패널 오픈
   useEffect(() => {
     if (!initialPlaceCode) return;
     setSelectedPlace({
       AREA_CD: initialPlaceCode,
       AREA_NM: initialPlaceName || "",
     });
-    setActivePanel("place");
+    setActivePanel((prev) => prev || "place");
     axios
       .get(
         `https://seoul-mate.co.kr/cityapi/cache/regions/city/districts/${initialPlaceCode}`
@@ -243,18 +259,10 @@ function DistrictMap() {
         address:
           poi.address_name || poi.road_address_name || ev?.EVENT_PLACE || "",
         url: poi.place_url ?? ev?.URL ?? "",
+        category:"행사",
       };
 
-      const res = await axios.post(
-        "https://seoul-mate.co.kr/contentapi/carts",
-        dto,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const res = await api.post("/carts", dto);
 
       alert("장소저장 완료");
       console.log("[createCart OK]", { dto, source, resStatus: res.status });
@@ -262,26 +270,39 @@ function DistrictMap() {
     } catch (err) {
       console.error("[createCart FAIL]", err);
       const status = err?.response?.status;
-      if (status === 409) alert("이미 저장된 장소입니다.");
-      else if (status === 401)
-        alert("인증이 만료되었습니다. 다시 로그인 해주세요.");
+      if (status === 401) alert("로그인이 필요합니다.");
+      else if (status === 409) alert("이미 저장된 장소입니다.");
       else alert("저장 실패");
       return false;
     }
   }, []);
 
-  const handlePlaceClick = useCallback((place) => {
-    setSelectedPlace(place);
-    setActivePanel("place");
-    axios
-      .get(
-        `https://seoul-mate.co.kr/cityapi/cache/regions/city/districts/${place.AREA_CD}`
-      )
-      .then((res) => setPlaceData(res.data))
-      .catch(console.error);
-  }, []);
+const handlePlaceClick = useCallback((place) => {
+  setSelectedPlace(place);
+  setActivePanel((prev) => prev || "place");  // 현재 탭 유지
+  const seq = ++reqSeqRef.current;
+  setPanelLoading(true);
+  axios
+    .get(`https://seoul-mate.co.kr/cityapi/cache/regions/city/districts/${place.AREA_CD}`)
+    .then((res) => {
+      if (seq !== reqSeqRef.current) return;  // 레이스 가드
+      setPlaceData(res.data);
+    })
+    .catch(console.error)
+    .finally(() => {
+      if (seq === reqSeqRef.current) setPanelLoading(false);
+    });
+}, []);
 
-  const openPanel = useCallback((type) => setActivePanel(type), []);
+
+  const openPanel = useCallback(
+    (type) => {
+      if (!selectedPlace) return;   // ← 지역 선택 전엔 패널 열지 않음
+      setActivePanel(type);
+    },
+    [selectedPlace]
+  );
+
   const closePanel = () => {
     setActivePanel(null);
     setSelectedPlace(null);
@@ -411,6 +432,17 @@ function DistrictMap() {
           image: PARK_IMAGE,
           zIndex: 3,
         });
+        // hover 효과
+        kakao.maps.event.addListener(marker, "mouseover", () => {
+          marker.setImage(PARK_IMAGE_HOVER);
+          marker.setZIndex(6);
+          if (mapRef.current) mapRef.current.style.cursor = "pointer";
+        });
+        kakao.maps.event.addListener(marker, "mouseout", () => {
+          marker.setImage(PARK_IMAGE);
+          marker.setZIndex(3);
+          if (mapRef.current) mapRef.current.style.cursor = "";
+        });
 
         const cpcty = p.CPCTY == null || p.CPCTY === "" ? "-" : p.CPCTY;
         const paid = p.PAY_YN === "Y" ? "유료" : "무료";
@@ -458,6 +490,16 @@ function DistrictMap() {
           image: BIKE_IMAGE,
           zIndex: 5,
         });
+        kakao.maps.event.addListener(marker, "mouseover", () => {
+         marker.setImage(BIKE_IMAGE_HOVER);
+         marker.setZIndex(8);
+         if (mapRef.current) mapRef.current.style.cursor = "pointer";
+       });
+       kakao.maps.event.addListener(marker, "mouseout", () => {
+         marker.setImage(BIKE_IMAGE);
+         marker.setZIndex(5);
+         if (mapRef.current) mapRef.current.style.cursor = "";
+       });
 
         const total = Number(b.SBIKE_RACK_CNT) || null;
         const empty = Number(b.SBIKE_PARKING_CNT);
@@ -543,12 +585,12 @@ function DistrictMap() {
   }, [mapObj, activePanel, previewPlaces]);
 
   const renderPanelContent = () => {
-    const needsPlace = ["place", "parking", "weather"].includes(
+    const needsPlace = ["place", "parking", "weather", "event"].includes(
       activePanel || ""
     );
     if (needsPlace && !placeData) {
       return selectedPlace ? (
-        <p>로딩 중…</p>
+        <p>요청을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.</p>
       ) : (
         <p>먼저 지도에서 장소를 선택하세요.</p>
       );
@@ -569,9 +611,9 @@ function DistrictMap() {
         );
       }
       case "parking":
-        return (
+        return (//AREA_CD
           <>
-            <h2>{placeData?.LIVE_PPLTN_STTS?.[0]?.AREA_CD || "정보 없음"}</h2>
+            <h2>{placeData?.LIVE_PPLTN_STTS?.[0]?.AREA_NM || "정보 없음"}</h2>
             <Traffic
               parkingData={placeData?.PRK_STTS}
               sbikeData={placeData?.SBIKE_STTS}
@@ -579,9 +621,9 @@ function DistrictMap() {
           </>
         );
       case "weather":
-        return (
+        return ( //AREA_CD
           <>
-            <h2>{placeData?.LIVE_PPLTN_STTS?.[0]?.AREA_CD || "정보 없음"}</h2>
+            <h2>{placeData?.LIVE_PPLTN_STTS?.[0]?.AREA_NM || "정보 없음"}</h2>
             <Weather weatherData={placeData?.WEATHER_STTS} />
           </>
         );
@@ -610,15 +652,15 @@ function DistrictMap() {
     }
   };
 
-  const sidebarMenus = [
-    ...(selectedPlace
-      ? [{ label: "장소", onClick: () => openPanel("place") }]
-      : []),
-    { label: "검색", onClick: () => openPanel("search") },
-    { label: "주차", onClick: () => openPanel("parking") },
-    { label: "날씨", onClick: () => openPanel("weather") },
-    { label: "행사", onClick: () => openPanel("event") },
-  ];
+  const sidebarMenus = selectedPlace
+    ? [
+        { label: "장소", onClick: () => openPanel("place") },
+        { label: "검색", onClick: () => openPanel("search") },
+        { label: "주차", onClick: () => openPanel("parking") },
+        { label: "날씨", onClick: () => openPanel("weather") },
+        { label: "행사", onClick: () => openPanel("event") },
+      ]
+    : []; // ← 지역 선택 전엔 메뉴 비움 (사이드바는 껍데기만 표시)
 
   return (
     <div className="container">

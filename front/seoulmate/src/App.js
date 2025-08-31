@@ -19,6 +19,7 @@ import SaveToken from "./components/Auth/SaveToken";
 import LoginForm from "./components/Auth/LoginForm";
 import SignUpForm from "./components/Auth/SignUpForm";
 import ProfileEditPage from "./pages/Settings/ProfileEditPage";
+import ReviewPage from "./pages/ReviewPage";
 
 export default function App() {
   return (
@@ -29,6 +30,8 @@ export default function App() {
 
         {/* 기본: 지도 먼저 */}
         <Route path="/map/:regionId" element={<DistrictMap />} />
+
+        <Route path="/reviews" element={<ReviewPage />} />
 
         {/* 리스트 페이지 */}
         <Route path="/districts/:regionId" element={<DistrictPage />} />

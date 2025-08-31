@@ -6,7 +6,7 @@ function SearchMapFilter({
   regionId,
   onPreviewPins,
 }) {
-  const tags = ["카페", "명소", "음식점"];
+  const tags = ["카페","명소","맛집","문화","공원",];
 
   return (
     <div>

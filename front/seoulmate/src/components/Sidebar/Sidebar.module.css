@@ -1,3 +1,5 @@
+/* Sidebar.module.css — 예전 스타일 복원 + 버튼화 방지 */
+
 .sidebar {
   width: 80px;
   height: 100vh;
@@ -26,11 +28,20 @@
 }
 
 .sidebarMenu {
+  /* ↓ 혹시 전역 스타일이 버튼처럼 만드는 걸 완전히 차단 */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+
+  display: block;
   font-size: 18px;
   font-weight: 500;
   margin-bottom: 20px;
   white-space: nowrap;
   text-align: center;
+  color: #000;
   cursor: pointer;
 }
 

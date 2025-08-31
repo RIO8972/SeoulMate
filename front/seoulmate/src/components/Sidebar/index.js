@@ -21,7 +21,8 @@ function Sidebar({
     { label: "행사", onClick: () => setActivePanel("event") },
   ];
 
-  const renderMenus = menus && menus.length ? menus : defaultMenus;
+  // ✅ menus가 "전달되지 않은(undefined)" 경우에만 기본 메뉴 사용
+  const renderMenus = typeof menus === "undefined" ? defaultMenus : menus;
 
   return (
     <div className={styles.sidebar}>
@@ -29,11 +30,18 @@ function Sidebar({
         <img src={logoImage} alt="로고" className={styles.sidebarLogo} />
       </Link>
 
-      {renderMenus.map((m, i) => (
-        <div key={i} className={styles.sidebarMenu} onClick={m.onClick}>
-          {m.label}
-        </div>
-      ))}
+      {/* ✅ 빈 배열이면 메뉴 자체를 렌더하지 않음 */}
+      {!!renderMenus?.length &&
+        renderMenus.map((m, i) => (
+          <button
+            key={`${m.label}-${i}`}
+            type="button"
+            className={styles.sidebarMenu}
+            onClick={m.onClick}
+          >
+            {m.label}
+          </button>
+        ))}
 
       {mode === "map" ? (
         <Link to={toWhenMap} className={styles.sidebarFooter} title="코스 작성">

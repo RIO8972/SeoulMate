@@ -6,6 +6,21 @@ import ReviewForm from "./ReviewForm";
 import api from "../api/api";
 
 /* ------------------ 유틸 ------------------ */
+
+const simplifyCategory = (raw = "") => {
+  const s = String(raw).trim();
+  if (!s) return "";
+  const t = s.replace(/\s/g, "");
+  if (/관광|명소|여행|유적|전망대|랜드마크/.test(t)) return "관광명소";
+  if (/카페|디저트/.test(t)) return "카페";
+  if (/음식|식당|한식|중식|양식|일식|분식|치킨|피자|고기|회|국수|돈까스/.test(t)) return "음식점";
+  if (/숙박|호텔|모텔|펜션|리조트|게스트/.test(t)) return "숙박";
+  if (/쇼핑|시장|백화점|아울렛|마트|편의점/.test(t)) return "쇼핑";
+  if (/문화|박물관|전시|미술관|공연|도서관|영화관|극장/.test(t)) return "문화시설";
+  if (/공원|자연|산|호수|강|해변|섬|둘레길|산책로|정원/.test(t)) return "자연/공원";
+  return s.split(">").shift()?.trim() ?? "기타";
+};
+
 const ALL_CATEGORY_LABELS = [
   "맛집","음식점","카페","디저트","자연","산책","야경","감성","명소",
   "힐링","쇼핑","실내","전시","팝업","공연","영화관","액티비티","드라이브",
@@ -36,14 +51,23 @@ const isoDate = (v) => {
 };
 
 // 프런트 place -> 백엔드 PlaceRequestDto
-const toPlaceRequest = (p, i) => ({
-  placeId: String(p.placeId ?? p.id ?? `p-${i}`),
-  name: p.name ?? "",
-  lat: String(p.lat ?? p.y ?? ""),
-  lng: String(p.lng ?? p.x ?? ""),
-  address: p.address ?? p.road_address_name ?? p.address_name ?? "",
-  url: p.url ?? p.place_url ?? "",
-});
+const toPlaceRequest = (p, i) => {
+  const rawCat =
+    p?.category ??
+    p?.category_group_name ??
+    p?.category_name ??
+    ""; // 없으면 빈 문자열
+
+  return {
+    placeId: String(p.placeId ?? p.id ?? `p-${i}`),
+    name: p.name ?? "",
+    lat: String(p.lat ?? p.y ?? ""),
+    lng: String(p.lng ?? p.x ?? ""),
+    address: p.address ?? p.road_address_name ?? p.address_name ?? "",
+    url: p.url ?? p.place_url ?? "",
+    category: p.category ?? simplifyCategory(rawCat), // ✅ 추가
+  };
+};
 
 // 문자열/Date/없음 → ISO 문자열 또는 null
 const toIsoDateTime = (v) => {
@@ -84,7 +108,7 @@ const toInitialData = (r) => {
     date: isoDate(r?.date ?? r?.visitedDate),
     time: r?.time ?? "",
     cost: numFromCurrency(r?.cost),
-    datetime: r?.datetime ?? null,
+    datetime: r?.datetime,
   };
 };
 /* ----------------------------------------- */

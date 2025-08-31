@@ -1,3 +1,4 @@
+// src/auth/Logout.jsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
@@ -7,17 +8,16 @@ export default function Logout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    (async () => {
-      try {
-        await logout();              // 서버 RT 쿠키/세션 정리 + 상태 null (아래 참고)
-      } finally {
-        // 방어적: 혹시 모를 잔존값 제거
-        try { localStorage.removeItem("accessToken"); } catch {}
-        setAccessToken(null);        // Provider 상태도 확실히 null
-        navigate("/login", { replace: true });
-      }
-    })();
+    // 1) 로컬 상태/스토리지 즉시 정리
+    try { localStorage.removeItem("accessToken"); } catch {}
+    setAccessToken(null);
+
+    // 2) 서버 로그아웃은 화면 전환을 막지 않도록 fire-and-forget
+    Promise.resolve().then(() => logout().catch(() => {}));
+
+    // 3) 즉시 로그인 페이지로 이동
+    navigate("/login", { replace: true });
   }, [logout, setAccessToken, navigate]);
 
-  return <p>로그아웃 중…</p>;
+  return null; // "로그아웃 중…" 같은 문구 없이 바로 이동
 }

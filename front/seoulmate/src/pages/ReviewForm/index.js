@@ -196,6 +196,7 @@ function ReviewForm({
       lng: String(p.lng ?? p.x ?? ""),
       address: p.address ?? p.road_address_name ?? p.address_name ?? "",
       url: p.url ?? p.place_url ?? "",
+      category: p.category ?? "",
     }));
 
     const form = new FormData();

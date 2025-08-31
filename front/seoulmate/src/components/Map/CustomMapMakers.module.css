@@ -23,3 +23,13 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   opacity: 0.7; /*투명도 추가*/
 }
+
+/* 👇 추가: 마우스 올라가면 손가락(클릭) 커서 */
+.container, .circle { cursor: pointer; }
+
+/* 선택: 살짝 호버 효과까지 주고 싶으면 */
+.container:hover .circle {
+  opacity: 0.9;
+  transform: scale(1.02);
+  transition: transform .12s ease, opacity .12s ease;
+}
