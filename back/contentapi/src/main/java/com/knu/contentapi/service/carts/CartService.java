@@ -50,6 +50,7 @@ public class CartService {
                 .lng(dto.getLng())
                 .address(dto.getAddress())
                 .url(dto.getUrl())
+                .category(dto.getCategory())
                 .build();
         log.info(cart.toString());
         return cartRepository.save(cart).getId();
