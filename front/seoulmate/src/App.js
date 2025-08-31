@@ -18,6 +18,7 @@ import Logout from "./components/Auth/Logout";
 import SaveToken from "./components/Auth/SaveToken";
 import LoginForm from "./components/Auth/LoginForm";
 import SignUpForm from "./components/Auth/SignUpForm";
+import ProfileEditPage from "./pages/Settings/ProfileEditPage";
 
 export default function App() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="/savetoken" element={<SaveToken />} />
         <Route path="/requesttoken" element={<RequestToken />} />
         <Route path="/sign" element={<SignUpForm />} />
+        <Route path="/settings" element={<ProfileEditPage />} />
       </Routes>
     </BrowserRouter>
   );
