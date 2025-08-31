@@ -116,6 +116,7 @@ public class Review {
                 .lng(dto.getLng())
                 .address(dto.getAddress())
                 .url(dto.getUrl())
+                .category(dto.getCategory())
                 .review(this)
                 .build();
         reviewPlaces.add(reviewPlace);
@@ -173,6 +174,7 @@ public class Review {
                     .lng(place.getLng())
                     .address(place.getAddress())
                     .url(place.getUrl())
+                    .category(place.getCategory())
                     .build();
             _places.add(dto);
         }

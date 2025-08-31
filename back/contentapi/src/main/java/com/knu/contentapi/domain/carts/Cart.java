@@ -35,4 +35,6 @@ public class Cart {
     private String address;
     @Column
     private String url;
+    @Column
+    private String category;
 }
