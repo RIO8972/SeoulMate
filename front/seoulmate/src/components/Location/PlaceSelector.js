@@ -27,6 +27,10 @@ const genUid = () =>
     ? crypto.randomUUID()
     : `uid_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+// 선택된 장소를 마커와 매칭하기 위한 키
+const placeKey = (p) =>
+  String(p?.uid ?? p?.placeId ?? p?.id ?? `${p?.lng ?? p?.x}-${p?.lat ?? p?.y}`);
+
 export default function PlaceSelector({
   data,
   setData,
@@ -36,7 +40,11 @@ export default function PlaceSelector({
 }) {
   const mapRef = useRef(null);
   const [map, setMap] = useState(null);
+
+  // ✅ 사용자가 "추가"한 장소 마커만 관리
   const [markers, setMarkers] = useState([]);
+
+  // ❌ 자동 프리뷰 마커는 더 이상 생성하지 않음(클리어 용도만)
   const [previewMarkers, setPreviewMarkers] = useState([]);
 
   const [keyword, setKeyword] = useState(defaultKeyword || "");
@@ -52,11 +60,11 @@ export default function PlaceSelector({
   const selectedPlaces = data.selectedPlaces || [];
   const isTaggedSearch = selectedTag && selectedTag !== "전체";
 
-  // 기본 카카오 검색 훅
+  // 기본 카카오 검색 훅(요청은 그대로, 지도엔 자동 마커 X)
   const searchQuery =
     selectedTag === "장바구니"
       ? ""
-      : keyword.trim() + (isTaggedSearch ? ` ${selectedTag}` : "");
+      : (keyword || "").toString().trim() + (isTaggedSearch ? ` ${selectedTag}` : "");
   const kakaoPlaces = useSearchPlaces(searchQuery);
 
   // 실제로 보여줄 목록
@@ -89,56 +97,25 @@ export default function PlaceSelector({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // prefill 1회 적용(+카테고리 저장)
+  /**
+   * ✅ prefill(기본 장소) 적용 시:
+   *  - 마커는 찍지 않고 중심만 이동(“초기 자동 핀 제거” 요구사항)
+   */
   useEffect(() => {
-    if (!map || !defaultPlace || !defaultPlace.lat || !defaultPlace.lng || prefillApplied) return;
+    if (!map || !defaultPlace || prefillApplied) return;
 
     const lat = Number(defaultPlace.lat);
     const lng = Number(defaultPlace.lng);
-    const uid = genUid();
-
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
       const pos = new kakao.maps.LatLng(lat, lng);
       map.setLevel(5);
-      map.setCenter(pos);
-      const mk = new kakao.maps.Marker({ position: pos, map });
-      mk.uid = uid;
-      mk.placeId = String(defaultPlace.id || `prefill-${Date.now()}`);
-      setMarkers((prev) => [...prev, mk]);
+      map.setCenter(pos); // 중심만 이동
     }
 
-    // 선택목록 중복 체크 후 추가
-    setData((prev) => {
-      const prevSel = Array.isArray(prev.selectedPlaces) ? prev.selectedPlaces : [];
-      const id = String(defaultPlace.id || `${defaultPlace.lng}-${defaultPlace.lat}`);
-
-      const exists = prevSel.some(
-        (p) =>
-          (p.placeId ?? p.id) === id ||
-          (Number(p.lat) === Number(defaultPlace.lat) &&
-            Number(p.lng) === Number(defaultPlace.lng))
-      );
-      if (exists) return prev;
-
-      const newPlace = {
-        uid,
-        placeId: id,
-        id,
-        name: defaultPlace.name || "장소",
-        lat,
-        lng,
-        address: defaultPlace.address || "",
-        url: defaultPlace.url || "",
-        category: simplifyCategory(defaultPlace.category || defaultKeyword || ""), // ✅ 저장
-        stay: defaultPlace.stay || 60,
-      };
-      return { ...prev, selectedPlaces: [...prevSel, newPlace] };
-    });
-
     setPrefillApplied(true);
-  }, [map, defaultPlace, defaultKeyword, prefillApplied, setData]);
+  }, [map, defaultPlace, prefillApplied]);
 
-  // “장바구니” 선택 시 내 찜 목록 불러오기
+  // “장바구니” 선택 시 내 찜 목록 불러오기(지도 자동 마커 X)
   useEffect(() => {
     if (selectedTag !== "장바구니") {
       setCartPlaces([]);
@@ -153,60 +130,92 @@ export default function PlaceSelector({
     api.get("/carts/mine").then((res) => {
       const list = Array.isArray(res.data) ? res.data : [];
       const mapped = list.map((p, i) => ({
-        // 렌더링 key용: 행 고유 id
         cartId: String(p.id ?? `row-${i}`),
-
-        //장소 식별: Kakao/POI id
         id: String(p.placeId ?? p.kakaoId ?? p.id ?? i),
-
         x: String(p.lng),
         y: String(p.lat),
         place_name: p.name,
         road_address_name: p.address,
         address_name: p.address,
         place_url: p.url,
-
-        // 서버 category 그대로
         category: p.category ?? "",
       }));
       setCartPlaces(mapped);
     });
   }, [selectedTag]);
 
-  // 검색/장바구니 결과 → 프리뷰 마커
+  /**
+   * ❌ 검색/카테고리 결과 자동 프리뷰 마커 제거
+   *  - 자동 마커는 만들지 않고, 결과가 있으면 중심만 이동
+   */
   useEffect(() => {
     if (!map) return;
 
+    // 기존 프리뷰 마커 제거
     previewMarkers.forEach((m) => m.setMap(null));
+    setPreviewMarkers([]);
 
-    if (!displayPlaces || displayPlaces.length === 0) {
-      setPreviewMarkers([]);
-      return;
+    if (displayPlaces && displayPlaces.length > 0) {
+      const first = displayPlaces[0];
+      const y = parseFloat(first.y);
+      const x = parseFloat(first.x);
+      if (Number.isFinite(y) && Number.isFinite(x)) {
+        map.setCenter(new kakao.maps.LatLng(y, x));
+      }
     }
-
-    const list =
-      selectedTag === "장바구니"
-        ? displayPlaces
-        : isTaggedSearch
-        ? displayPlaces
-        : [displayPlaces[0]];
-
-    const nextPreview = list.map((place) => {
-      const mk = new kakao.maps.Marker({
-        position: new kakao.maps.LatLng(parseFloat(place.y), parseFloat(place.x)),
-        map,
-        title: place.place_name,
-      });
-      return mk;
-    });
-    setPreviewMarkers(nextPreview);
-
-    const first = displayPlaces[0];
-    map.setCenter(new kakao.maps.LatLng(parseFloat(first.y), parseFloat(first.x)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayPlaces, map, isTaggedSearch, selectedTag]);
+  }, [displayPlaces, map, isTaggedSearch, selectedTag, keyword]);
 
-  // 장소 추가: 이름 중복 방지 + uid 부여 + 카테고리 저장
+  /**
+   * ✅ 선택된 장소(selectedPlaces) ↔ 지도 마커 동기화
+   *  - (1) 처음 폼 로딩 시 이미 선택된 장소들 → 마커 생성
+   *  - (2) 선택 목록에서 제거하면 해당 마커 제거
+   *  - (3) 외부에서 목록이 바뀌어도 항상 동기화
+   */
+  useEffect(() => {
+    if (!map) return;
+
+    const existing = new Map(
+      markers.map((m) => [String(m.uid ?? m.placeId ?? m.id), m])
+    );
+    const desiredKeys = new Set(selectedPlaces.map(placeKey));
+
+    // 1) 없는 마커 생성
+    const newMarkers = [...markers];
+    selectedPlaces.forEach((p, i) => {
+      const key = placeKey(p);
+      if (existing.has(key)) return;
+
+      const lat = Number(p.lat ?? p.y);
+      const lng = Number(p.lng ?? p.x);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      const mk = new kakao.maps.Marker({
+        position: new kakao.maps.LatLng(lat, lng),
+        map,
+      });
+      mk.uid = key;
+      mk.placeId = String(p.placeId ?? p.id ?? `p-${i}`);
+      newMarkers.push(mk);
+    });
+
+    // 2) 불필요한 마커 제거
+    const filtered = newMarkers.filter((m) => {
+      const key = String(m.uid ?? m.placeId ?? m.id);
+      if (desiredKeys.has(key)) return true;
+      try { m.setMap(null); } catch {}
+      return false;
+    });
+
+    // 필요할 때만 상태 업데이트(불필요한 리렌더 방지)
+    if (filtered.length !== markers.length ||
+        filtered.some((m, i) => markers[i] !== m)) {
+      setMarkers(filtered);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, selectedPlaces]);
+
+  // ✅ 사용자가 "추가"한 경우에만 마커 생성
   const handleAddPlace = (place) => {
     const id = String(place.id || `${place.x}-${place.y}`);
 
@@ -218,7 +227,6 @@ export default function PlaceSelector({
     const exists = selectedPlaces.some((p) => norm(p.name ?? p.place_name) === norm(name));
     if (exists) return;
 
-    // 원본 카테고리 → 간단화
     const categoryRaw =
       place.category ??
       place.category_group_name ??
@@ -228,14 +236,14 @@ export default function PlaceSelector({
 
     const uid = genUid();
     const newPlace = {
-      uid,             // 고유키(삭제/정렬 시 사용)
-      placeId: id,     // 보조키
+      uid,
+      placeId: id,
       name,
       lat: Number(place.lat ?? place.y),
       lng: Number(place.lng ?? place.x),
       address: place.address ?? place.road_address_name ?? place.address_name ?? "",
       url: place.url ?? place.place_url ?? "",
-      category,        // ✅ DB 저장용 카테고리
+      category,
     };
 
     setData((prev) => ({
@@ -248,14 +256,14 @@ export default function PlaceSelector({
         position: new kakao.maps.LatLng(newPlace.lat, newPlace.lng),
         map,
       });
-      marker.uid = uid;
+      marker.uid = placeKey(newPlace);
       marker.placeId = id;
       setMarkers((prev) => [...prev, marker]);
       map.panTo(marker.getPosition());
     }
   };
 
-  // 개별 제거: uid 우선, 없으면 placeId로 폴백하여 "하나만" 제거
+  // 개별 제거: uid 우선, 없으면 placeId로 폴백
   const handleRemovePlace = (key) => {
     const strKey = String(key);
 
@@ -320,9 +328,9 @@ export default function PlaceSelector({
 
               return (
                 <PlaceCard
-                  key={rowKey}                // ✅ 행 기준 고유 key
+                  key={rowKey}
                   place={{
-                    id: kakaoId,              // ✅ 장소 id (비지니스 식별)
+                    id: kakaoId,
                     name: place.place_name,
                     lat: parseFloat(place.y),
                     lng: parseFloat(place.x),
@@ -331,10 +339,10 @@ export default function PlaceSelector({
                     category:
                       place.category_group_name ||
                       place.category_name ||
-                      place.category || "",    // ✅ 장바구니 항목도 문제없이 표시
+                      place.category || "",
                   }}
                   mode="select"
-                  onAdd={handleAddPlace}
+                  onAdd={handleAddPlace}   // "추가" 눌러야만 마커 생성
                 />
               );
             })}
@@ -347,7 +355,7 @@ export default function PlaceSelector({
             <SelectedPlacesPanel
               selectedPlaces={selectedPlaces}
               onRemoveAll={handleRemoveAll}
-              onRemove={handleRemovePlace}
+              onRemove={handleRemovePlace}  
               onReorder={handleReorder}
             />
           </div>

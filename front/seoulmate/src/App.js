@@ -20,6 +20,7 @@ import LoginForm from "./components/Auth/LoginForm";
 import SignUpForm from "./components/Auth/SignUpForm";
 import ProfileEditPage from "./pages/Settings/ProfileEditPage";
 import ReviewPage from "./pages/ReviewPage";
+import PasswordEditPage from "./pages/Password/PasswordEditPage";
 
 export default function App() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
         <Route path="/requesttoken" element={<RequestToken />} />
         <Route path="/sign" element={<SignUpForm />} />
         <Route path="/settings" element={<ProfileEditPage />} />
+        <Route path="/settings/password" element={<PasswordEditPage />} />
       </Routes>
     </BrowserRouter>
   );

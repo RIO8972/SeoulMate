@@ -1,4 +1,4 @@
-// src/pages/Settings/ProfileEditPage.jsx
+// // src/pages/Settings/ProfileEditPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./ProfileEditPage.module.css";
 import api from "../../api/api";
@@ -18,7 +18,7 @@ export default function ProfileEditPage() {
   const [me, setMe] = useState(null);
 
   // 수정 상태
-  const [nickname, setNickname] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(DEFAULT_AVATAR);
@@ -35,10 +35,10 @@ export default function ProfileEditPage() {
         if (!mounted) return;
         const u = res.data ?? {};
         setMe(u);
-        setNickname(u.nickname ?? u.name ?? "");
+        setUsername(u.username ?? "");
         setEmail(u.email ?? "");
         // ✅ 서버가 이미지 안 주면 기본 이미지로
-        setAvatarPreview(u.avatarUrl ?? u.profileImage ?? DEFAULT_AVATAR);
+        setAvatarPreview(u.imgUrl ?? DEFAULT_AVATAR);
       } catch (e) {
         console.error("내 정보 조회 실패", e);
         if (e?.response?.status === 401) {
@@ -54,14 +54,14 @@ export default function ProfileEditPage() {
       if (avatarPreview?.startsWith?.("blob:"))
         URL.revokeObjectURL(avatarPreview);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 변경 여부 → 저장 버튼 활성화
   const isDirty = useMemo(() => {
-    const baseNick = me?.nickname ?? me?.name ?? "";
-    return nickname.trim() !== baseNick || !!avatarFile;
-  }, [me, nickname, avatarFile]);
+    const baseNick = me?.username ?? me?.name ?? "";
+    return username.trim() !== baseNick || !!avatarFile;
+  }, [me, username, avatarFile]);
 
   // ───────────────── 파일 선택/검사/미리보기 ─────────────────
   const validateImage = (file) => {
@@ -87,73 +87,90 @@ export default function ProfileEditPage() {
   const onFileChange = (e) => handleFileFromUser(e.target.files?.[0]);
   const pickFile = () => fileInputRef.current?.click();
 
-  // ───────────────── 기본 이미지로(삭제) ─────────────────
-  const handleRemoveAvatar = async () => {
-    if (!window.confirm("프로필 사진을 기본 이미지로 변경할까요?")) return;
-    try {
-      setUploading(true);
-      await api.delete("/users/me/avatar"); // 팀 엔드포인트명 맞추기
-      const refreshed = await api.get("/users/me");
-      setMe(refreshed.data ?? {});
-      setAvatarFile(null);
-      if (avatarPreview?.startsWith?.("blob:"))
-        URL.revokeObjectURL(avatarPreview);
-      setAvatarPreview(DEFAULT_AVATAR); // ✅ 바로 기본 이미지로
-      window.dispatchEvent(new Event("profile-updated"));
-    } catch (e) {
-      console.error(e);
-      alert("이미지 삭제에 실패했어요.");
-    } finally {
-      setUploading(false);
-    }
-  };
+// ───────────────── 기본 이미지로(삭제) ─────────────────
+const handleRemoveAvatar = async () => {
+  if (!window.confirm("프로필 사진을 기본 이미지로 변경할까요?")) return;
+
+  try {
+    setUploading(true);
+
+    // 컨트롤러(@DeleteMapping("/users/me/image"))와 1:1 매칭
+    await api.delete("/users/me/image");
+
+    // 로컬 상태 즉시 반영(서버는 204라 바디 없음)
+    setMe((prev) => (prev ? { ...prev, imgUrl: null } : prev));
+    setAvatarFile(null);
+    if (avatarPreview?.startsWith?.("blob:")) URL.revokeObjectURL(avatarPreview);
+    setAvatarPreview(DEFAULT_AVATAR);
+
+    // 헤더 등 다른 컴포넌트에 즉시 반영
+    window.dispatchEvent(
+      new CustomEvent("profile-updated", { detail: { imgUrl: null } })
+    );
+  } catch (e) {
+    console.error(e);
+    alert("이미지 삭제에 실패했어요.");
+  } finally {
+    setUploading(false);
+  }
+};
+
+
 
   // ───────────────── 저장 ─────────────────
-  const handleSave = async () => {
-    if (!isDirty) return;
-    try {
-      setSaving(true);
-      setError("");
+// 2) 저장 핸들러 수정
+const handleSave = async () => {
+  if (!isDirty) return;
+  try {
+    setSaving(true);
+    setError("");
 
-      // 닉네임 변경 (필요시)
-      const baseNick = me?.nickname ?? me?.name ?? "";
-      if (nickname.trim() !== baseNick) {
-        await api.put("/users/me", { nickname: nickname.trim() });
-      }
-
-      // 아바타 업로드 (필요시)
-      if (avatarFile) {
-        const form = new FormData();
-        form.append("file", avatarFile);
-        await api.post("/users/me/avatar", form, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-      }
-
-      // 최신 상태 동기화
-      const refreshed = await api.get("/users/me");
-      setMe(refreshed.data ?? {});
-      setNickname(refreshed.data?.nickname ?? refreshed.data?.name ?? "");
-      setAvatarFile(null);
-      if (avatarPreview?.startsWith?.("blob:"))
-        URL.revokeObjectURL(avatarPreview);
-
-      // ✅ 서버 URL이 있으면 캐시버스트, 없으면 기본 이미지
-      const serverUrl =
-        refreshed.data?.avatarUrl ?? refreshed.data?.profileImage ?? "";
-      setAvatarPreview(
-        serverUrl ? `${serverUrl}?t=${Date.now()}` : DEFAULT_AVATAR
-      );
-
-      alert("저장되었습니다.");
-      window.dispatchEvent(new Event("profile-updated"));
-    } catch (e) {
-      console.error(e);
-      setError("저장 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
-    } finally {
-      setSaving(false);
+    // 1) 닉네임 변경 (백엔드가 JSON으로 받는 경우: @RequestBody)
+    //   - 서버가 @RequestPart("dto")로 받는다면 아래 JSON 대신 FormData 로 바꾸세요(아래 참고)
+    const baseNick = me?.username ?? me?.name ?? "";
+    if (username.trim() !== baseNick) {
+      await api.patch("/users/me/name", { username: username.trim() }); // JSON
     }
-  };
+    // 2) 아바타 업로드 (멀티파트)
+    if (avatarFile) {
+      const form = new FormData();
+      form.append("image", avatarFile, avatarFile.name); // ★ 키 이름 'image'
+      await api.patch("/users/me/image", form, {
+        onUploadProgress: (e) => {
+          if (e.total) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            console.log(`[ProfileEdit] upload ${pct}% (${e.loaded}/${e.total})`);
+          }
+        },
+      });
+    } else {
+      console.log("[ProfileEdit] no avatarFile selected (skip upload)");
+    }
+
+    // 3) 최신 상태 동기화
+    const refreshed = await api.get("/users/me");
+    setMe(refreshed.data ?? {});
+    setUsername(refreshed.data?.username ?? refreshed.data?.name ?? "");
+    setAvatarFile(null);
+    if (avatarPreview?.startsWith?.("blob:")) URL.revokeObjectURL(avatarPreview);
+
+    const serverUrl =
+      refreshed.data?.avatarUrl ??
+      refreshed.data?.profileImage ??
+      refreshed.data?.imgUrl ??
+      "";
+    setAvatarPreview(serverUrl ? `${serverUrl}?t=${Date.now()}` : DEFAULT_AVATAR);
+
+    alert("저장되었습니다.");
+    window.dispatchEvent(new Event("profile-updated"));
+  } catch (e) {
+    console.error(e);
+    setError("저장 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
+  } finally {
+    setSaving(false);
+  }
+};
+
 
   if (loading) {
     return (
@@ -190,7 +207,7 @@ export default function ProfileEditPage() {
             </div>
 
             <div className={styles.ownerName}>
-              {nickname || me?.name || "사용자"}
+              {me?.email || me?.name || "사용자"}
             </div>
 
             <div className={styles.avatarActions}>
@@ -230,24 +247,13 @@ export default function ProfileEditPage() {
           <div className={styles.formCard}>
             <label className={styles.label}>닉네임</label>
             <input
+              placeholder={username}
               className={styles.input}
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="닉네임"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               maxLength={20}
               disabled={saving}
             />
-
-            <label className={styles.label}>이메일</label>
-            <input
-              className={styles.input}
-              value={email}
-              disabled
-              readOnly
-              placeholder="email"
-            />
-
-            {error && <div className={styles.error}>{error}</div>}
 
             <div className={styles.actions}>
               <button
@@ -263,7 +269,7 @@ export default function ProfileEditPage() {
                 onClick={handleSave}
                 disabled={saving || !isDirty}
               >
-                {saving ? "저장 중..." : "저장"}
+                {saving ? "수정 중..." : "수정"}
               </button>
             </div>
 

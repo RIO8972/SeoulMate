@@ -1,3 +1,4 @@
+// src/components/Header/index.jsx
 import "./style.css";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -9,18 +10,18 @@ import api from "../../api/api";
 const Header = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [imgVersion, setImgVersion] = useState(0); // 캐시버스트용
   const location = useLocation();
 
-  // 로그인 유무에 따라 사용자 정보 가져오기
+  // 최초 로드 시 내 정보
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
       setUser(null);
       return;
     }
-
     api
-      .get(`/users/me`)
+      .get(`/users/me`, { params: { t: Date.now() } })
       .then((res) => setUser(res.data))
       .catch((err) => {
         console.error("내 정보 조회 실패", err);
@@ -31,12 +32,30 @@ const Header = () => {
       });
   }, []);
 
+  // ✅ 프로필 저장 후 이벤트 수신 → 리패치 + 캐시버스트
+  useEffect(() => {
+    const onProfileUpdated = async () => {
+      try {
+        const res = await api.get(`/users/me`, { params: { t: Date.now() } });
+        setUser(res.data);
+        setImgVersion(Date.now()); // 이미지 src에 버전 붙여 새로 로드
+      } catch (err) {
+        console.error("프로필 갱신 리패치 실패", err);
+      }
+    };
+    window.addEventListener("profile-updated", onProfileUpdated);
+    return () => window.removeEventListener("profile-updated", onProfileUpdated);
+  }, []);
+
   // 이미지 에러 시 기본 아이콘으로 복구
   const handleAvatarError = (e) => {
     e.currentTarget.src = Account;
     e.currentTarget.onerror = null;
   };
-  const avatarUrl = user?.imgUrl || Account;
+
+  // ✅ 캐시버스트 파라미터만 추가 (UI/스타일 영향 없음)
+  const raw = user?.imgUrl || "";
+  const avatarUrl = raw ? `${raw}${raw.includes("?") ? "&" : "?"}v=${imgVersion}` : Account;
 
   // ESC 키로 닫기
   useEffect(() => {
@@ -58,7 +77,6 @@ const Header = () => {
         </Link>
 
         <div className="header-btn-layout">
-          {/* 로그인 유무에 따라 링크/이미지 동적 변경 */}
           <Link
             to={user ? "/profile" : "/login"}
             className="login-link"
@@ -69,10 +87,12 @@ const Header = () => {
               alt="프로필"
               className="header-avatar"
               onError={handleAvatarError}
+              // 필요 시 아래 두 줄로 사이즈 고정 가능(스타일이 안 먹을 때만)
+              // width={32}
+              // height={32}
             />
           </Link>
 
-          {/* 햄버거 → 사이드바 열기 */}
           <button
             className="menu-btn"
             onClick={() => setOpen(true)}
@@ -83,51 +103,26 @@ const Header = () => {
         </div>
       </header>
 
-      {/* 오른쪽 드로어 */}
       {open && (
         <>
           <div className="drawer-backdrop" onClick={() => setOpen(false)} />
-          <aside
-            className="drawer"
-            role="dialog"
-            aria-modal="true"
-            aria-label="사이드 메뉴"
-          >
+          <aside className="drawer" role="dialog" aria-modal="true" aria-label="사이드 메뉴">
             <div className="drawer-header">
               <span className="drawer-title">메뉴</span>
-              <button
-                className="drawer-close"
-                onClick={() => setOpen(false)}
-                aria-label="메뉴 닫기"
-              >
+              <button className="drawer-close" onClick={() => setOpen(false)} aria-label="메뉴 닫기">
                 ✕
               </button>
             </div>
 
             <nav className="drawer-nav">
-              <Link
-                to="/mypage"
-                className="drawer-link"
-                onClick={() => setOpen(false)}
-              >
+              <Link to="/mypage" className="drawer-link" onClick={() => setOpen(false)}>
                 마이페이지
               </Link>
-
-              <Link
-                to="/settings"
-                className="drawer-link"
-                onClick={() => setOpen(false)}
-              >
+              <Link to="/settings" className="drawer-link" onClick={() => setOpen(false)}>
                 설정
               </Link>
-
-              {/* 로그인 상태에서만 보이는 로그아웃 (Logout 컴포넌트로 라우팅) */}
               {user && (
-                <Link
-                  to="/logout"
-                  className="drawer-link drawer-logout"
-                  onClick={() => setOpen(false)}
-                >
+                <Link to="/logout" className="drawer-link drawer-logout" onClick={() => setOpen(false)}>
                   로그아웃
                 </Link>
               )}
