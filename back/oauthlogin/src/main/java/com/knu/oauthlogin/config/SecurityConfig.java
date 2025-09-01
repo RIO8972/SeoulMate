@@ -92,8 +92,10 @@ public class SecurityConfig {
                                 "/oauth2/**", "/oauth-login",
                                 "/token/*", //refesh토큰
                                 "token/logout",
-                                "/auth/password/**"           // 임시비번 API 익명 허용
+                                "/auth/password/email-code",
+                                "/auth/password/issue-temp"// 임시비번 API 익명 허용
                         ).permitAll()
+                        .requestMatchers("/auth/password/change").authenticated() // ← 여기!
                         // H2 콘솔도 필요시 열어둘 수 있음
                         .requestMatchers("/h2-console/**").permitAll()
                         // 나머지 요청은 모두 인증 필요

@@ -1,8 +1,15 @@
 package com.knu.oauthlogin.controller.PasswordController;
 
+import com.knu.oauthlogin.domain.user.User;
+import com.knu.oauthlogin.domain.user.UserRepository;
+import com.knu.oauthlogin.dto.user.PasswordChangeRequest;
 import com.knu.oauthlogin.service.TempPasswordService.TempPasswordService;
+import com.knu.oauthlogin.service.passwordCange.PasswordService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -12,6 +19,8 @@ import java.util.Map;
 public class PasswordController {
 
     private final TempPasswordService tempPasswordService;
+    private final UserRepository userRepository;
+    private final PasswordService passwordService;
 
     /** 이메일로 인증코드 보내기 */
     @PostMapping("/email-code")
@@ -28,5 +37,26 @@ public class PasswordController {
         String code  = body.get("code");
         tempPasswordService.issueTempPassword(email, code);
         return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/change")
+    public ResponseEntity<?> change(
+            // principal 이름을 이메일로 사용 중이라는 가정(필요시 커스텀 Principal 써도 됨)
+            @AuthenticationPrincipal(expression = "username") String email,
+            @Valid @RequestBody PasswordChangeRequest req
+    ) {
+        if (!req.getNewPassword().equals(req.getConfirmNewPassword())) {
+            return ResponseEntity.unprocessableEntity()
+                    .body(Map.of("error", "새 비밀번호 확인이 일치하지 않습니다."));
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+        passwordService.changeLocalPassword(user, req.getCurrentPassword(), req.getNewPassword());
+
+        return ResponseEntity.ok(Map.of(
+                "message", "비밀번호가 변경되었습니다. 다시 로그인해 주세요."
+        ));
     }
 }
