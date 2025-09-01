@@ -41,13 +41,13 @@ public class PasswordService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        // 6) 리프레시 토큰 전부 삭제(강제 재로그인)
-        try {
-            // 프로젝트에 맞는 메서드로 정리 (by userId / by email 등)
-            refreshTokenService.revokeByUsername(user.getEmail());
-        } catch (Exception e) {
-            log.warn("RefreshToken cleanup failed for userId={}", user.getId(), e);
-        }
+//        // 6) 리프레시 토큰 전부 삭제(강제 재로그인)
+//        try {
+//            // 프로젝트에 맞는 메서드로 정리 (by userId / by email 등)
+//            refreshTokenService.revokeByUsername(user.getEmail());
+//        } catch (Exception e) {
+//            log.warn("RefreshToken cleanup failed for userId={}", user.getId(), e);
+//        }
     }
 
     private void validateStrength(String pwd) {
