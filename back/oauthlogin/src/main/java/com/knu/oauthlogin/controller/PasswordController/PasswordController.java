@@ -42,7 +42,7 @@ public class PasswordController {
     @PatchMapping("/change")
     public ResponseEntity<?> change(
             // principal 이름을 이메일로 사용 중이라는 가정(필요시 커스텀 Principal 써도 됨)
-            @AuthenticationPrincipal(expression = "username") String email,
+            @AuthenticationPrincipal String email,
             @Valid @RequestBody PasswordChangeRequest req
     ) {
         if (!req.getNewPassword().equals(req.getConfirmNewPassword())) {
