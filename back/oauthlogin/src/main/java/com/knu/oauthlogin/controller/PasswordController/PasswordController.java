@@ -44,16 +44,19 @@ public class PasswordController {
     @PatchMapping("/change")
     public ResponseEntity<?> change(
             // principal 이름을 이메일로 사용 중이라는 가정(필요시 커스텀 Principal 써도 됨)
-            @AuthenticationPrincipal String email,
+            @AuthenticationPrincipal String email, //이거 id값으로 들어옴
             @Valid @RequestBody PasswordChangeRequest req
     ) {
-        log.info("Password change request: principalEmail={}", email); // ★ 여기
+        log.info("Password change request: principalId={}", email);
+
         if (!req.getNewPassword().equals(req.getConfirmNewPassword())) {
             return ResponseEntity.unprocessableEntity()
                     .body(Map.of("error", "새 비밀번호 확인이 일치하지 않습니다."));
         }
 
-        User user = userRepository.findByEmail(email)
+        // ★ principal을 ID로 파싱해서 조회
+        Long userId = Long.parseLong(email);
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
         passwordService.changeLocalPassword(user, req.getCurrentPassword(), req.getNewPassword());
