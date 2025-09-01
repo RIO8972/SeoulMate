@@ -22,7 +22,11 @@ public class UserService {
     final private UserRepository userRepository;
     final private AwsS3Service awsS3Service;
 
-    public void updateUserImage(User user, UserUpdateRequestDto dto, MultipartFile image) {
+    public void updateUserImage(User principal,  String username, MultipartFile image) {
+        // principal은 보통 Detach이므로, 반드시 Managed 엔티티로 다시 조회
+        User user = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new IllegalArgumentException("user not found"));
+
         if (image != null && !image.isEmpty()) {
             AwsS3Service.S3PutResult put;
             try {
@@ -45,7 +49,10 @@ public class UserService {
                 }
             });
         }
-        if (dto.getUsername() != null) { user.updateUserName(dto.getUsername()); }
+        if (org.springframework.util.StringUtils.hasText(username)) {
+            user.updateUserName(username.trim()); // 변경감지 대상
+        }
+
         userRepository.save(user);
     }
 }

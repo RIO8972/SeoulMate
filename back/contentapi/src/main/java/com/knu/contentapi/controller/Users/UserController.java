@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -59,10 +60,11 @@ public class UserController {
     @PutMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateUserImage(
             @AuthenticationPrincipal User user,
-            @RequestPart("dto") UserUpdateRequestDto dto,     // JSON 전체를 이 DTO 로 바인딩
+            @RequestPart("dto") Map<String, String> dto,              // ← {"username":"..."} JSON 받기
             @RequestPart(value = "image", required = false) MultipartFile image
             ) {
-        userService.updateUserImage(user,dto ,image);
+        String username = dto.get("username"); // 키 체크 필요
+        userService.updateUserImage(user,username, image);
         return ResponseEntity.ok("ok");
     }
 }
