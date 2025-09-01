@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -57,6 +58,32 @@ public class UserService {
 
         if (org.springframework.util.StringUtils.hasText(username)) {
             user.updateUserName(username.trim()); // 변경감지 대상
+        }
+    }
+
+    public void deleteUserImage(User principal) {
+        User user = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new IllegalArgumentException("user not found"));
+
+        // 1) 기존 URL 백업
+        final String prevUrl = user.getImgUrl();
+
+        // 2) DB 값 먼저 null로 (변경감지로 UPDATE)
+        user.updateImg(null);
+
+        // 3) URL이 있던 경우에만, 커밋 후 S3 삭제
+        if (StringUtils.hasText(prevUrl)) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() {
+                    try {
+                        awsS3Service.deleteFile(prevUrl); // ← 백업한 값을 사용
+                        log.info("Deleted user image from S3: {}", prevUrl);
+                    } catch (Exception ex) {
+                        // 삭제 실패해도 DB는 이미 null 상태(멱등). 로그만 남김.
+                        log.warn("Failed to delete user image from S3. url={}", prevUrl, ex);
+                    }
+                }
+            });
         }
     }
 }
