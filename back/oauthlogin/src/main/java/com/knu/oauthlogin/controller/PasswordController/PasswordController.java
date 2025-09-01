@@ -7,6 +7,7 @@ import com.knu.oauthlogin.service.TempPasswordService.TempPasswordService;
 import com.knu.oauthlogin.service.passwordCange.PasswordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,6 +17,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth/password")
+@Slf4j
 public class PasswordController {
 
     private final TempPasswordService tempPasswordService;
