@@ -22,7 +22,7 @@ public class UserService {
     final private UserRepository userRepository;
     final private AwsS3Service awsS3Service;
 
-    public void updateUserImage(User principal,  String username, MultipartFile image) {
+    public void updateUserImage(User principal, MultipartFile image) {
         // principal은 보통 Detach이므로, 반드시 Managed 엔티티로 다시 조회
         User user = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new IllegalArgumentException("user not found"));
@@ -49,11 +49,15 @@ public class UserService {
                 }
             });
         }
+    }
+
+    public void updateUserName(User principal,String username) {
+        User user = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new IllegalArgumentException("user not found"));
+
         if (org.springframework.util.StringUtils.hasText(username)) {
             user.updateUserName(username.trim()); // 변경감지 대상
         }
-
-        userRepository.save(user);
     }
 }
 

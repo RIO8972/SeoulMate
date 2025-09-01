@@ -57,14 +57,23 @@ public class UserController {
         return ResponseEntity.ok(dto);
     }
 
-    @PutMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateUserImage(
             @AuthenticationPrincipal User user,
-            @RequestPart("dto") Map<String, String> dto,              // ← {"username":"..."} JSON 받기
             @RequestPart(value = "image", required = false) MultipartFile image
             ) {
+
+        userService.updateUserImage(user, image);
+        return ResponseEntity.ok("ok");
+    }
+
+    @PatchMapping(value = "/me/name", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateUserName(
+            @AuthenticationPrincipal User user,
+            @RequestBody Map<String, String> dto
+    ) {
         String username = dto.get("username"); // 키 체크 필요
-        userService.updateUserImage(user,username, image);
+        userService.updateUserName(user, username);
         return ResponseEntity.ok("ok");
     }
 }
