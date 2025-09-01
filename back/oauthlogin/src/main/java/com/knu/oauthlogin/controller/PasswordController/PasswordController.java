@@ -45,6 +45,7 @@ public class PasswordController {
             @AuthenticationPrincipal String email,
             @Valid @RequestBody PasswordChangeRequest req
     ) {
+        log.info("Password change request: principalEmail={}", email); // ★ 여기
         if (!req.getNewPassword().equals(req.getConfirmNewPassword())) {
             return ResponseEntity.unprocessableEntity()
                     .body(Map.of("error", "새 비밀번호 확인이 일치하지 않습니다."));
