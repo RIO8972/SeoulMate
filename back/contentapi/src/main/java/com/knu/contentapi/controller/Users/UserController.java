@@ -76,4 +76,12 @@ public class UserController {
         userService.updateUserName(user, username);
         return ResponseEntity.ok("ok");
     }
+
+    @DeleteMapping(value = "/me/image")
+    public ResponseEntity<?> updateUserName(
+            @AuthenticationPrincipal User user
+    ) {
+        userService.deleteUserImage(user);
+        return ResponseEntity.noContent().build(); // 204
+    }
 }
