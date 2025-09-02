@@ -61,9 +61,6 @@
   background: #f5f7fb;
 }
 
-/* 오버레이 효과 완전 제거 (사용 안 함) */
-/* .profileOverlay, .profileBtn:hover .profileOverlay { display: none !important; } */
-
 .ownerName {
   margin-top: 10px;
   color: #111;
