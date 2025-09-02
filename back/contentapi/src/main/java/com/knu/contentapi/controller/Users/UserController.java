@@ -7,6 +7,7 @@ import com.knu.contentapi.domain.users.UserRepository;
 import com.knu.contentapi.dto.review.ReviewUpdateRequestDto;
 import com.knu.contentapi.dto.users.UserProfileDto;
 import com.knu.contentapi.dto.users.UserUpdateRequestDto;
+import com.knu.contentapi.service.users.AccountDeletionService;
 import com.knu.contentapi.service.users.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,8 @@ public class UserController {
     private final JwtTokenProvider jwtProvider;
     private final UserRepository userRepository;
     private final UserService userService;
+
+    private final AccountDeletionService accountDeletionService;
 
     @GetMapping("/me")
     public ResponseEntity<UserProfileDto> getMyProfile(
@@ -83,5 +86,11 @@ public class UserController {
     ) {
         userService.deleteUserImage(user);
         return ResponseEntity.noContent().build(); // 204
+    }
+
+    @DeleteMapping("/me") //계정삭제용
+    public ResponseEntity<Void> deleteMe(@AuthenticationPrincipal User user) {
+        accountDeletionService.deleteAccount(user);
+        return ResponseEntity.noContent().build();
     }
 }

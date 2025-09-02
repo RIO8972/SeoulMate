@@ -2,6 +2,7 @@ package com.knu.contentapi.domain.carts;
 
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -10,7 +11,6 @@ import java.util.List;
 
 public interface CartRepository extends JpaRepository<Cart, Long> {
     List<Cart> findAllByUser_Id(Long userId);
-
     @Query("select c.placeId from Cart c where c.user.id = :userId and c.placeId in :ids")
     List<String> findPlaceIdsInCart(@Param("userId") Long userId,
                                     @Param("ids") Collection<String> ids);
@@ -21,7 +21,12 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
     @Query("select c.name from Cart c where c.user.id = :userId and c.name in :names")
     List<String> findNamesInCart(@Param("userId") Long userId,
                                  @Param("names") Collection<String> names);
+
     //이름으로 삭제 (유저 스코프)
     long deleteByUser_IdAndName(Long userId, String name);
 
+    //벌크 삭제
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from Cart c where c.user.id = :userId")
+    int deleteByUserId(@Param("userId") Long userId);
 }

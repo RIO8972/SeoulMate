@@ -49,4 +49,19 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             @Param("cAt") LocalDateTime cursorCreatedAt,
             @Param("cId") Long cursorId,
             Pageable pageable);
+
+    //벌크 삭제
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from Review r where r.user.id = :userId")
+    int deleteByUserId(@Param("userId") Long userId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true) //유저 탈퇴 => 좋아요 차감
+    @Query("""
+           update Review r
+              set r.likeCount = case when r.likeCount >= :cnt
+                                     then r.likeCount - :cnt
+                                     else 0 end
+            where r.id = :reviewId
+           """)
+    int decrementBy(@Param("reviewId") Long reviewId, @Param("cnt") long cnt);
 }
