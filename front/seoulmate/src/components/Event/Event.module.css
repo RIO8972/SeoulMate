@@ -286,6 +286,7 @@
   border-color: #e5e7eb;
 }
 
+/* 기본 버튼 */
 .addButton {
   padding: 4px 10px;
   background-color: #4f46e5;
@@ -293,23 +294,22 @@
   font-size: 0.875rem;
   border: none;
   border-radius: 6px;
-  cursor: pointer;
+  cursor: pointer;              /* 클릭 가능 */
 }
 
-/* 저장되어 비활성화(회색) */
+/* 저장됨(회색)이어도 토글 가능: 커서 유지 */
 .addButtonSaved {
-  background: #e5e7eb; /* slate-200 */
-  color: #64748b; /* slate-500 */
-  cursor: not-allowed;
+  background: #e5e7eb;          /* slate-200 */
+  color: #64748b;               /* slate-500 */
+  cursor: pointer;              /* ← not-allowed 제거 */
+  /* pointer-events: auto;      ← 전역에서 막았다면 주석 해제 */
 }
 
-/* 로딩 중(살짝 투명) */
-.addButtonBusy {
-  opacity: 0.7;
-}
-
-/* 공통 disabled 보정 */
+/* 로딩/요청 중에만 비활성화 느낌 */
+.addButtonBusy,
 .addButton:disabled {
-  box-shadow: none;
-  pointer-events: none;
+  opacity: 0.7;
+  cursor: wait;                 /* 대기 커서(선택) */
+  pointer-events: none;         /* 실제 클릭 차단 */
 }
+

@@ -43,7 +43,7 @@ function ReviewForm({
 }) {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
-
+  const [submitting, setSubmitting] = useState(false);
   const initialForm = useMemo(() => {
     const base = {
       categories: [],
@@ -187,45 +187,40 @@ function ReviewForm({
 
   // ====== 저장(생성) ======
   const handleSave = async () => {
-    const placesToSend = getPlacesToSend(formData);
-
-    const placesDto = placesToSend.map((p, i) => ({
-      placeId: String(p.placeId ?? p.id ?? `p-${i}`),
-      name: p.name ?? "",
-      lat: String(p.lat ?? p.y ?? ""),
-      lng: String(p.lng ?? p.x ?? ""),
-      address: p.address ?? p.road_address_name ?? p.address_name ?? "",
-      url: p.url ?? p.place_url ?? "",
-      category: p.category ?? "",
-    }));
-
-    const form = new FormData();
-    form.append(
-      "dto",
-      new Blob(
-        [
-          JSON.stringify({
-            categories: formData.categories,
-            cost: Number(formData.cost ?? 0),
-            date: formData.date,
-            time: formData.time,
-            region: formData.region,
-            title: formData.title,
-            intro: formData.intro,
-            detail: formData.detail,
-            datetime: buildDateTime(formData.date, formData.time),
-            places: placesDto,
-          }),
-        ],
-        { type: "application/json" }
-      )
-    );
-
-    (formData.newImages || []).forEach((file) => form.append("images", file));
-
+    if (submitting) return;            // ✅ 더블클릭 가드
+    setSubmitting(true);
     try {
-      // baseURL 사용 → "/reviews" 만 전송
-      const { data } = await api.post("/reviews", form); // 인터셉터로 AT 자동 주입
+      const placesToSend = getPlacesToSend(formData);
+
+      const placesDto = placesToSend.map((p, i) => ({
+        placeId: String(p.placeId ?? p.id ?? `p-${i}`),
+        name: p.name ?? "",
+        lat: String(p.lat ?? p.y ?? ""),
+        lng: String(p.lng ?? p.x ?? ""),
+        address: p.address ?? p.road_address_name ?? p.address_name ?? "",
+        url: p.url ?? p.place_url ?? "",
+        category: p.category ?? "",
+      }));
+
+      const form = new FormData();
+      form.append(
+        "dto",
+        new Blob([JSON.stringify({
+          categories: formData.categories,
+          cost: Number(formData.cost ?? 0),
+          date: formData.date,
+          time: formData.time,
+          region: formData.region,
+          title: formData.title,
+          intro: formData.intro,
+          detail: formData.detail,
+          datetime: buildDateTime(formData.date, formData.time),
+          places: placesDto,
+        })], { type: "application/json" })
+      );
+      (formData.newImages || []).forEach((file) => form.append("images", file));
+
+      const { data } = await api.post("/reviews", form);
       const newId = Number(data);
       if (!Number.isFinite(newId)) {
         alert("생성된 리뷰 ID를 받지 못했습니다.");
@@ -236,12 +231,16 @@ function ReviewForm({
     } catch (err) {
       console.error("업로드 실패:", err);
       alert("업로드 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);            // ✅ 반드시 되돌리기
     }
   };
 
-  const handleFinish = () => {
-    const placesToSend = getPlacesToSend(formData);
 
+  const handleFinish = async () => {
+    if (submitting) return; // ✅ 중복 호출 방지
+
+    const placesToSend = getPlacesToSend(formData);
     const payload = {
       ...formData,
       datetime: buildDateTime(formData.date, formData.time),
@@ -253,9 +252,14 @@ function ReviewForm({
     };
 
     if (mode === "edit") {
-      onSubmit?.(payload);
+      try {
+        setSubmitting(true);
+        await onSubmit?.(payload);     // onSubmit이 Promise면 await
+      } finally {
+        setSubmitting(false);
+      }
     } else {
-      handleSave();
+      await handleSave();              // 내부에서 submitting 처리
     }
   };
 
@@ -300,23 +304,33 @@ function ReviewForm({
 
         <div className="review-button-bar">
           <div className="left">
-            <button type="button" className="review-button cancel" onClick={handleCancel}>
+            <button 
+              type="button" 
+              className="review-button cancel" 
+              onClick={handleCancel}
+              disabled={submitting}
+              >
               {cancelLabel || "취소"}
             </button>
           </div>
 
           <div className="right">
             {step > 1 && (
-              <button type="button" className="review-button back" onClick={prev}>
+              <button 
+                type="button" 
+                className="review-button back" 
+                onClick={prev}
+                disabled={submitting}
+                >
                 이전
               </button>
             )}
             {step < totalSteps ? (
-              <button type="button" className="review-button next" onClick={next}>
+              <button type="button" className="review-button next" onClick={next} disabled={submitting}>
                 다음
               </button>
             ) : (
-              <button type="button" className="review-button next" onClick={handleFinish}>
+              <button type="button" className="review-button next" onClick={handleFinish} disabled={submitting}>
                 {submitText}
               </button>
             )}

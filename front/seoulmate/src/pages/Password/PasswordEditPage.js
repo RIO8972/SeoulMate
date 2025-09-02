@@ -45,6 +45,7 @@ export default function PasswordEditPage() {
       alert(res.data?.message || "비밀번호가 변경되었습니다. 다시 로그인해 주세요.");
       setCurrentPwd("");
       setNewPwd("");
+      window.location.replace("/logout");
     } catch (e) {
       console.error("비밀번호 변경 실패", e);
       const msg =

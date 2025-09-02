@@ -4,7 +4,6 @@ import styles from "./ProfileEditPage.module.css";
 import api from "../../api/api";
 import Header from "../../components/Header";
 
-// ✅ 기본 프로필 이미지 (너가 가진 파일 경로)
 import defaultAvatar from "../../images/account.png";
 const DEFAULT_AVATAR = defaultAvatar;
 
@@ -283,7 +282,7 @@ const handleSave = async () => {
                   try {
                     await api.delete("/users/me"); // 팀 엔드포인트에 맞게 수정
                     localStorage.removeItem("accessToken");
-                    window.location.replace("/goodbye");
+                    window.location.replace("/logout");
                   } catch (e) {
                     alert("탈퇴 처리에 실패했어요.");
                   }
