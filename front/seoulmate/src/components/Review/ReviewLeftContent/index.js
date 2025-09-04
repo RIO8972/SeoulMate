@@ -364,7 +364,7 @@ const ReviewLeftContent = ({
   // 삭제
   const onDelete = useCallback(async () => {
     if (!review?.id || deleting) return;
-    if (!window.confirm("리뷰를 삭제할까요? 삭제 후 복구할 수 없습니다.")) return;
+    if (!window.confirm("리뷰를 삭제할까요?")) return;
     const token = localStorage.getItem("accessToken");
     if (!token) {
       alert("로그인이 필요합니다.");

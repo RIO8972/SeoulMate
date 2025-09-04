@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import styles from './SignUpForm.module.css';
 import axios from 'axios';
 
@@ -6,6 +7,8 @@ const SignUpForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUserName] = useState('');
+  const navigate = useNavigate();
+
   const handleSignUp = async () => {
     console.log(email);
     console.log(password);
@@ -26,8 +29,9 @@ const SignUpForm = () => {
         }
       );
 
-      console.log('회원가입 성공:', response.data);
-      // 이후 리다이렉트나 상태 초기화 등 처리…
+      //console.log('회원가입 성공:', response.data);
+      alert("회원가입 성공:")
+      navigate("/login", { replace: true }); // ← 로그인으로 이동
 
     } catch (error) {
       console.error('회원가입 에러:', error.response || error);

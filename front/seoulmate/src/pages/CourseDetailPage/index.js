@@ -740,7 +740,7 @@ export default function CourseDetailPage() {
   // 삭제
   const onDelete = async () => {
     if (deleting) return;
-    if (!window.confirm("이 코스를 삭제할까요? 복구할 수 없습니다.")) return;
+    if (!window.confirm("이 코스를 삭제할까요?")) return;
     try {
       setDeleting(true);
       await api.delete(`/courses/${courseId}`);

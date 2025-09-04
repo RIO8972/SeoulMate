@@ -84,7 +84,7 @@ const LoginForm = () => {
             </div>
 
             <div className={styles["input-control"]}>
-              <a href="#" className={styles["text-links"]}>
+              <a href="/sign" className={styles["text-links"]}>
                 Create an account
               </a>
               <button

@@ -371,7 +371,6 @@ function DistrictMap() {
 
       const res = await api.post("/carts", dto);
 
-      alert("장소저장 완료");
       console.log("[createCart OK]", { dto, source, resStatus: res.status });
       return true;
     } catch (err) {

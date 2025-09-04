@@ -21,22 +21,33 @@ import SignUpForm from "./components/Auth/SignUpForm";
 import ProfileEditPage from "./pages/Settings/ProfileEditPage";
 import ReviewPage from "./pages/ReviewPage";
 import PasswordEditPage from "./pages/Password/PasswordEditPage";
+import RequireAuth from "./components/Auth/RequireAuth";
 
 export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/reviews/:id" element={<ReviewDetailPage />} />
+          <Route path="/reviews/:id/edit" element={<ReviewEditPage />} />
+          <Route path="/review/new" element={<ReviewForm />} />
+          <Route path="/course/new" element={<CourseCreatePage />} />
+          <Route path="/courses/:courseId" element={<CourseDetailPage />} />
+          <Route path="/courses/:courseId/edit" element={<CourseEditPage />} />
 
+          <Route path="/mypage" element={<MyPage />} />
+          <Route path="/settings" element={<ProfileEditPage />} />
+          <Route path="/settings/password" element={<PasswordEditPage />} />
+        </Route>
+
+        <Route path="/" element={<Home />} />
         {/* 기본: 지도 먼저 */}
         <Route path="/map/:regionId" element={<DistrictMap />} />
-
         <Route path="/reviews" element={<ReviewPage />} />
 
         {/* 리스트 페이지 */}
         <Route path="/districts/:regionId" element={<DistrictPage />} />
-
         {/* 예전 경로로 오면 지도로 리다이렉트 */}
         <Route
           path="/district/:regionId"
@@ -47,20 +58,14 @@ export default function App() {
           element={<Navigate to="/map/:regionId" replace />}
         />
 
-        <Route path="/reviews/:id" element={<ReviewDetailPage />} />
-        <Route path="/reviews/:id/edit" element={<ReviewEditPage />} />
-        <Route path="/review/new" element={<ReviewForm />} />
-        <Route path="/course/new" element={<CourseCreatePage />} />
-        <Route path="/courses/:courseId" element={<CourseDetailPage />} />
-        <Route path="/courses/:courseId/edit" element={<CourseEditPage />} />
-        <Route path="/mypage" element={<MyPage />} />
+
+
         <Route path="/login" element={<LoginForm />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/savetoken" element={<SaveToken />} />
         <Route path="/requesttoken" element={<RequestToken />} />
         <Route path="/sign" element={<SignUpForm />} />
-        <Route path="/settings" element={<ProfileEditPage />} />
-        <Route path="/settings/password" element={<PasswordEditPage />} />
+
       </Routes>
     </BrowserRouter>
   );

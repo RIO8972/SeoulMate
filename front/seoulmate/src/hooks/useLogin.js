@@ -22,7 +22,7 @@ export default function useLogin() {
         }
       );
       const accessToken = res.data?.accessToken;
-      if (!accessToken) throw new Error(res.data?.message || "토큰이 없습니다.");
+      if (!accessToken) throw new Error(res.data?.message || "아이디/비밀번호를 확인하세요");
       setToken(accessToken); // 저장은 훅이 담당
       return { accessToken };
     } catch (e) {
