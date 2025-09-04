@@ -16,4 +16,5 @@ public class CourseRequestDto {
     private Date datetime;
     private String title;
     private List<PlaceRequestDto> places;
+    private List<String> categories;
 }

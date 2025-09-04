@@ -39,6 +39,7 @@ public class CourseService {
                         .id(c.getId())
                         .title(c.getTitle())
                         .datetime(c.getDatetime())
+                        .categories(c.getCategories())
                         .places(c.getPlacesDto())
                         .build())
                 .toList();
@@ -50,6 +51,14 @@ public class CourseService {
                 .title(dto.getTitle())
                 .datetime(dto.getDatetime())
                 .build();
+
+        if (dto.getCategories() != null) {
+            var cats = dto.getCategories().stream()
+                    .filter(s -> s != null && !s.isBlank())
+                    .map(String::trim).distinct().toList();
+            course.replaceCategories(cats);
+        }
+
         dto.getPlaces().forEach(course::addPlace); // addPlace가 양방향/연관 설정 수행
         return courseRepository.save(course).getId();
     }

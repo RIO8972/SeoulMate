@@ -34,6 +34,16 @@ public class Course {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "course_categories",
+            joinColumns = @JoinColumn(name = "course_id")
+    )
+    @Column(name = "category", length = 50)   // 개별 값: "카페", "야외" ...
+    @OrderColumn(name = "category_idx")       // (선택) 입력 순서 유지
+    @Builder.Default
+    private List<String> categories = new ArrayList<>();
+
     @JsonManagedReference
     @OneToMany(
             mappedBy="course",
@@ -65,11 +75,19 @@ public class Course {
         this.datetime = dto.getDatetime();
         this.coursePlaces.clear();
 
+        //카테고리
+        replaceCategories(dto.getCategories());
+
         // 2) DTO 순서대로 다시 추가 (연관관계 주인 세팅 포함)
         for (PlaceRequestDto p : dto.getPlaces()) {
             this.addPlace(p); // addPlace 내부에서 course=this 세팅
         }
         return this;
+    }
+
+    public void replaceCategories(List<String> cats) {
+        this.categories.clear();
+        if (cats != null) this.categories.addAll(cats);
     }
 
     public List<PlaceResponseDto> getPlacesDto() {
