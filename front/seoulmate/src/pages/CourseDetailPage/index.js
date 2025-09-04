@@ -9,7 +9,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import styles from "./CourseDetailPage.module.css";
 import Header from "../../components/Header";
 import { FaBus, FaCar, FaWalking } from "react-icons/fa";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiMoreVertical, FiEdit2, FiTrash2 } from "react-icons/fi";
 import api from "../../api/api";
 
 /* global kakao */
@@ -116,7 +116,20 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // 열기/닫기
+  const openMenu = () => {
+    setMenuClosing(false);
+    setMenuOpen(true);
+  };
+  const closeMenu = () => {
+    if (!menuOpen) return;
+    setMenuOpen(false);
+    setMenuClosing(true);
+  };
 
   // 지도/도형 refs
   const mapRef = useRef(null);
@@ -135,8 +148,9 @@ export default function CourseDetailPage() {
   const [metaVersion, setMetaVersion] = useState(0);
 
   const overlayRef = useRef(null);
+  const menuRef = useRef(null);
 
-  // 로딩 플래그(아이콘 페이드용)
+  // 구간별 로딩 플래그
   const [ptLoading, setPtLoading] = useState({});
   const [carLoading, setCarLoading] = useState({});
   const [walkLoading, setWalkLoading] = useState({});
@@ -156,12 +170,25 @@ export default function CourseDetailPage() {
         setCourse(data);
       } catch (e) {
         console.error("[course detail] error:", e);
-        setErr("코스를 불러오는 중 오류가 발생했습니다.");
+        setErr("को스를 불러오는 중 오류가 발생했습니다.");
       } finally {
         setLoading(false);
       }
     })();
   }, [courseId]);
+
+  // 바깥 클릭 감지
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        closeMenu();
+      }
+    }
+    if (menuOpen || menuClosing) {
+      window.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => window.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen, menuClosing]);
 
   // 지도 초기화 + 마커
   useEffect(() => {
@@ -259,6 +286,7 @@ export default function CourseDetailPage() {
 
       if (kind === "pt") {
         if (!ptLinesByLegRef.current[idx]?.length) {
+          setPtLoading((p) => ({ ...p, [idx]: true })); // start
           await drawPublicRouteLeg(
             { lat: +a.lat, lng: +a.lng },
             { lat: +b.lat, lng: +b.lng },
@@ -267,6 +295,7 @@ export default function CourseDetailPage() {
         }
       } else if (kind === "car") {
         if (!carLinesByLegRef.current[idx]?.length) {
+          setCarLoading((p) => ({ ...p, [idx]: true })); // start
           await drawCarRouteLeg(
             { lat: +a.lat, lng: +a.lng },
             { lat: +b.lat, lng: +b.lng },
@@ -275,6 +304,7 @@ export default function CourseDetailPage() {
         }
       } else if (kind === "walk") {
         if (!walkLinesByLegRef.current[idx]?.length) {
+          setWalkLoading((p) => ({ ...p, [idx]: true })); // start
           await drawWalkLeg(
             { lat: +a.lat, lng: +a.lng },
             { lat: +b.lat, lng: +b.lng },
@@ -481,6 +511,8 @@ export default function CourseDetailPage() {
       ptMetaByLegRef.current[legIdx] = { error: "noPT" };
       setMetaVersion((v) => v + 1);
       return { status: "noPT" };
+    } finally {
+      setPtLoading((p) => ({ ...p, [legIdx]: false })); // end
     }
   }, []);
 
@@ -489,203 +521,214 @@ export default function CourseDetailPage() {
     const map = mapObjRef.current;
     if (!map) return;
 
-    const url =
-      `https://seoul-mate.co.kr/cityapi/search/route?mode=car` +
-      `&start_x=${A.lng}&start_y=${A.lat}&end_x=${B.lng}&end_y=${B.lat}`;
-    const res = await fetch(url);
-    const json = await res.json();
+    try {
+      const url =
+        `https://seoul-mate.co.kr/cityapi/search/route?mode=car` +
+        `&start_x=${A.lng}&start_y=${A.lat}&end_x=${B.lng}&end_y=${B.lat}`;
+      const res = await fetch(url);
+      const json = await res.json();
 
-    const sections = json?.routes?.[0]?.sections || [];
-    const created = [];
-    const color = "#2E7DFF";
+      const sections = json?.routes?.[0]?.sections || [];
+      const created = [];
+      const color = "#2E7DFF";
 
-    if (sections.length) {
-      sections.forEach((sec) => {
-        (sec.roads || []).forEach((road) => {
-          const v = road.vertexes || [];
-          if (!v.length) return;
-          const path = [];
-          for (let i = 0; i < v.length; i += 2) {
-            const x = v[i],
-              y = v[i + 1];
-            if (Number.isFinite(x) && Number.isFinite(y))
-              path.push(new kakao.maps.LatLng(y, x));
-          }
-          if (!path.length) return;
+      if (sections.length) {
+        sections.forEach((sec) => {
+          (sec.roads || []).forEach((road) => {
+            const v = road.vertexes || [];
+            if (!v.length) return;
+            const path = [];
+            for (let i = 0; i < v.length; i += 2) {
+              const x = v[i],
+                y = v[i + 1];
+              if (Number.isFinite(x) && Number.isFinite(y))
+                path.push(new kakao.maps.LatLng(y, x));
+            }
+            if (!path.length) return;
 
-          const colorLine = new kakao.maps.Polyline({
-            map: null,
-            path,
-            strokeWeight: 5,
-            strokeColor: color,
-            strokeOpacity: 0.95,
-            strokeStyle: "solid",
-            lineJoin: "round",
-            lineCap: "round",
-            zIndex: 1,
-            clickable: false,
-          });
-          const hitLine = new kakao.maps.Polyline({
-            map: null,
-            path,
-            strokeWeight: 14,
-            strokeColor: color,
-            strokeOpacity: 0.2,
-            strokeStyle: "solid",
-            lineJoin: "round",
-            lineCap: "round",
-            zIndex: 2,
-            clickable: true,
-          });
+            const colorLine = new kakao.maps.Polyline({
+              map: null,
+              path,
+              strokeWeight: 5,
+              strokeColor: color,
+              strokeOpacity: 0.95,
+              strokeStyle: "solid",
+              lineJoin: "round",
+              lineCap: "round",
+              zIndex: 1,
+              clickable: false,
+            });
+            const hitLine = new kakao.maps.Polyline({
+              map: null,
+              path,
+              strokeWeight: 14,
+              strokeColor: color,
+              strokeOpacity: 0.2,
+              strokeStyle: "solid",
+              lineJoin: "round",
+              lineCap: "round",
+              zIndex: 2,
+              clickable: true,
+            });
 
-          kakao.maps.event.addListener(hitLine, "mouseover", () => {
-            map.setDraggable(false);
-            setMapCursor(map, "pointer");
-          });
-          kakao.maps.event.addListener(hitLine, "mouseout", () => {
-            map.setDraggable(true);
-            setMapCursor(map, "");
-          });
-          kakao.maps.event.addListener(hitLine, "click", (e) => {
-            const rows = [
-              {
-                label: "거리",
-                value: `${(road.distance ?? 0).toLocaleString()} m`,
-              },
-              {
-                label: "예상",
-                value: `${Math.round((road.duration ?? 0) / 60)} 분`,
-              },
-            ];
-            if (road.traffic_speed != null)
-              rows.push({ label: "속도", value: `${road.traffic_speed} km/h` });
-            const box = buildPopupBox(
-              road.name?.trim() || "이름 없는 도로",
-              rows
-            );
-            openOverlay(map, overlayRef, e.latLng, box);
-          });
+            kakao.maps.event.addListener(hitLine, "mouseover", () => {
+              map.setDraggable(false);
+              setMapCursor(map, "pointer");
+            });
+            kakao.maps.event.addListener(hitLine, "mouseout", () => {
+              map.setDraggable(true);
+              setMapCursor(map, "");
+            });
+            kakao.maps.event.addListener(hitLine, "click", (e) => {
+              const rows = [
+                {
+                  label: "거리",
+                  value: `${(road.distance ?? 0).toLocaleString()} m`,
+                },
+                {
+                  label: "예상",
+                  value: `${Math.round((road.duration ?? 0) / 60)} 분`,
+                },
+              ];
+              if (road.traffic_speed != null)
+                rows.push({
+                  label: "속도",
+                  value: `${road.traffic_speed} km/h`,
+                });
+              const box = buildPopupBox(
+                road.name?.trim() || "이름 없는 도로",
+                rows
+              );
+              openOverlay(map, overlayRef, e.latLng, box);
+            });
 
-          created.push(colorLine, hitLine);
+            created.push(colorLine, hitLine);
+          });
         });
-      });
-    } else if (json?.route?.traoptimal?.[0]?.path?.length) {
-      const path = json.route.traoptimal[0].path.map(
-        ([x, y]) => new kakao.maps.LatLng(y, x)
-      );
+      } else if (json?.route?.traoptimal?.[0]?.path?.length) {
+        const path = json.route.traoptimal[0].path.map(
+          ([x, y]) => new kakao.maps.LatLng(y, x)
+        );
 
-      const colorLine = new kakao.maps.Polyline({
-        map: null,
-        path,
-        strokeWeight: 5,
-        strokeColor: color,
-        strokeOpacity: 0.95,
-        strokeStyle: "solid",
-        lineJoin: "round",
-        lineCap: "round",
-        zIndex: 1,
-        clickable: false,
-      });
-      const hitLine = new kakao.maps.Polyline({
-        map: null,
-        path,
-        strokeWeight: 14,
-        strokeColor: color,
-        strokeOpacity: 0.2,
-        strokeStyle: "solid",
-        lineJoin: "round",
-        lineCap: "round",
-        zIndex: 2,
-        clickable: true,
-      });
+        const colorLine = new kakao.maps.Polyline({
+          map: null,
+          path,
+          strokeWeight: 5,
+          strokeColor: color,
+          strokeOpacity: 0.95,
+          strokeStyle: "solid",
+          lineJoin: "round",
+          lineCap: "round",
+          zIndex: 1,
+          clickable: false,
+        });
+        const hitLine = new kakao.maps.Polyline({
+          map: null,
+          path,
+          strokeWeight: 14,
+          strokeColor: color,
+          strokeOpacity: 0.2,
+          strokeStyle: "solid",
+          lineJoin: "round",
+          lineCap: "round",
+          zIndex: 2,
+          clickable: true,
+        });
 
-      kakao.maps.event.addListener(hitLine, "mouseover", () => {
-        map.setDraggable(false);
-        setMapCursor(map, "pointer");
-      });
-      kakao.maps.event.addListener(hitLine, "mouseout", () => {
-        map.setDraggable(true);
-        setMapCursor(map, "");
-      });
-      kakao.maps.event.addListener(hitLine, "click", (e) => {
-        const totalDist = json?.routes?.[0]?.summary?.distance ?? null;
-        const totalDur = json?.routes?.[0]?.summary?.duration ?? null;
-        const rows = [];
-        if (totalDist != null)
-          rows.push({
-            label: "총 거리",
-            value: `${totalDist.toLocaleString()} m`,
-          });
-        if (totalDur != null)
-          rows.push({
-            label: "총 시간",
-            value: `${Math.round(totalDur / 60)} 분`,
-          });
-        const box = buildPopupBox("자동차 경로", rows);
-        openOverlay(map, overlayRef, e.latLng, box);
-      });
+        kakao.maps.event.addListener(hitLine, "mouseover", () => {
+          map.setDraggable(false);
+          setMapCursor(map, "pointer");
+        });
+        kakao.maps.event.addListener(hitLine, "mouseout", () => {
+          map.setDraggable(true);
+          setMapCursor(map, "");
+        });
+        kakao.maps.event.addListener(hitLine, "click", (e) => {
+          const totalDist = json?.routes?.[0]?.summary?.distance ?? null;
+          const totalDur = json?.routes?.[0]?.summary?.duration ?? null;
+          const rows = [];
+          if (totalDist != null)
+            rows.push({
+              label: "총 거리",
+              value: `${totalDist.toLocaleString()} m`,
+            });
+          if (totalDur != null)
+            rows.push({
+              label: "총 시간",
+              value: `${Math.round(totalDur / 60)} 분`,
+            });
+          const box = buildPopupBox("자동차 경로", rows);
+          openOverlay(map, overlayRef, e.latLng, box);
+        });
 
-      created.push(colorLine, hitLine);
+        created.push(colorLine, hitLine);
+      }
+
+      carLinesByLegRef.current[legIdx] = [
+        ...(carLinesByLegRef.current[legIdx] || []),
+        ...created,
+      ];
+      const totalDist = json?.routes?.[0]?.summary?.distance ?? null;
+      const totalDur = json?.routes?.[0]?.summary?.duration ?? null;
+      carMetaByLegRef.current[legIdx] = {
+        distance: totalDist,
+        duration: totalDur,
+      };
+      setMetaVersion((v) => v + 1);
+    } finally {
+      setCarLoading((p) => ({ ...p, [legIdx]: false })); // end
     }
-
-    carLinesByLegRef.current[legIdx] = [
-      ...(carLinesByLegRef.current[legIdx] || []),
-      ...created,
-    ];
-    const totalDist = json?.routes?.[0]?.summary?.distance ?? null;
-    const totalDur = json?.routes?.[0]?.summary?.duration ?? null;
-    carMetaByLegRef.current[legIdx] = {
-      distance: totalDist,
-      duration: totalDur,
-    };
-    setMetaVersion((v) => v + 1);
   }, []);
 
   // ───── 도보(직선) ─────
   const drawWalkLeg = useCallback(async (A, B, legIdx) => {
     const map = mapObjRef.current;
     if (!map) return false;
-    const path = [
-      new kakao.maps.LatLng(A.lat, A.lng),
-      new kakao.maps.LatLng(B.lat, B.lng),
-    ];
-    const line = new kakao.maps.Polyline({
-      map: null,
-      path,
-      strokeWeight: 4,
-      strokeColor: "#111827",
-      strokeOpacity: 0.95,
-      strokeStyle: "shortdash",
-      zIndex: 3,
-      clickable: true,
-    });
-    kakao.maps.event.addListener(line, "mouseover", () => {
-      map.setDraggable(false);
-      setMapCursor(map, "pointer");
-    });
-    kakao.maps.event.addListener(line, "mouseout", () => {
-      map.setDraggable(true);
-      setMapCursor(map, "");
-    });
-    kakao.maps.event.addListener(line, "click", (e) => {
-      const distM = haversineMeters(A, B);
-      const mins = Math.max(1, Math.round(distM / 1.2 / 60));
-      const rows = [
-        { label: "거리", value: `${Math.round(distM).toLocaleString()} m` },
-        { label: "예상", value: `${mins} 분` },
+    try {
+      const path = [
+        new kakao.maps.LatLng(A.lat, A.lng),
+        new kakao.maps.LatLng(B.lat, B.lng),
       ];
-      const box = buildPopupBox("도보 이동", rows);
-      openOverlay(map, overlayRef, e.latLng, box);
-    });
-    walkLinesByLegRef.current[legIdx] = [line];
+      const line = new kakao.maps.Polyline({
+        map: null,
+        path,
+        strokeWeight: 4,
+        strokeColor: "#111827",
+        strokeOpacity: 0.95,
+        strokeStyle: "shortdash",
+        zIndex: 3,
+        clickable: true,
+      });
+      kakao.maps.event.addListener(line, "mouseover", () => {
+        map.setDraggable(false);
+        setMapCursor(map, "pointer");
+      });
+      kakao.maps.event.addListener(line, "mouseout", () => {
+        map.setDraggable(true);
+        setMapCursor(map, "");
+      });
+      kakao.maps.event.addListener(line, "click", (e) => {
+        const distM = haversineMeters(A, B);
+        const mins = Math.max(1, Math.round(distM / 1.2 / 60));
+        const rows = [
+          { label: "거리", value: `${Math.round(distM).toLocaleString()} m` },
+          { label: "예상", value: `${mins} 분` },
+        ];
+        const box = buildPopupBox("도보 이동", rows);
+        openOverlay(map, overlayRef, e.latLng, box);
+      });
+      walkLinesByLegRef.current[legIdx] = [line];
 
-    const distM = haversineMeters(A, B);
-    walkMetaByLegRef.current[legIdx] = {
-      distance: distM,
-      minutes: Math.max(1, Math.round(distM / 1.2 / 60)),
-    };
-    setMetaVersion((v) => v + 1);
-    return true;
+      const distM = haversineMeters(A, B);
+      walkMetaByLegRef.current[legIdx] = {
+        distance: distM,
+        minutes: Math.max(1, Math.round(distM / 1.2 / 60)),
+      };
+      setMetaVersion((v) => v + 1);
+      return true;
+    } finally {
+      setWalkLoading((p) => ({ ...p, [legIdx]: false })); // end
+    }
   }, []);
 
   // 지역구
@@ -748,48 +791,73 @@ export default function CourseDetailPage() {
       <Header />
 
       <div className={styles.inner}>
-        {/* 좌측: 타이틀 + 타임라인 */}
         <aside className={styles.sidebar}>
-          <button
-            type="button"
-            className={styles.backBtn}
-            onClick={() => window.history.back()}
-          >
-            ← 뒤로
-          </button>
+          {/* 맨 위 줄: 뒤로 ↔ 점3개 */}
+          <div className={styles.topBar}>
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={() => window.history.back()}
+            >
+              ← 뒤로
+            </button>
 
-          <div className={styles.titleBar}>
-            <h1 className={styles.title}>{course.title}</h1>
-            <div className={styles.actions}>
-              <Link
-                to={`/courses/${courseId}/edit`}
-                state={{ course }}
-                className={`${styles.btn} ${styles.btnPrimary}`}
-              >
-                <FiEdit2 /> 수정
-              </Link>
-
+            <div className={styles.actions} ref={menuRef}>
               <button
-                type="button"
-                onClick={onDelete}
-                disabled={deleting}
-                className={`${styles.btn} ${styles.btnDanger}`}
-                aria-busy={deleting ? "true" : "false"}
-                title={deleting ? "삭제 중..." : "삭제"}
+                className={styles.menuBtn}
+                onClick={() => (menuOpen ? closeMenu() : openMenu())}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen ? "true" : "false"}
+                aria-label="코스 메뉴 열기"
               >
-                <FiTrash2 />
-                {deleting ? "삭제 중…" : "삭제"}
+                <FiMoreVertical />
               </button>
+
+              {(menuOpen || menuClosing) && (
+                <ul
+                  className={`${styles.dropdown} ${
+                    menuOpen ? styles.open : styles.closing
+                  }`}
+                  role="menu"
+                  onTransitionEnd={() => {
+                    if (!menuOpen) setMenuClosing(false);
+                  }}
+                >
+                  <li role="menuitem">
+                    <Link
+                      to={`/courses/${courseId}/edit`}
+                      state={{ course }}
+                      className={styles.menuItem}
+                    >
+                      <FiEdit2 /> 수정
+                    </Link>
+                  </li>
+                  <li role="menuitem">
+                    <button
+                      type="button"
+                      onClick={onDelete}
+                      disabled={deleting}
+                      className={styles.menuItem}
+                    >
+                      <FiTrash2 />
+                      {deleting ? "삭제 중…" : "삭제"}
+                    </button>
+                  </li>
+                </ul>
+              )}
             </div>
           </div>
 
-          <div className={styles.metaTop}>
-            <div>
-              <div className={styles.metaValue}>서울시 {region || "-"}</div>
+          {/* 제목/지역 ↔ 날짜 */}
+          <div className={styles.headerBlock}>
+            <div className={styles.titleCol}>
+              <h1 className={styles.title}>{course.title}</h1>
+              <p className={styles.regionLine}>서울시 {region || "-"}</p>
             </div>
-            <div>
-              <div className={styles.metaLabel}>데이트 예정 일시</div>
-              <div className={styles.metaValue}>{when}</div>
+
+            <div className={styles.dateBox}>
+              <span className={styles.metaLabel}>데이트 예정 일시</span>
+              <span className={styles.dateValue}>{when}</span>
             </div>
           </div>
 
@@ -814,7 +882,6 @@ export default function CourseDetailPage() {
                   >
                     <span className={styles.orderDot}>{idx + 1}</span>
 
-                    {/* 모드 선택 전엔 아이콘 없음 */}
                     {!isLast && routeMode && (
                       <div className={styles.transportBlock}>
                         {routeMode === "pt" ? (
@@ -900,7 +967,7 @@ export default function CourseDetailPage() {
                 </button>
               </div>
 
-              {/* 구간 칩 (모드 선택 전에는 비활성화) */}
+              {/* 구간 칩 */}
               <LegChips
                 steps={steps}
                 active={selectedLeg ?? -1}
@@ -908,8 +975,12 @@ export default function CourseDetailPage() {
                 onSelect={(i) => onClickLeg(i)}
               />
 
-              {/* 정보 카드: 모드 미선택 시에만 안내 문구 */}
-              <div className={styles.infoCard}>
+              {/* 정보 카드 */}
+              <div
+                className={`${styles.infoCard} ${
+                  !routeMode ? styles.infoEmpty : ""
+                }`}
+              >
                 {!routeMode ? (
                   <EmptyHint />
                 ) : (
@@ -921,6 +992,9 @@ export default function CourseDetailPage() {
                     ptMeta={ptMetaByLegRef.current[selectedLeg ?? 0]}
                     carMeta={carMetaByLegRef.current[selectedLeg ?? 0]}
                     walkMeta={walkMetaByLegRef.current[selectedLeg ?? 0]}
+                    loadingPT={!!ptLoading[selectedLeg ?? 0]}
+                    loadingCar={!!carLoading[selectedLeg ?? 0]}
+                    loadingWalk={!!walkLoading[selectedLeg ?? 0]}
                   />
                 )}
               </div>
@@ -967,25 +1041,57 @@ function LegChips({ steps, active, disabled, onSelect }) {
 
 function EmptyHint() {
   return (
-    <div className={`${styles.infoCard} ${styles.infoEmpty}`}>
+    <>
       <div className={styles.infoHeaderLine}>
         <span className={styles.infoIcon} aria-hidden />
         <span className={styles.infoLead}>이동 방법을 선택하세요</span>
       </div>
       <p className={styles.infoText}>
         상단 탭에서 <strong>대중교통</strong> / <strong>자동차</strong> /{" "}
-        <strong>도보</strong> 중 하나를 선택하면, 첫 구간이 자동으로 표시됩니다.
+        <strong>도보</strong> 중 하나를 선택하면,
+        <br />첫 구간이 자동으로 표시됩니다.
       </p>
-    </div>
+    </>
   );
 }
 
-function MapLegInfo({ mode, legIndex, steps, ptMeta, carMeta, walkMeta }) {
+function MapLegInfo({
+  mode,
+  legIndex,
+  steps,
+  ptMeta,
+  carMeta,
+  walkMeta,
+  loadingPT,
+  loadingCar,
+  loadingWalk,
+}) {
   const a = steps[legIndex],
     b = steps[legIndex + 1];
   const title = a && b ? `${a.name} → ${b.name}` : "-";
   const fmtM = (m) => (m == null ? "-" : `${Math.round(m).toLocaleString()} m`);
   const fmtMin = (x) => (x == null ? "-" : `${Math.round(x)} 분`);
+
+  const isLoading =
+    (mode === "pt" && loadingPT) ||
+    (mode === "car" && loadingCar) ||
+    (mode === "walk" && loadingWalk);
+
+  if (isLoading || (mode === "pt" && !ptMeta)) {
+    return (
+      <>
+        <div className={styles.infoHeader}>
+          <span className={styles.kicker}>경로 계산 중…</span>
+        </div>
+        <div className={styles.infoTitle}>{title}</div>
+        <div className={styles.divider} />
+        <div className={styles.infoRows}>
+          <div className={styles.infoLabel}>소요</div>
+          <div className={styles.infoValue}>불러오는 중…</div>
+        </div>
+      </>
+    );
+  }
 
   if (mode === "walk") {
     return (
@@ -1027,8 +1133,7 @@ function MapLegInfo({ mode, legIndex, steps, ptMeta, carMeta, walkMeta }) {
   }
 
   // PT
-  const noPT =
-    ptMeta?.error || (!ptMeta?.segs?.length && ptMeta?.totalTime == null);
+  const noPT = mode === "pt" && ptMeta?.error === "noPT";
   if (noPT) {
     return (
       <>

@@ -54,10 +54,9 @@ const toReviewCardData = (r) => ({
 const toCourseCard = (c, idx = 0) => ({
   id: c.id ?? `${c.title}-${c.datetime}-${idx}`,
   title: c.title,
-  date: fmtYmd(c.datetime),
+  date: fmtYmd(c.datetime), // ← 항상 날짜 표시
   region: extractDistrict(c.places?.[0]?.address),
   count: Array.isArray(c.places) ? c.places.length : 0,
-  thumb: c.thumb || "/images/test/date1.jpg",
 });
 
 export default function MyPage() {
@@ -111,7 +110,6 @@ export default function MyPage() {
     api
       .get("carts/mine")
       .then((res) => {
-        console.log(res.data);
         const list = Array.isArray(res.data) ? res.data : [];
         // UI 포맷으로 변환
         const mapped = list.map((p, i) => ({
@@ -280,6 +278,7 @@ export default function MyPage() {
       alert("찜 해제에 실패했습니다.");
     }
   };
+
   return (
     <div className={styles.page}>
       <Header />
@@ -361,7 +360,7 @@ export default function MyPage() {
 
       {/* 콘텐츠 */}
       <main className={`${styles.row} ${styles.content}`}>
-        {/* ✅ 관심있는 장소 (요청한 UI) */}
+        {/* ✅ 관심있는 장소 */}
         {activeTab === "favorites" && (
           <>
             <div className={styles.sectionHeader}>
@@ -440,24 +439,38 @@ export default function MyPage() {
             ) : courses.length === 0 ? (
               <div className={styles.empty}>저장한 코스가 없습니다.</div>
             ) : (
-              <ul className={styles.courseList}>
+              <ul className={`${styles.courseListVertical}`}>
                 {courses.map((c, idx) => (
                   <li key={c.id ?? idx}>
                     <button
                       type="button"
-                      className={styles.courseCard}
+                      className={`${styles.courseRow}`}
                       onClick={() => goCourseDetail(c.id)}
                     >
-                      <div className={styles.cardThumb}>
-                        <img src={c.thumb} alt={c.title} loading="lazy" />
-                        <div className={styles.cardBadge}>{c.date} 저장</div>
+                      {/* 좌: 가짜 썸네일(아이콘 블록) */}
+                      <div className={styles.media} aria-hidden>
+                        <div className={styles.thumb}>
+                          <span className={styles.thumbEmoji}>🌐</span>
+                        </div>
                       </div>
-                      <div className={styles.cardBody}>
-                        <div className={styles.cardRegion}>{c.region}</div>
-                        <div className={styles.cardTitle}>{c.title}</div>
+
+                      {/* 중: 본문 (날짜 → 제목 → 메타) */}
+                      <div className={styles.main}>
+                        <span className={styles.cardBadge}>
+                          {c.date} 데이트 예정
+                        </span>
+                        <span className={styles.cardTitle}>{c.title}</span>
                         <div className={styles.cardMeta}>
                           선택한 장소 {c.count}개
                         </div>
+                      </div>
+
+                      {/* 우: 지역 + 화살표 */}
+                      <div className={styles.right}>
+                        <span className={styles.cardRegion}>{c.region}</span>
+                        <span className={styles.chevron} aria-hidden>
+                          ›
+                        </span>
                       </div>
                     </button>
                   </li>

@@ -17,17 +17,16 @@
   --btn-shadow: 0 8px 20px rgba(2, 6, 23, 0.08);
   --danger: #ef4444;
 
-  --last-tail: 20px; /* 아이콘 없는 마지막 스텝 꼬리선 길이 */
+  --last-tail: 20px;
 
-  /* 우상단 패널(칩+카드) 공통 크기 */
   --panel-w: 420px;
   --tab-h: 44px;
   --chip-h: 40px;
   --card-min-h: 148px;
-  --info-accent: 3px; /* 안내카드 좌측 포인트 두께 */
+  --info-accent: 5px;
 }
 
-/* ========== 버튼(공통) ========== */
+/* ========== 버튼 공통 ========== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -82,7 +81,7 @@
   margin-top: -1px;
 }
 
-/* CSS Modules 호환 */
+/* CSS Modules compose */
 .editBtn {
   composes: btn btnPrimary;
 }
@@ -120,38 +119,145 @@
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  margin-bottom: 6px;
 }
-.titleBar {
+
+/* 툴바 */
+.topBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  margin-bottom: 8px;
 }
-.actions {
+
+/* 헤더(제목·지역 ↔ 날짜) */
+.headerBlock {
   display: flex;
-  gap: 8px;
-  align-items: center;
-  margin: 8px 0 16px;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin: 0 0 12px;
+}
+.titleCol {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .title {
   font-size: 20px;
   font-weight: 800;
-  margin: 2px 0 12px;
+  margin: 0;
 }
-.metaTop {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 16px;
-}
-.metaLabel {
-  font-size: 12px;
+.regionLine {
+  margin: 0;
+  font-size: 14px;
   color: var(--muted);
 }
-.metaValue {
-  font-weight: 700;
+.dateBox {
+  text-align: right;
+  min-width: 170px;
 }
+.metaLabel {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.dateValue {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* ========== 점3개 액션/드롭다운 ========== */
+.actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 16px;
+}
+.topBar .actions {
+  margin: 0;
+}
+
+.menuBtn {
+  border: none;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.menuBtn:hover {
+  color: var(--ink);
+}
+.menuBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(69, 93, 229, 0.28);
+}
+.menuBtn svg {
+  font-size: 20px;
+}
+
+/* 드롭다운(상태 기반 전환) */
+.dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 140px;
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.12);
+  z-index: 20;
+
+  /* 전환 */
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  opacity: 0;
+  transform: scale(0.98);
+  pointer-events: none;
+}
+.dropdown.open {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+.dropdown.closing {
+  opacity: 0;
+  transform: scale(0.98);
+  pointer-events: none;
+}
+
+.menuItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--ink);
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.menuItem:hover {
+  background: #f5f7ff;
+}
+.menuItem:active {
+  background: #eef2ff;
+}
+.menuItem svg {
+  font-size: 16px;
+}
+
+/* ========== 섹션 타이틀 ========== */
 .sectionH2 {
   font-size: 18px;
   font-weight: 800;
@@ -173,7 +279,6 @@
   align-items: start;
 }
 
-/* 레일 공통 변수 */
 .leftRail {
   position: relative;
   width: 44px;
@@ -200,7 +305,6 @@
   position: relative;
   z-index: 2;
 }
-/* 번호 아래 짧은 선 */
 .leftRail::before {
   content: "";
   position: absolute;
@@ -212,7 +316,6 @@
   background: #cfd8ff;
   z-index: 1;
 }
-/* 운송 아이콘 */
 .transportBlock {
   position: absolute;
   left: var(--rail-center);
@@ -233,7 +336,6 @@
   transform: scale(1.12);
   filter: drop-shadow(0 2px 6px rgba(69, 93, 229, 0.25));
 }
-/* 다음 스텝까지 세로선 */
 .step:not(:last-child) .leftRail::after {
   content: "";
   position: absolute;
@@ -245,7 +347,6 @@
   background: #cfd8ff;
   z-index: 1;
 }
-/* 아이콘 없는 행 */
 .leftRail.noTransport::before {
   display: none;
 }
@@ -253,11 +354,9 @@
   top: var(--dot);
   height: calc(var(--gap) + (var(--dot) / 2) + var(--icon-off) + var(--icon));
 }
-/* 마지막: 아이콘 있으면 선 없음 */
 .step:last-child .leftRail::after {
   display: none;
 }
-/* 마지막: 아이콘 없으면 꼬리선 */
 .step:last-child .leftRail.noTransport::after {
   content: "";
   display: block;
@@ -270,7 +369,6 @@
   background: #cfd8ff;
   z-index: 1;
 }
-/* 마지막 작은 점(원한다면 유지) */
 .step:last-child .endDot {
   position: absolute;
   left: var(--rail-center);
@@ -286,7 +384,7 @@
   z-index: 2;
 }
 
-/* 행 배경 하이라이트 제거 */
+/* 텍스트영역 */
 .stepClickable {
   position: relative;
 }
@@ -295,7 +393,6 @@
   display: none;
 }
 
-/* 장소 텍스트 */
 .badgeRow {
   display: flex;
   align-items: center;
@@ -313,23 +410,20 @@
   font-weight: 700;
   font-size: 12px;
 }
-.sep {
-  color: #cbd5e1;
-}
 .placeName {
   font-weight: 800;
   font-size: 18px;
 }
-.placeAddr {
+.placeAddr,
+.move {
   color: #64748b;
   font-size: 13px;
 }
 .move {
-  color: #64748b;
   font-size: 12px;
 }
 
-/* ========== 지도 영역 ========== */
+/* ========== 지도/우상단 컨트롤 ========== */
 .mapArea {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -340,14 +434,12 @@
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 14px;
-  padding: 12px;
+  padding: 8px;
   height: 88vh;
   min-height: 560px;
   display: grid;
   box-shadow: var(--card-shadow);
 }
-
-/* 우상단 컨트롤(탭+칩+카드 패널 크기 통일) */
 .mapControls {
   position: absolute;
   top: 24px;
@@ -359,7 +451,7 @@
   max-width: 100%;
 }
 
-/* 모드 탭 */
+/* 탭 */
 .modeBtns {
   display: flex;
   gap: 8px;
@@ -391,7 +483,7 @@
   color: #1e3a8a;
 }
 
-/* 구간 칩 */
+/* 칩 */
 .legChips {
   display: flex;
   justify-content: center;
@@ -411,7 +503,6 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  line-height: 1;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--chip-bg);
@@ -454,7 +545,7 @@
   line-height: 1;
 }
 
-/* ========== 정보 카드 ========== */
+/* 정보 카드 */
 .infoCard {
   width: 100%;
   max-width: 100%;
@@ -462,7 +553,7 @@
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  padding: 14px 16px;
+  padding: 10px 12px;
   box-shadow: 0 8px 20px rgba(2, 6, 23, 0.08);
 }
 .infoHeader {
@@ -475,11 +566,11 @@
   margin: 0;
 }
 
-/* 빈 상태 안내 카드 */
 .infoEmpty {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-left-width: var(--info-accent);
+  border-left-color: #7283e1;
   padding-left: calc(16px - var(--info-accent));
   box-shadow: 0 6px 16px rgba(2, 6, 23, 0.06);
   min-height: calc(var(--card-min-h) - 8px);
@@ -523,7 +614,6 @@
   word-break: keep-all;
 }
 
-/* 강제 정렬 리셋 */
 .infoCard,
 .infoCard * {
   text-align: left;
@@ -532,7 +622,6 @@
   word-spacing: 0;
 }
 
-/* 상세 행/세그먼트 */
 .kicker {
   display: inline-flex;
   align-items: center;
@@ -619,7 +708,6 @@
   color: #155e75;
 }
 
-/* (구버전 empty 호환) */
 .empty {
   display: flex;
   gap: 8px;
@@ -670,5 +758,24 @@
   }
   .infoEmpty {
     min-height: 136px;
+  }
+  .headerBlock {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .dateBox {
+    text-align: left;
+    min-width: 0;
+  }
+  .menuBtn {
+    width: 40px;
+    height: 40px;
+  }
+  .dropdown {
+    min-width: 132px;
+  }
+  .menuItem {
+    padding: 12px 14px;
   }
 }

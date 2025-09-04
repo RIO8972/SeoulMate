@@ -1,16 +1,15 @@
 :root {
-  --header-h: 70px; /* Header가 고정이라면 위 패딩 보정 */
-  --gutter-x: 24px; /* 좌우 가터(섹션 내부 패딩) */
+  --header-h: 70px; /* Header가 고정이면 위 패딩 보정 */
+  --gutter-x: 24px; /* 좌우 가터 */
   --brand: #455de5;
   --ink: #0f172a;
   --muted: #6b7280;
 }
 
+/* 페이지 & 공통 컨테이너 */
 .page {
   padding-top: var(--header-h);
 }
-
-/* 공통 행 컨테이너(가로 100% + 좌우 가터만) */
 .row {
   width: 100%;
   padding-left: var(--gutter-x);
@@ -19,7 +18,7 @@
   margin-right: auto;
 }
 
-/* ── 배너(폭 100%) ───────────────────────────────────────────── */
+/* ── 배너 ───────────────────────────────────────────── */
 .banner {
   width: 100%;
   background: #455de5;
@@ -31,14 +30,12 @@
   gap: 12px;
   padding: 16px var(--gutter-x);
 }
-
 .avatar {
   width: 56px;
   height: 56px;
   border-radius: 50%;
   overflow: hidden;
   background: #fff;
-  display: grid;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,7 +45,6 @@
   height: 70px;
   object-fit: cover;
 }
-
 .username {
   font-weight: 800;
   font-size: 20px;
@@ -60,7 +56,7 @@
   gap: 10px;
 }
 
-/* CTA 버튼들 */
+/* CTA 버튼 */
 .createBtn,
 .darkBtn,
 .darkBtnXS {
@@ -84,7 +80,7 @@
   padding: 0 10px;
 }
 
-/* ── 탭(폭 100%) ─────────────────────────────────────────────── */
+/* ── 탭 ─────────────────────────────────────────────── */
 .tabs {
   width: 100%;
   border-bottom: 1px solid #e5e7eb;
@@ -116,10 +112,10 @@
   color: var(--muted);
 }
 
-/* ── 섹션 공통 머리말 ────────────────────────────────────────── */
+/* ── 섹션 머리말 & 페이지 패딩 ───────────────────────── */
 .content {
   width: 100%;
-  padding: 20px 50px;
+  padding: 20px 24px;
 }
 .sectionHeader {
   display: flex;
@@ -148,7 +144,7 @@
   color: #fff;
 }
 
-/* ── 관심 장소 리스트 ───────────────────────────────────────── */
+/* ── 관심 장소 리스트 ───────────────────────────────── */
 .placeList {
   list-style: none;
   padding: 0;
@@ -198,68 +194,112 @@
   cursor: pointer;
 }
 
-/* ── 코스 카드 그리드 ───────────────────────────────────────── */
-.courseList {
+/* ── 코스 목록: 리스트형 + 반응형 다열 ─────────────────── */
+/* 컨테이너: 화면 폭에 따라 1→2→3열 */
+.courseListVertical {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: grid;
+  display: grid !important;
+  grid-template-columns: 1fr; /* 기본 1열 */
+  gap: 14px;
+}
+@media (min-width: 1024px) {
+  .courseListVertical {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+@media (min-width: 1536px) {
+  .courseListVertical {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+  }
+}
+
+/* 카드: 가로 한 줄 레이아웃 */
+.courseRow {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-}
-.courseCard {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  background: #fff;
+  padding: 12px 16px;
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  overflow: hidden;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 10px;
+  background: #fff;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    border-color 0.15s ease;
 }
-.courseCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+.courseRow:hover {
+  background: #f9fafb;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+  border-color: #e2e8f0;
 }
-.cardThumb {
-  position: relative;
-  aspect-ratio: 16/10;
-  background: #f3f4f6;
+
+/* 왼쪽 묶음: 배지 + 제목 + 장소수 */
+.rowLeft {
+  min-width: 0;
+  flex: 1 1 auto;
 }
-.cardThumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.rowTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
+
+/* 날짜 배지(리스트 공용) */
 .cardBadge {
-  position: absolute;
-  left: 10px;
-  top: 10px;
   font-size: 12px;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
+  font-weight: 600;
+  color: #3730a3;
+  background: #eef2ff;
+  border-radius: 999px;
   padding: 4px 8px;
-  border-radius: 8px;
+  white-space: nowrap;
 }
-.cardBody {
-  padding: 12px;
-}
-.cardRegion {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
+
+/* 제목 & 메타 */
 .cardTitle {
   font-weight: 800;
-  margin-bottom: 6px;
+  font-size: 15px;
+  line-height: 1.35;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .cardMeta {
   font-size: 12px;
   color: var(--muted);
+  margin-top: 4px;
 }
 
-/* ── 리뷰 카드 그리드 ───────────────────────────────────────── */
+/* 오른쪽 묶음: 지역 + 화살표 */
+.rowRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.cardRegion {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.chevron {
+  font-size: 18px;
+  line-height: 1;
+  color: #9ca3af;
+  transform: translateX(0);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+.courseRow:hover .chevron {
+  transform: translateX(2px);
+  color: #6b7280;
+}
+
+/* ── 리뷰 카드 그리드(텍스트 전용) ───────────────────── */
 .reviewGrid {
   display: grid;
   gap: 16px;
@@ -270,30 +310,16 @@
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   overflow: hidden;
-}
-.reviewThumb {
-  position: relative;
-  aspect-ratio: 16/10;
-  background: #f3f4f6;
-}
-.reviewThumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+  padding: 14px 16px;
 }
 .reviewTag {
-  position: absolute;
-  left: 10px;
-  top: 10px;
+  display: inline-block;
   font-size: 12px;
   color: #fff;
   background: #111827;
   padding: 4px 8px;
   border-radius: 8px;
-}
-.reviewBody {
-  padding: 12px;
+  margin-bottom: 8px;
 }
 .reviewTitle {
   font-weight: 800;
@@ -324,18 +350,6 @@
   cursor: pointer;
 }
 
-/* 푸터 액션 정렬 */
-.footerActionsRight {
-  margin-top: 14px;
-  display: flex;
-  justify-content: flex-end;
-}
-.footerActionsCenter {
-  margin-top: 14px;
-  display: flex;
-  justify-content: center;
-}
-
 /* 상태 */
 .empty {
   color: var(--muted);
@@ -343,7 +357,7 @@
   text-align: center;
 }
 
-/* 반응형 */
+/* 반응형 보완 */
 @media (max-width: 640px) {
   .bannerInner {
     grid-template-columns: auto 1fr;
@@ -352,4 +366,275 @@
     grid-column: 1 / -1;
     justify-content: flex-end;
   }
+  .courseRow {
+    align-items: flex-start;
+  }
+  .rowTop {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .cardTitle {
+    width: 100%;
+  } /* 배지 아래로 제목 내려오게 */
+}
+
+/* 컨테이너: 2~3열 자동 */
+.courseListVertical {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 16px;
+}
+
+/* 카드: 3칸 그리드(썸 64px / 본문 / 우측) */
+.courseRow {
+  display: grid !important;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    border-color 0.15s ease;
+  min-height: 88px; /* 균일 높이 */
+}
+.courseRow:hover {
+  background: #f9fafb;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+  border-color: #e2e8f0;
+}
+
+/* 썸네일(가짜) */
+.media {
+  width: 64px;
+  height: 64px;
+}
+.thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e9efff, #dbeafe);
+  border: 1px solid #e5e7eb;
+}
+.thumbEmoji {
+  font-size: 22px;
+  line-height: 1;
+}
+/* (옵션) 카테고리별 색 바꾸고 싶으면 .thumb에 cat-* 클래스를 추가해 토글 */
+
+/* 본문 */
+.main {
+  min-width: 0;
+}
+.rowTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.cardBadge {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #3730a3;
+  background: #eef2ff;
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+.cardTitle {
+  font-weight: 800;
+  font-size: 15px;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cardMeta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* 우측 */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+.cardRegion {
+  font-size: 12px;
+  color: var(--muted);
+}
+.chevron {
+  font-size: 18px;
+  color: #9ca3af;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+.courseRow:hover .chevron {
+  transform: translateX(2px);
+  color: #6b7280;
+}
+
+/* 작은 화면: 1열로 자동, 제목이 배지 아래로 떨어지도록 */
+@media (max-width: 640px) {
+  .courseRow {
+    grid-template-columns: 48px 1fr auto;
+    min-height: 76px;
+  }
+  .media,
+  .thumb {
+    width: 48px;
+    height: 48px;
+  }
+  .rowTop {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .cardTitle {
+    width: 100%;
+  }
+}
+
+/* 코스 목록 컨테이너 */
+.courseListVertical {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid !important;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(380px, 1fr)
+  ); /* ✅ 카드 너비 통일 */
+  gap: 20px;
+  justify-items: stretch; /* ✅ 같은 폭으로 늘림 */
+}
+
+/* 카드 */
+.courseRow {
+  display: grid !important;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+
+  /* ✅ 높이 고정 */
+  min-height: 120px;
+  max-height: 120px;
+
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+.courseRow:hover {
+  background: #f9fafb;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+  border-color: #e2e8f0;
+}
+
+/* 썸네일 */
+.thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e9efff, #dbeafe);
+  border: 1px solid #e5e7eb;
+}
+.thumbEmoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* 본문 영역을 균일하게 배치 */
+.main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* ✅ 카드 안 세로 중앙정렬 */
+}
+.rowTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* 제목을 한 줄만 (높이 균일) */
+.cardTitle {
+  font-weight: 800;
+  font-size: 15px;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cardMeta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* 오른쪽 영역 */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.cardRegion {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.chevron {
+  font-size: 18px;
+  color: #9ca3af;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+.courseRow:hover .chevron {
+  transform: translateX(2px);
+  color: #6b7280;
+}
+/* 날짜-제목을 세로 스택으로 정렬 */
+.courseRow .main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 카드 높이 내에서 중앙 정렬 */
+}
+
+/* 배지: 제목 위, 살짝 간격 */
+.courseRow .main .cardBadge {
+  margin-bottom: 6px;
+  align-self: flex-start; /* 왼쪽 정렬 */
+}
+
+/* 제목: 한 줄로 고정, 길면 말줄임 */
+.courseRow .main .cardTitle {
+  margin: 0 0 4px;
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* (선택) 카드 고정 높이로 완전 통일하고 싶으면 유지/조정 */
+.courseRow {
+  min-height: 120px;
+  max-height: 120px; /* 필요 시 140px 등으로 조절 */
 }
