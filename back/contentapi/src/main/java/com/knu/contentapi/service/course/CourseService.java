@@ -39,7 +39,7 @@ public class CourseService {
                         .id(c.getId())
                         .title(c.getTitle())
                         .datetime(c.getDatetime())
-                        .categories(c.getCategories())
+                        .categories(new java.util.ArrayList<>(c.getCategories()))
                         .places(c.getPlacesDto())
                         .build())
                 .toList();
