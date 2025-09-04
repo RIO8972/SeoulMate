@@ -17,6 +17,7 @@ import java.util.List;
 @Builder
 public class CourseResponseDto {
     private Long id;
+    private List<String> categories;
     private Date datetime;
     private String title;
     private List<PlaceResponseDto> places;
@@ -26,7 +27,7 @@ public class CourseResponseDto {
                 .id(course.getId())
                 .datetime(course.getDatetime())
                 .title(course.getTitle())
-                // course.getPlacesDto()가 이미 List<PlaceResponseDto>면 그대로 사용
+                .categories(course.getCategories())
                 .places(course.getPlacesDto())
                 .build();
     }
