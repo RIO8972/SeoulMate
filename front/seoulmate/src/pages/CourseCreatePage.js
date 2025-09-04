@@ -1,3 +1,4 @@
+// src/pages/CourseCreatePage.jsx
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMemo, useState } from "react";
 import CourseForm from "./CourseForm";
@@ -52,6 +53,7 @@ export default function CourseCreatePage() {
     return {
       title: "",
       datetime: "",
+      categories: [], // ★ 추가: 카테고리 초기값
       places: prefillPlace ? [prefillPlace] : [],
       selectedPlaces: prefillPlace ? [prefillPlace] : [],
     };
@@ -72,6 +74,7 @@ export default function CourseCreatePage() {
               : new Date(payload.datetime)
             ).toISOString()
           : null,
+        categories: Array.isArray(payload.categories) ? payload.categories : [], // ★ 추가: 카테고리 전송
         places: (payload.selectedPlaces?.length ? payload.selectedPlaces : payload.places || []).map(
           (p, i) => ({
             placeId: String(p.placeId ?? p.id ?? `p-${i}`),
@@ -89,8 +92,8 @@ export default function CourseCreatePage() {
       console.groupCollapsed("[CourseCreatePage] POST /courses payload");
       console.log("title:", body.title);
       console.log("datetime(iso):", body.datetime);
+      console.log("categories:", body.categories); // ★ 카테고리 로깅
       console.log("places (raw):", body.places);
-      // 보기 쉽게 테이블로도
       console.table(
         body.places.map((p) => ({
           placeId: p.placeId,
@@ -110,7 +113,6 @@ export default function CourseCreatePage() {
         },
       });
 
-      // ✅ 응답 로깅
       console.log("[CourseCreatePage] /courses response:", res.status, res.data);
 
       const newId = res?.data?.id;
@@ -122,7 +124,6 @@ export default function CourseCreatePage() {
         nav("/mypage");
       }
     } catch (e) {
-      // ✅ 에러 로깅(서버 메시지까지)
       if (e.response) {
         console.error(
           "[CourseCreatePage] /courses error:",

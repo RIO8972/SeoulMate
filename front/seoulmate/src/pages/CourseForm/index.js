@@ -3,68 +3,88 @@ import React, { useState, useMemo, useEffect } from "react";
 import Header from "../../components/Header";
 import StepBasic from "./CourseDate";
 import CourseLocation from "./CourseLocation";
+import CourseCategory from "./CourseCategory";
 import "./style.css";
 
 export default function CourseForm({
-  mode = "create",            // "create" | "edit"
+  mode = "create",
   initialData,
   onSubmit,
   onCancel,
-  submitting = false,         // 부모가 내려주는 전송중 상태
+  submitting = false,
 }) {
   const normalize = (src) => ({
     title: src?.title ?? "",
-    // datepicker에서 Date를 쓰면 그대로, 없으면 ""
     datetime: src?.datetime ?? "",
-    // ★ 선택된 장소만 진짜 소스 (없으면 빈 배열)
+    categories: Array.isArray(src?.categories) ? src.categories : [],
+    keyword: Array.isArray(src?.categories) ? src.categories.join(" · ") : "",
     selectedPlaces: Array.isArray(src?.selectedPlaces) ? src.selectedPlaces : [],
-    // (선택) 참고용으로 보여줄 전체 후보 리스트가 필요하면 유지
     places: Array.isArray(src?.places) ? src.places : [],
   });
 
-  // initialData로 상태 초기화
   const [data, setData] = useState(() => normalize(initialData));
+  const TOTAL_STEPS = 3;
   const [step, setStep] = useState(1);
 
-  // initialData가 나중에 들어와도 반영
   useEffect(() => {
     setData(normalize(initialData));
   }, [initialData]);
 
-  // 단계별 유효성: 1단계(제목+날짜), 2단계(선택된 장소 1개 이상)
+  // ✅ 단계별 유효성: 1) 카테고리 → 2) 기본정보 → 3) 장소선택
   const canNext = useMemo(() => {
-    if (step === 1) return data.title.trim().length > 0 && !!data.datetime;
-    if (step === 2) return (data.selectedPlaces?.length ?? 0) > 0; // ★ 핵심
-    return false;
+    switch (step) {
+      case 1:
+        return (data.categories?.length ?? 0) > 0; // 카테고리 최소 1개
+      case 2:
+        return data.title.trim().length > 0 && !!data.datetime; // 제목+날짜
+      case 3:
+        return (data.selectedPlaces?.length ?? 0) > 0; // 장소 최소 1개
+      default:
+        return false;
+    }
   }, [step, data]);
 
   const handleNext = () => {
-    if (step === 1 && canNext) setStep(2);
+    if (!canNext || submitting) return;
+    if (step < TOTAL_STEPS) setStep((s) => s + 1);
   };
 
   const handlePrev = () => {
-    if (step === 2) setStep(1);
+    if (step > 1) setStep((s) => s - 1);
   };
 
   const handleFinish = () => {
-    if (!canNext || submitting) return;  // 전송중/검증 실패 시 무시
-    // ★ 항상 selectedPlaces를 서버로 보낼 places에 매핑해서 전달
-    onSubmit?.({ ...data, places: data.selectedPlaces });
+    if (!canNext || submitting) return;
+    onSubmit?.({
+      title: data.title,
+      datetime: data.datetime,
+      categories: data.categories || [],
+      places: data.selectedPlaces || [],
+    });
   };
 
-  const progress = (step / 2) * 100;
+  const progress = (step / TOTAL_STEPS) * 100;
 
   return (
     <div className="course-form-wrapper">
       <Header />
       <div className="course-form">
+        {/* 1단계: 카테고리 */}
         {step === 1 && (
+          <div className="form-card">
+            <CourseCategory data={data} setData={setData} />
+          </div>
+        )}
+
+        {/* 2단계: 기본정보(제목/날짜) */}
+        {step === 2 && (
           <div className="form-card">
             <StepBasic data={data} setData={setData} />
           </div>
         )}
 
-        {step === 2 && (
+        {/* 3단계: 장소선택 */}
+        {step === 3 && (
           <div className="location-step-container">
             <CourseLocation data={data} setData={setData} />
           </div>
@@ -96,11 +116,11 @@ export default function CourseForm({
                 </button>
               )}
 
-              {step < 2 ? (
+              {step < TOTAL_STEPS ? (
                 <button
                   className="btn primary"
                   onClick={handleNext}
-                  disabled={!canNext}
+                  disabled={!canNext || submitting}
                   type="button"
                 >
                   다음
@@ -109,7 +129,7 @@ export default function CourseForm({
                 <button
                   className="btn primary"
                   onClick={handleFinish}
-                  disabled={!canNext || submitting}   // 전송중 비활성화
+                  disabled={!canNext || submitting}
                   type="button"
                 >
                   {submitting ? "저장 중…" : mode === "edit" ? "수정 완료" : "완료"}
