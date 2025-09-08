@@ -22,6 +22,7 @@ import ProfileEditPage from "./pages/Settings/ProfileEditPage";
 import ReviewPage from "./pages/ReviewPage";
 import PasswordEditPage from "./pages/Password/PasswordEditPage";
 import RequireAuth from "./components/Auth/RequireAuth";
+import AuthSwitchCard from "./components/AuthSwitchCard/AuthSwitchCard";
 
 export default function App() {
   return (
@@ -58,13 +59,15 @@ export default function App() {
           element={<Navigate to="/map/:regionId" replace />}
         />
 
-
-
-        <Route path="/login" element={<LoginForm />} />
+        {/* <Route path="/login" element={<LoginForm />} /> */}
         <Route path="/logout" element={<Logout />} />
         <Route path="/savetoken" element={<SaveToken />} />
         <Route path="/requesttoken" element={<RequestToken />} />
-        <Route path="/sign" element={<SignUpForm />} />
+        {/* <Route path="/sign" element={<SignUpForm />} /> */}
+        <Route path="/login" element={<AuthSwitchCard />} />
+
+        {/* 잘못된 URL 접근 시 → "/" 로 이동 */}
+        <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
     </BrowserRouter>
