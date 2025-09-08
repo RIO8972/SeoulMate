@@ -1,0 +1,67 @@
+/* 그리드: 셀 중앙에 버튼을 두고, 셀이 넓어도 버튼을 늘리지 않게 */
+.grid {
+  display: grid;
+  margin-bottom: 1.5rem;
+  justify-items: center; /* 칸이 넓어도 버튼을 안 늘리고 중앙에 */
+}
+
+/* 버튼 크기 고정 (가로/세로), 내부 컨텐츠 정확한 중앙 정렬 */
+.button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* 세로 중앙 */
+  gap: 6px;
+  padding: 8px 10px;
+
+  width: 230px; /* 가로 크기 고정 (200~230px에서 조절 가능) */
+  min-height: 88px; /* 세로 크기 (80~92px 권장) */
+  max-width: 100%;
+  align-self: center;
+
+  border-radius: 14px;
+  border: 1px solid var(--line, #e5e7eb);
+  background: var(--card, #fff);
+  box-shadow: var(--card-shadow, 0 6px 20px rgba(2, 6, 23, 0.08));
+  transition: transform 0.06s ease, border-color 0.15s ease;
+  cursor: pointer;
+  text-align: center;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.selected {
+  border-color: var(--brand, #455de5);
+  box-shadow: 0 0 0 2px rgba(69, 93, 229, 0.12);
+}
+
+/* 이미지 아이콘: 인라인 베이스라인 영향 제거 */
+.icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
+}
+
+/* 이모지 아이콘: 폰트 베이스라인 보정 → 정확히 중앙 */
+.emoji {
+  display: flex; /* 글리프 중앙 배치 */
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  line-height: 1;
+  text-align: center;
+  transform: translateY(1px); /* 필요 시 0~2px 사이로 조절 */
+}
+
+/* 라벨: 조금 크게 */
+.label {
+  font-size: 14px; /* ← 텍스트 키움 (기존 12px) */
+  line-height: 1.2;
+  color: var(--ink, #0f172a);
+  white-space: nowrap;
+  text-align: center;
+}

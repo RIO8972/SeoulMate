@@ -23,9 +23,9 @@ function StepCost({ data, setData }) {
 
   return (
     <div className="review-container">
-      <h2 className="review-title">예상 비용 입력</h2>
+      <h2 className="review-title">사용한 비용 입력</h2>
       <p className="review-subtitle">
-        전체 데이트 코스의 예상 총 비용을 입력해주세요
+        전체 데이트 코스에서 실제로 지출한 총액을 입력해 주세요
       </p>
 
       {/* 실시간 금액 표시 */}

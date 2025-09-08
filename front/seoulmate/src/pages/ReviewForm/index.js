@@ -14,8 +14,24 @@ import api from "../../api/api";
 
 /* ---------- 카테고리 ↔ 키워드 유틸 ---------- */
 const ALL_CATEGORY_LABELS = [
-  "맛집","음식점","카페","디저트","자연","산책","야경","감성","명소","힐링",
-  "쇼핑","실내","전시","팝업","공연","영화관","액티비티","드라이브",
+  "맛집",
+  "음식점",
+  "카페",
+  "디저트",
+  "자연",
+  "산책",
+  "야경",
+  "감성",
+  "명소",
+  "힐링",
+  "쇼핑",
+  "실내",
+  "전시",
+  "팝업",
+  "공연",
+  "영화관",
+  "액티비티",
+  "드라이브",
 ];
 
 // "# 맛집 · 디저트" → ["맛집","디저트"]
@@ -29,7 +45,8 @@ const deriveCatsFromKeyword = (kw) => {
 };
 
 // ["맛집","디저트"] → "맛집 · 디저트"
-const buildKeyword = (cats) => (Array.isArray(cats) ? cats : []).filter(Boolean).join(" · ");
+const buildKeyword = (cats) =>
+  (Array.isArray(cats) ? cats : []).filter(Boolean).join(" · ");
 /* ------------------------------------------- */
 
 function ReviewForm({
@@ -62,7 +79,10 @@ function ReviewForm({
       ...(initialData || {}),
     };
 
-    if (!Array.isArray(base.selectedPlaces) || base.selectedPlaces.length === 0) {
+    if (
+      !Array.isArray(base.selectedPlaces) ||
+      base.selectedPlaces.length === 0
+    ) {
       base.selectedPlaces = Array.isArray(base.places) ? [...base.places] : [];
     } else if (!Array.isArray(base.places) || base.places.length === 0) {
       base.places = [...base.selectedPlaces];
@@ -73,18 +93,20 @@ function ReviewForm({
         ? base.categories
         : deriveCatsFromKeyword(base.keyword);
 
-    const normalizedExisting =
-      Array.isArray(base.images)
-        ? base.images
-            .map((it) => {
-              if (typeof it === "string") return { id: null, url: it };
-              if (it && typeof it === "object") {
-                return { id: it.id ?? null, url: it.url ?? it.imgUrl ?? it.src ?? "" };
-              }
-              return null;
-            })
-            .filter(Boolean)
-        : [];
+    const normalizedExisting = Array.isArray(base.images)
+      ? base.images
+          .map((it) => {
+            if (typeof it === "string") return { id: null, url: it };
+            if (it && typeof it === "object") {
+              return {
+                id: it.id ?? null,
+                url: it.url ?? it.imgUrl ?? it.src ?? "",
+              };
+            }
+            return null;
+          })
+          .filter(Boolean)
+      : [];
 
     return {
       ...base,
@@ -119,7 +141,8 @@ function ReviewForm({
         ? (next.selectedPlaces || []).some(
             (x) =>
               (x.id && p.id && x.id === p.id) ||
-              (Number(x.lat) === Number(p.lat) && Number(x.lng) === Number(p.lng))
+              (Number(x.lat) === Number(p.lat) &&
+                Number(x.lng) === Number(p.lng))
           )
         : true;
 
@@ -150,18 +173,26 @@ function ReviewForm({
       if (next && next.categories && next.categories !== prev.categories) {
         next.keyword = buildKeyword(next.categories);
       }
-      if (next && Array.isArray(next.selectedPlaces) && next.selectedPlaces !== prev.selectedPlaces) {
+      if (
+        next &&
+        Array.isArray(next.selectedPlaces) &&
+        next.selectedPlaces !== prev.selectedPlaces
+      ) {
         next.places = next.selectedPlaces;
       }
       if (next && Array.isArray(next.places) && next.places !== prev.places) {
-        if (!Array.isArray(next.selectedPlaces) || next.selectedPlaces.length !== next.places.length) {
+        if (
+          !Array.isArray(next.selectedPlaces) ||
+          next.selectedPlaces.length !== next.places.length
+        ) {
           next.selectedPlaces = next.places;
         }
       }
 
       if (!isDirty) {
         try {
-          if (JSON.stringify(next) !== JSON.stringify(initialForm)) setIsDirty(true);
+          if (JSON.stringify(next) !== JSON.stringify(initialForm))
+            setIsDirty(true);
         } catch {
           setIsDirty(true);
         }
@@ -187,7 +218,7 @@ function ReviewForm({
 
   // ====== 저장(생성) ======
   const handleSave = async () => {
-    if (submitting) return;            // ✅ 더블클릭 가드
+    if (submitting) return; // ✅ 더블클릭 가드
     setSubmitting(true);
     try {
       const placesToSend = getPlacesToSend(formData);
@@ -205,18 +236,23 @@ function ReviewForm({
       const form = new FormData();
       form.append(
         "dto",
-        new Blob([JSON.stringify({
-          categories: formData.categories,
-          cost: Number(formData.cost ?? 0),
-          date: formData.date,
-          time: formData.time,
-          region: formData.region,
-          title: formData.title,
-          intro: formData.intro,
-          detail: formData.detail,
-          datetime: buildDateTime(formData.date, formData.time),
-          places: placesDto,
-        })], { type: "application/json" })
+        new Blob(
+          [
+            JSON.stringify({
+              categories: formData.categories,
+              cost: Number(formData.cost ?? 0),
+              date: formData.date,
+              time: formData.time,
+              region: formData.region,
+              title: formData.title,
+              intro: formData.intro,
+              detail: formData.detail,
+              datetime: buildDateTime(formData.date, formData.time),
+              places: placesDto,
+            }),
+          ],
+          { type: "application/json" }
+        )
       );
       (formData.newImages || []).forEach((file) => form.append("images", file));
 
@@ -226,16 +262,15 @@ function ReviewForm({
         alert("생성된 리뷰 ID를 받지 못했습니다.");
         return;
       }
-      alert("form데이터 전송이 완료되었습니다!");
+      alert("리뷰가 저장되었습니다!");
       navigate(`/reviews/${newId}`);
     } catch (err) {
       console.error("업로드 실패:", err);
       alert("업로드 중 오류가 발생했습니다.");
     } finally {
-      setSubmitting(false);            // ✅ 반드시 되돌리기
+      setSubmitting(false); // ✅ 반드시 되돌리기
     }
   };
-
 
   const handleFinish = async () => {
     if (submitting) return; // ✅ 중복 호출 방지
@@ -254,12 +289,12 @@ function ReviewForm({
     if (mode === "edit") {
       try {
         setSubmitting(true);
-        await onSubmit?.(payload);     // onSubmit이 Promise면 await
+        await onSubmit?.(payload); // onSubmit이 Promise면 await
       } finally {
         setSubmitting(false);
       }
     } else {
-      await handleSave();              // 내부에서 submitting 처리
+      await handleSave(); // 내부에서 submitting 처리
     }
   };
 
@@ -279,7 +314,11 @@ function ReviewForm({
       <Header />
 
       <div className="review-form">
-        {step === 1 && <StepCategory data={formData} setData={updateFormData} />}
+        {step === 1 && (
+          <div className="form-card">
+            <StepCategory data={formData} setData={updateFormData} />
+          </div>
+        )}
         {step === 2 && <StepDate data={formData} setData={updateFormData} />}
 
         {step === 3 && (
@@ -292,8 +331,12 @@ function ReviewForm({
           />
         )}
 
-        {step === 4 && <StepImage data={formData} setData={updateFormData} mode={mode} />}
-        {step === 5 && <StepDescription data={formData} setData={updateFormData} />}
+        {step === 4 && (
+          <StepImage data={formData} setData={updateFormData} mode={mode} />
+        )}
+        {step === 5 && (
+          <StepDescription data={formData} setData={updateFormData} />
+        )}
         {step === 6 && <StepCost data={formData} setData={updateFormData} />}
       </div>
 
@@ -304,33 +347,43 @@ function ReviewForm({
 
         <div className="review-button-bar">
           <div className="left">
-            <button 
-              type="button" 
-              className="review-button cancel" 
+            <button
+              type="button"
+              className="review-button cancel"
               onClick={handleCancel}
               disabled={submitting}
-              >
+            >
               {cancelLabel || "취소"}
             </button>
           </div>
 
           <div className="right">
             {step > 1 && (
-              <button 
-                type="button" 
-                className="review-button back" 
+              <button
+                type="button"
+                className="review-button back"
                 onClick={prev}
                 disabled={submitting}
-                >
+              >
                 이전
               </button>
             )}
             {step < totalSteps ? (
-              <button type="button" className="review-button next" onClick={next} disabled={submitting}>
+              <button
+                type="button"
+                className="review-button next"
+                onClick={next}
+                disabled={submitting}
+              >
                 다음
               </button>
             ) : (
-              <button type="button" className="review-button next" onClick={handleFinish} disabled={submitting}>
+              <button
+                type="button"
+                className="review-button next"
+                onClick={handleFinish}
+                disabled={submitting}
+              >
                 {submitText}
               </button>
             )}
