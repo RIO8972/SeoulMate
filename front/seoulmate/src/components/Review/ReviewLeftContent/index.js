@@ -1,11 +1,10 @@
-// src/components/Review/ReviewLeftContent.jsx
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import "./style.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faCreditCard } from "@fortawesome/free-regular-svg-icons";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
+import { FiMoreVertical, FiEdit2, FiTrash2 } from "react-icons/fi";
 import api from "../../../api/api";
 
 /* 날짜 포맷터: YYYY.MM.DD */
@@ -21,7 +20,6 @@ const fmtYmd = (val) => {
   const dd = String(d.getDate()).padStart(2, "0");
   return `${y}.${mo}.${dd}`;
 };
-
 /* 시간 포맷터: HH:mm */
 const fmtHm = (val) => {
   if (!val) return "";
@@ -29,7 +27,6 @@ const fmtHm = (val) => {
   const m = s.match(/T?(\d{2}:\d{2})/);
   return m ? m[1] : s.slice(0, 5);
 };
-
 const fmtCost = (v) => {
   const digits = String(v ?? "").replace(/[^\d.-]/g, "");
   const n = digits === "" ? 0 : Number(digits);
@@ -51,10 +48,46 @@ const decodeJwtPayload = (token) => {
   }
 };
 
-/* ──────────────────────────────────────────────────────────────
-   DistrictMap 과 동일 스타일의 커스텀 오버레이 유틸
-   (CSS: .mapPopup* 클래스가 style.css에 있어야 함)
-   ────────────────────────────────────────────────────────────── */
+/* ── 리뷰 태그 이모지 매핑 ── */
+const TAG_ICON_MAP = {
+  맛집: "🌟",
+  음식점: "🍽️",
+  카페: "☕",
+  디저트: "🍰",
+  자연: "🌲",
+  산책: "🚶🏻‍♂️",
+  야경: "🌃",
+  감성: "✨",
+  명소: "📍",
+  힐링: "🍵",
+  쇼핑: "🛍️",
+  실내: "🛋️",
+  전시: "🖼️",
+  팝업: "🏬",
+  공연: "🎫",
+  영화관: "🎞️",
+  액티비티: "🎯",
+  드라이브: "🚗",
+};
+
+/* 배열/문자열 어떤 형태든 ["맛집","디저트", ...]로 정규화 */
+const normalizeReviewTags = (review) => {
+  if (Array.isArray(review?.categories) && review.categories.length) {
+    return review.categories
+      .map((c) => (typeof c === "string" ? c : c?.label || c?.name || ""))
+      .map((s) => String(s).trim())
+      .filter(Boolean);
+  }
+  const raw = String(review?.keyword ?? review?.keywords ?? "").trim();
+  if (!raw) return [];
+  const plain = raw.replace(/^#\s*/, "");
+  return plain
+    .split(/[\s·,|/]+/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+};
+
+/* ───────────────── Kakao 미니맵 ───────────────── */
 const esc = (s) =>
   String(s ?? "")
     .replace(/&/g, "&amp;")
@@ -85,7 +118,6 @@ function buildPopupBox(title, rows = []) {
   `;
   return box;
 }
-
 function openOverlay(map, overlayRef, position, box) {
   if (overlayRef.current) {
     overlayRef.current.setMap(null);
@@ -100,7 +132,6 @@ function openOverlay(map, overlayRef, position, box) {
   });
   overlay.setMap(map);
   overlayRef.current = overlay;
-
   const closeBtn = box.querySelector(".mapPopup__close");
   if (closeBtn) {
     closeBtn.onclick = () => {
@@ -109,15 +140,12 @@ function openOverlay(map, overlayRef, position, box) {
     };
   }
 }
-
-/* =================== Kakao 미니맵 컴포넌트 =================== */
 function KakaoMiniMap({ places = [], height = 300 }) {
   const mapRef = useRef(null);
   const containerRef = useRef(null);
   const overlayRef = useRef(null);
   const markersRef = useRef([]);
 
-  // SDK 로더 (한 번만 로드)
   const loadKakao = useCallback(() => {
     return new Promise((resolve, reject) => {
       if (window.kakao?.maps) return resolve(window.kakao);
@@ -144,7 +172,6 @@ function KakaoMiniMap({ places = [], height = 300 }) {
       if (!containerRef.current) return;
       const kakao = await loadKakao();
       kakao.maps.load(() => {
-        // 이전 마커/오버레이 정리
         markersRef.current.forEach((m) => m.setMap(null));
         markersRef.current = [];
         if (overlayRef.current) {
@@ -152,7 +179,6 @@ function KakaoMiniMap({ places = [], height = 300 }) {
           overlayRef.current = null;
         }
 
-        // 유효 좌표만
         const pts = (Array.isArray(places) ? places : [])
           .map((p) => {
             const lat = parseFloat(p.lat ?? p.y);
@@ -176,7 +202,7 @@ function KakaoMiniMap({ places = [], height = 300 }) {
 
         const center = pts[0]
           ? new kakao.maps.LatLng(pts[0].lat, pts[0].lng)
-          : new kakao.maps.LatLng(37.5665, 126.9780);
+          : new kakao.maps.LatLng(37.5665, 126.978);
 
         const map = new kakao.maps.Map(containerRef.current, {
           center,
@@ -202,7 +228,9 @@ function KakaoMiniMap({ places = [], height = 300 }) {
               pt.url
                 ? {
                     label: "링크",
-                    valueHtml: `<a href="${esc(pt.url)}" target="_blank" rel="noreferrer">바로가기</a>`,
+                    valueHtml: `<a href="${esc(
+                      pt.url
+                    )}" target="_blank" rel="noreferrer">바로가기</a>`,
                   }
                 : null,
             ].filter(Boolean);
@@ -254,7 +282,7 @@ const ReviewLeftContent = ({
 }) => {
   const navigate = useNavigate();
 
-  // 이미지 URL 배열만 추출
+  /* ----- 이미지 처리 ----- */
   const images = useMemo(() => {
     const srcs = (Array.isArray(review?.images) ? review.images : [])
       .map((it) =>
@@ -270,19 +298,15 @@ const ReviewLeftContent = ({
     setSelectedImage(images[0] || null);
   }, [images]);
 
+  /* ----- 상단 타이틀 메타 ----- */
   const region = review?.region || "";
   const title = review?.title || "";
-  const createdAtText = review?.createdAt ? `${fmtYmd(review.createdAt)} 작성` : "";
+  const createdAtText = review?.createdAt
+    ? `${fmtYmd(review.createdAt)} 작성`
+    : "";
 
-  // 해시태그/키워드
-  const keyword =
-    (Array.isArray(review?.categories) && review.categories.length
-      ? `# ${review.categories.join(" · ")}`
-      : review?.keyword
-      ? `# ${review.keyword}`
-      : "");
-
-  // 초기 좋아요 상태/카운트
+  /* ----- 태그/좋아요 ----- */
+  const tagList = useMemo(() => normalizeReviewTags(review), [review]);
   const initialLikeCount = Number(review?.likeCount ?? review?.like ?? 0);
   const initialLiked = Boolean(
     review?.likedByMe ?? review?.liked ?? review?.userLiked ?? review?.isLiked
@@ -293,14 +317,10 @@ const ReviewLeftContent = ({
   const [likeBusy, setLikeBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    setLikeCount(initialLikeCount);
-  }, [initialLikeCount]);
-  useEffect(() => {
-    setLiked(initialLiked);
-  }, [initialLiked]);
+  useEffect(() => setLikeCount(initialLikeCount), [initialLikeCount]);
+  useEffect(() => setLiked(initialLiked), [initialLiked]);
 
-  // 날짜/시간
+  /* ----- 방문일시/비용 ----- */
   const dateRaw = review?.date || review?.visitedDate || review?.datetime || "";
   const timeRaw = review?.time || review?.datetime || "";
   const visitedText = (() => {
@@ -308,14 +328,13 @@ const ReviewLeftContent = ({
     const t = fmtHm(timeRaw);
     return d ? (t ? `${d} ${t}` : d) : "";
   })();
-
   const costText = fmtCost(review?.cost);
 
-  // 소개/팁
+  /* ----- 본문/팁 ----- */
   const description = review?.intro ?? review?.description ?? "";
   const tips = review?.detail ?? review?.tips ?? "";
 
-  // 작성자 여부
+  /* ----- 작성자 여부 ----- */
   const showEdit = useMemo(() => {
     if (canEdit) return true;
     const token = localStorage.getItem("accessToken");
@@ -334,7 +353,7 @@ const ReviewLeftContent = ({
   const editTo = editHref ?? `/reviews/${review?.id}/edit`;
   const editStateObj = editState ?? { review, canEdit: true };
 
-  // 좋아요 토글 (서버 응답 { liked, likeCount } 반영)
+  /* ----- 좋아요 ----- */
   const onToggleLike = useCallback(async () => {
     if (!review?.id || likeBusy) return;
     const token = localStorage.getItem("accessToken");
@@ -342,13 +361,11 @@ const ReviewLeftContent = ({
       alert("로그인이 필요합니다.");
       return;
     }
-
     setLikeBusy(true);
     try {
-      const { data } = await api.post(
-        `/reviews/${review.id}/likes`,
-        { liked: !liked }
-      ); // 인터셉터로 AT 자동 주입
+      const { data } = await api.post(`/reviews/${review.id}/likes`, {
+        liked: !liked,
+      });
       if (data && typeof data === "object") {
         if (typeof data.liked !== "undefined") setLiked(Boolean(data.liked));
         if (typeof data.likeCount === "number") setLikeCount(data.likeCount);
@@ -361,7 +378,7 @@ const ReviewLeftContent = ({
     }
   }, [review?.id, liked, likeBusy]);
 
-  // 삭제
+  /* ----- 삭제 ----- */
   const onDelete = useCallback(async () => {
     if (!review?.id || deleting) return;
     if (!window.confirm("리뷰를 삭제할까요?")) return;
@@ -370,10 +387,9 @@ const ReviewLeftContent = ({
       alert("로그인이 필요합니다.");
       return;
     }
-
     setDeleting(true);
     try {
-      await api.delete(`/reviews/${review.id}`); // 인터셉터로 AT 자동 주입
+      await api.delete(`/reviews/${review.id}`);
       alert("리뷰가 삭제되었습니다.");
       navigate("/mypage", { replace: true });
     } catch (e) {
@@ -384,6 +400,28 @@ const ReviewLeftContent = ({
     }
   }, [review?.id, deleting, navigate]);
 
+  /* ----- 수정 이동 ----- */
+  const onEdit = useCallback(() => {
+    navigate(editTo, { state: editStateObj });
+  }, [navigate, editTo, editStateObj]);
+
+  /* ===== 점3개 메뉴 (백드롭 방식) ===== */
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
+  const menuRef = useRef(null);
+
+  const openMenu = () => {
+    setMenuClosing(false);
+    setMenuOpen(true);
+  };
+  const closeMenu = () => {
+    if (!menuOpen) return;
+    setMenuOpen(false);
+    setMenuClosing(true);
+  };
+
+  // ❌ 전역 document 리스너 없음 (백드롭이 대신 처리)
+
   return (
     <div className="review-left-content">
       <div className="title-meta-group">
@@ -391,21 +429,61 @@ const ReviewLeftContent = ({
           {region && <span className="region-badge-title">{region}</span>}
           <h1 className="review-title">{title}</h1>
 
+          {/* 점3개 메뉴 (백드롭으로 밖 클릭 처리) */}
           {showEdit && (
-            <div style={{ display: "flex", gap: 8 }}>
-              <Link to={editTo} state={editStateObj} className="edit-link">
-                수정
-              </Link>
+            <div className="action-menu" ref={menuRef}>
               <button
                 type="button"
-                onClick={onDelete}
-                className="edit-link"
-                disabled={deleting}
-                style={{ color: "#d33" }}
-                title={deleting ? "삭제 중..." : "삭제"}
+                className="icon-button"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen ? "true" : "false"}
+                aria-label="리뷰 메뉴 열기"
+                onClick={() => (menuOpen ? closeMenu() : openMenu())}
               >
-                삭제
+                <FiMoreVertical size={18} />
               </button>
+
+              {(menuOpen || menuClosing) && (
+                <>
+                  {/* ✅ 밖 클릭 닫힘: 화면 전체 백드롭 */}
+                  <button
+                    type="button"
+                    className={`action-backdrop ${
+                      menuOpen ? "open" : "closing"
+                    }`}
+                    aria-label="메뉴 닫기"
+                    onClick={closeMenu}
+                  />
+                  <div
+                    className={`action-popover ${
+                      menuOpen ? "open" : "closing"
+                    }`}
+                    role="menu"
+                    onTransitionEnd={(e) => {
+                      if (e.target !== e.currentTarget) return;
+                      if (
+                        e.propertyName !== "opacity" &&
+                        e.propertyName !== "transform"
+                      )
+                        return;
+                      if (!menuOpen) setMenuClosing(false);
+                    }}
+                  >
+                    <button type="button" onClick={onEdit}>
+                      <FiEdit2 /> 수정
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onDelete}
+                      disabled={deleting}
+                      className="danger"
+                    >
+                      <FiTrash2 />
+                      {deleting ? " 삭제 중…" : " 삭제"}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -419,12 +497,13 @@ const ReviewLeftContent = ({
           ) : (
             <div className="main-image placeholder">이미지가 없습니다</div>
           )}
-
           {images.length > 4 && (
             <button
               type="button"
               className="overlay-show-all-button"
-              onClick={() => alert("전체 갤러리 보기 기능은 아직 준비 중이에요.")}
+              onClick={() =>
+                alert("전체 갤러리 보기 기능은 아직 준비 중이에요.")
+              }
             >
               사진 모두 보기
             </button>
@@ -439,7 +518,9 @@ const ReviewLeftContent = ({
                   key={i}
                   src={img}
                   alt={`thumb-${i}`}
-                  className={`thumbnail ${selectedImage === img ? "selected" : ""}`}
+                  className={`thumbnail ${
+                    selectedImage === img ? "selected" : ""
+                  }`}
                   onClick={() => setSelectedImage(img)}
                 />
               ))}
@@ -449,14 +530,27 @@ const ReviewLeftContent = ({
       </div>
 
       <div className="review-header-row">
-        {keyword && <span className="review-keyword">{keyword}</span>}
+        {/* 태그 칩 */}
+        {tagList.length > 0 && (
+          <div className="tag-chips">
+            {tagList.slice(0, 8).map((t) => (
+              <span key={t} className="tag-chip">
+                <span className="tag-icon">{TAG_ICON_MAP[t] || "🏷️"}</span>
+                {t}
+              </span>
+            ))}
+          </div>
+        )}
 
         <span
           className="review-like"
           onClick={onToggleLike}
           role="button"
           title={likeBusy ? "처리 중..." : liked ? "좋아요 취소" : "좋아요"}
-          style={{ cursor: likeBusy ? "not-allowed" : "pointer", userSelect: "none" }}
+          style={{
+            cursor: likeBusy ? "not-allowed" : "pointer",
+            userSelect: "none",
+          }}
         >
           <FontAwesomeIcon icon={faHeart} className="like-icon" /> {likeCount}
         </span>
@@ -471,7 +565,6 @@ const ReviewLeftContent = ({
             <span>{visitedText}</span>
           </div>
         )}
-
         {costText && (
           <div className="review-info">
             <FontAwesomeIcon icon={faCreditCard} className="review-icon" />
@@ -494,7 +587,6 @@ const ReviewLeftContent = ({
         </div>
       )}
 
-      {/* 코스 지도 (DistrictMap 스타일 팝업) */}
       {Array.isArray(review?.places) && review.places.length > 0 && (
         <div className="review-map-section" style={{ marginBottom: 24 }}>
           <KakaoMiniMap places={review.places} height={300} />

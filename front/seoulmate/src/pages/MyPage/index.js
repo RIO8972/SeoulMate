@@ -5,6 +5,7 @@ import styles from "./MyPage.module.css";
 import Header from "../../components/Header";
 import Account from "../../images/account.png";
 import ReviewCard from "../../components/Review/ReviewCard";
+import CourseCard from "../../components/Course/CourseCard";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as solidHeart } from "@fortawesome/free-solid-svg-icons";
@@ -32,6 +33,40 @@ const extractDistrict = (address) => {
   return parts[1] || "";
 };
 
+/* ───────────────── 카테고리 칩 (코스용) ───────────────── */
+const CATEGORY_MAP = {
+  맛집: { label: "맛집", icon: "🌟" },
+  음식점: { label: "음식점", icon: "🍽️" },
+  카페: { label: "카페", icon: "☕" },
+  디저트: { label: "디저트", icon: "🍰" },
+  자연: { label: "자연", icon: "🌲" },
+  산책: { label: "산책", icon: "🚶🏻‍♂️" },
+  야경: { label: "야경", icon: "🌃" },
+  감성: { label: "감성", icon: "✨" },
+  명소: { label: "명소", icon: "📍" },
+  힐링: { label: "힐링", icon: "🍵" },
+  쇼핑: { label: "쇼핑", icon: "🛍️" },
+  실내: { label: "실내", icon: "🛋️" },
+  전시: { label: "전시", icon: "🖼️" },
+  팝업: { label: "팝업", icon: "🏬" },
+  공연: { label: "공연", icon: "🎫" },
+  영화관: { label: "영화관", icon: "🎞️" },
+  액티비티: { label: "액티비티", icon: "🎯" },
+  드라이브: { label: "드라이브", icon: "🚗" },
+};
+
+/* 서버 응답이 ["맛집","카페"] 또는 [{label:"맛집"}] 모두 지원 */
+const normalizeCourseCategories = (raw) => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) {
+    return raw
+      .map((v) => (typeof v === "string" ? v : v?.label || v?.name || ""))
+      .map((s) => String(s).trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
 /* 카드 매퍼(리뷰) */
 const toReviewCardData = (r) => ({
   id: r.id,
@@ -50,13 +85,14 @@ const toReviewCardData = (r) => ({
     r.keyword ?? (Array.isArray(r.categories) ? r.categories.join(" · ") : ""),
 });
 
-/* 카드 매퍼(코스) */
+/* 카드 매퍼(코스) — ★ 카테고리 포함 */
 const toCourseCard = (c, idx = 0) => ({
   id: c.id ?? `${c.title}-${c.datetime}-${idx}`,
   title: c.title,
   date: fmtYmd(c.datetime), // ← 항상 날짜 표시
   region: extractDistrict(c.places?.[0]?.address),
   count: Array.isArray(c.places) ? c.places.length : 0,
+  categories: normalizeCourseCategories(c.categories), // ← 추가!
 });
 
 export default function MyPage() {
@@ -439,43 +475,15 @@ export default function MyPage() {
             ) : courses.length === 0 ? (
               <div className={styles.empty}>저장한 코스가 없습니다.</div>
             ) : (
-              <ul className={`${styles.courseListVertical}`}>
-                {courses.map((c, idx) => (
-                  <li key={c.id ?? idx}>
-                    <button
-                      type="button"
-                      className={`${styles.courseRow}`}
-                      onClick={() => goCourseDetail(c.id)}
-                    >
-                      {/* 좌: 가짜 썸네일(아이콘 블록) */}
-                      <div className={styles.media} aria-hidden>
-                        <div className={styles.thumb}>
-                          <span className={styles.thumbEmoji}>🌐</span>
-                        </div>
-                      </div>
-
-                      {/* 중: 본문 (날짜 → 제목 → 메타) */}
-                      <div className={styles.main}>
-                        <span className={styles.cardBadge}>
-                          {c.date} 데이트 예정
-                        </span>
-                        <span className={styles.cardTitle}>{c.title}</span>
-                        <div className={styles.cardMeta}>
-                          선택한 장소 {c.count}개
-                        </div>
-                      </div>
-
-                      {/* 우: 지역 + 화살표 */}
-                      <div className={styles.right}>
-                        <span className={styles.cardRegion}>{c.region}</span>
-                        <span className={styles.chevron} aria-hidden>
-                          ›
-                        </span>
-                      </div>
-                    </button>
-                  </li>
+              <div className={styles.ticketGrid}>
+                {courses.map((c) => (
+                  <CourseCard
+                    key={c.id}
+                    course={c}
+                    onClick={() => goCourseDetail(c.id)}
+                  />
                 ))}
-              </ul>
+              </div>
             )}
           </>
         )}

@@ -5,7 +5,7 @@
   --muted: #6b7280;
   --line: #e5e7eb;
 
-  --card: #ffffff;
+  --card: #fff;
   --card-shadow: 0 6px 20px rgba(2, 6, 23, 0.08);
   --glass-bg: rgba(255, 255, 255, 0.92);
   --glass-border: rgba(15, 23, 42, 0.08);
@@ -18,7 +18,6 @@
   --danger: #ef4444;
 
   --last-tail: 20px;
-
   --panel-w: 420px;
   --tab-h: 44px;
   --chip-h: 40px;
@@ -26,7 +25,7 @@
   --info-accent: 5px;
 }
 
-/* ========== 버튼 공통 ========== */
+/* ========== 버튼 ========== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -35,15 +34,13 @@
   padding: 0 16px;
   border: 1px solid transparent;
   border-radius: var(--btn-radius);
-  font-weight: 700;
-  font-size: 14px;
-  line-height: 1;
+  font: 700 14px/1 system-ui;
   cursor: pointer;
   user-select: none;
   background: #fff;
   color: var(--ink);
   box-shadow: var(--btn-shadow);
-  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+  transition: transform 0.12s, filter 0.12s, box-shadow 0.12s;
   text-decoration: none;
 }
 .btnPrimary {
@@ -59,7 +56,7 @@
   filter: brightness(1.03);
 }
 .btn:active {
-  transform: translateY(0);
+  transform: none;
   filter: brightness(0.98);
 }
 .btn:focus-visible {
@@ -80,8 +77,6 @@
   font-size: 16px;
   margin-top: -1px;
 }
-
-/* CSS Modules compose */
 .editBtn {
   composes: btn btnPrimary;
 }
@@ -89,7 +84,7 @@
   composes: btn btnDanger;
 }
 
-/* ========== 페이지 레이아웃 ========== */
+/* ========== 레이아웃 ========== */
 .page {
   padding-top: var(--header-h);
   background: #f9fafb;
@@ -120,8 +115,6 @@
   color: var(--muted);
   cursor: pointer;
 }
-
-/* 툴바 */
 .topBar {
   display: flex;
   align-items: center;
@@ -129,7 +122,6 @@
   margin-bottom: 8px;
 }
 
-/* 헤더(제목·지역 ↔ 날짜) */
 .headerBlock {
   display: flex;
   justify-content: space-between;
@@ -170,7 +162,7 @@
   color: var(--ink);
 }
 
-/* ========== 점3개 액션/드롭다운 ========== */
+/* ========== 케밥 & 드롭다운 ========== */
 .actions {
   position: relative;
   display: flex;
@@ -182,46 +174,52 @@
   margin: 0;
 }
 
-.menuBtn {
-  border: none;
-  background: transparent;
+.menuBtn,
+.review-left-content .icon-button {
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
-  padding: 4px;
-  cursor: pointer;
-  color: var(--muted);
+  border: none;
+  background: transparent !important;
+  color: #6b7280;
+  transition: color 0.15s;
 }
-.menuBtn:hover {
-  color: var(--ink);
+.menuBtn:hover,
+.menuBtn[aria-expanded="true"],
+.review-left-content .icon-button:hover,
+.review-left-content .icon-button[aria-expanded="true"] {
+  color: #111827;
+  background: transparent !important;
 }
 .menuBtn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px rgba(69, 93, 229, 0.28);
+  border-radius: 8px;
 }
 .menuBtn svg {
   font-size: 20px;
 }
 
-/* 드롭다운(상태 기반 전환) */
+/* 상태 전환 포함한 기본 드롭다운 박스 */
 .dropdown {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
   min-width: 140px;
   margin: 0;
-  padding: 6px 0;
+  padding: 0;
   list-style: none;
+  z-index: 20;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(2, 6, 23, 0.12);
-  z-index: 20;
-
-  /* 전환 */
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.18s, transform 0.18s;
   opacity: 0;
   transform: scale(0.98);
   pointer-events: none;
+  overflow: hidden; /* hover 배경이 모서리 밖으로 안 새게 */
 }
 .dropdown.open {
   opacity: 1;
@@ -233,35 +231,62 @@
   transform: scale(0.98);
   pointer-events: none;
 }
+.dropdown li {
+  margin: 0;
+  padding: 0;
+}
 
+/* 공용 팝오버 클래스가 있다면 동일 톤으로 */
+.action-popover {
+  min-width: 140px;
+  padding: 0;
+  background: #fff;
+  border: 1px solid #edf0f7;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.14);
+  overflow: hidden;
+}
+
+/* 항목 */
 .menuItem {
-  width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  font-size: 14px;
-  color: var(--ink);
-  text-decoration: none;
-  background: transparent;
+  gap: 10px;
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  background: #fff;
   border: 0;
+  border-radius: 0;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
-.menuItem:hover {
-  background: #f5f7ff;
+.dropdown li + li .menuItem {
+  border-top: 1px solid #edf0f7;
+}
+.menuItem:hover,
+.menuItem:focus-visible {
+  background: #eef2ff;
+  color: #111827;
+  outline: none;
 }
 .menuItem:active {
-  background: #eef2ff;
+  background: #e9ecff;
 }
-.menuItem svg {
-  font-size: 16px;
+.menuItemPrimary {
+  color: #1e3a8a;
 }
-
-/* ========== 섹션 타이틀 ========== */
-.sectionH2 {
-  font-size: 18px;
-  font-weight: 800;
-  margin: 16px 0 8px;
+.menuItemDanger {
+  color: var(--danger);
+}
+.menuItemDanger:hover,
+.menuItemDanger:focus-visible {
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 /* ========== 타임라인 ========== */
@@ -278,7 +303,6 @@
   column-gap: 12px;
   align-items: start;
 }
-
 .leftRail {
   position: relative;
   width: 44px;
@@ -328,7 +352,7 @@
   color: #6f8cff;
   line-height: 1;
   display: block;
-  transition: transform 0.14s ease, color 0.14s ease, filter 0.14s ease;
+  transition: transform 0.14s, color 0.14s, filter 0.14s;
 }
 .stepClickable:hover .transportBlock .busIcon,
 .stepActive .transportBlock .busIcon {
@@ -383,8 +407,6 @@
   border-radius: 50%;
   z-index: 2;
 }
-
-/* 텍스트영역 */
 .stepClickable {
   position: relative;
 }
@@ -392,7 +414,6 @@
 .stepActive::before {
   display: none;
 }
-
 .badgeRow {
   display: flex;
   align-items: center;
@@ -423,7 +444,7 @@
   font-size: 12px;
 }
 
-/* ========== 지도/우상단 컨트롤 ========== */
+/* ========== 지도/컨트롤 ========== */
 .mapArea {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -472,7 +493,7 @@
   color: #0f172a;
   box-shadow: 0 4px 12px rgba(2, 6, 23, 0.06);
   cursor: pointer;
-  transition: transform 0.12s ease;
+  transition: transform 0.12s;
 }
 .tab:hover {
   transform: translateY(-1px);
@@ -565,7 +586,6 @@
 .infoCard p {
   margin: 0;
 }
-
 .infoEmpty {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -613,7 +633,6 @@
   line-height: 1.55;
   word-break: keep-all;
 }
-
 .infoCard,
 .infoCard * {
   text-align: left;
@@ -621,7 +640,6 @@
   letter-spacing: 0;
   word-spacing: 0;
 }
-
 .kicker {
   display: inline-flex;
   align-items: center;
@@ -667,8 +685,7 @@
   row-gap: 6px;
   column-gap: 12px;
   font-size: 14px;
-  margin-top: 2px;
-  margin-bottom: 6px;
+  margin: 2px 0 6px;
 }
 .infoLabel {
   color: #6b7280;
@@ -707,7 +724,6 @@
   border-color: #a5f3fc;
   color: #155e75;
 }
-
 .empty {
   display: flex;
   gap: 8px;
@@ -776,6 +792,6 @@
     min-width: 132px;
   }
   .menuItem {
-    padding: 12px 14px;
+    padding: 0 14px;
   }
 }

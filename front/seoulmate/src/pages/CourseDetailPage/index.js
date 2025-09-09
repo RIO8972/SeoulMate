@@ -170,7 +170,7 @@ export default function CourseDetailPage() {
         setCourse(data);
       } catch (e) {
         console.error("[course detail] error:", e);
-        setErr("को스를 불러오는 중 오류가 발생했습니다.");
+        setErr("코스를 불러오는 중 오류가 발생했습니다.");
       } finally {
         setLoading(false);
       }
@@ -837,7 +837,7 @@ export default function CourseDetailPage() {
                       type="button"
                       onClick={onDelete}
                       disabled={deleting}
-                      className={styles.menuItem}
+                      className={`${styles.menuItem} ${styles.menuItemDanger}`}
                     >
                       <FiTrash2 />
                       {deleting ? "삭제 중…" : "삭제"}
