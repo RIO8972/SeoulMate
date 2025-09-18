@@ -1,5 +1,5 @@
 // src/pages/ReviewPage.jsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./style.css";
 import Header from "../../components/Header";
@@ -9,9 +9,32 @@ import useInfiniteReviews from "../../hooks/useInfiniteReviews";
 
 // 서울 지역 리스트
 const seoulDistricts = [
-  "전체","강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구",
-  "노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구","성동구","성북구",
-  "송파구","양천구","영등포구","용산구","은평구","종로구","중구","중랑구",
+  "전체",
+  "강남구",
+  "강동구",
+  "강북구",
+  "강서구",
+  "관악구",
+  "광진구",
+  "구로구",
+  "금천구",
+  "노원구",
+  "도봉구",
+  "동대문구",
+  "동작구",
+  "마포구",
+  "서대문구",
+  "서초구",
+  "성동구",
+  "성북구",
+  "송파구",
+  "양천구",
+  "영등포구",
+  "용산구",
+  "은평구",
+  "종로구",
+  "중구",
+  "중랑구",
 ];
 
 /* 날짜 포맷터: 2025.08.02 형태 */
@@ -28,7 +51,7 @@ const fmtYmd = (val) => {
   return `${y}.${mo}.${dd}`;
 };
 
-/** 서버 리뷰 → ReviewCard가 기대하는 형태로 변환 (마이페이지와 동일 규격) */
+/** 서버 리뷰 → ReviewCard가 기대하는 형태로 변환 */
 const toReviewCardData = (r) => ({
   id: r.id,
   title: r.title,
@@ -36,34 +59,42 @@ const toReviewCardData = (r) => ({
   image:
     r.image ||
     r.thumbnail ||
-    (Array.isArray(r.images) ? r.images[0]?.imgUrl || r.images[0]?.url : undefined),
+    (Array.isArray(r.images)
+      ? r.images[0]?.imgUrl || r.images[0]?.url
+      : undefined),
   visitedDate: fmtYmd(r.datetime || r.createdAt || r.created_at),
   cost: r.cost ?? 0,
   like: r.like_count ?? r.likeCount ?? r.like ?? 0,
-  keyword: r.keyword ?? (Array.isArray(r.categories) ? r.categories.join(" · ") : ""),
+  keyword:
+    r.keyword ?? (Array.isArray(r.categories) ? r.categories.join(" · ") : ""),
+  createdAt: r.createdAt ?? r.created_at,
+  likeCount: r.like_count ?? r.likeCount ?? r.like ?? 0,
 });
 
 const ReviewPage = () => {
-  const [sortType, setSortType] = useState("latest"); // "latest" | "popular"
+  const [sortType, setSortType] = useState("latest");
   const [selectedRegion, setSelectedRegion] = useState("전체");
 
   // 서버 무한 스크롤
   const { items, setItems, loading, hasNext, sentinelRef, reload } =
     useInfiniteReviews({ pageSize: 12 });
 
-  // 정렬/필터 바뀌면 리스트 초기화 후 다시 로드
-  React.useEffect(() => {
+  // 정렬/필터 변경 시 초기화
+  useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortType, selectedRegion]);
 
-  // 지역 필터 (프론트에서)
-  const filtered = useMemo(() => {
-    if (selectedRegion === "전체") return items;
-    return items.filter((r) => r.region === selectedRegion);
-  }, [items, selectedRegion]);
+  // 데이터 변환
+  const mapped = useMemo(() => items.map(toReviewCardData), [items]);
 
-  // 정렬 (프론트에서)
+  // 지역 필터
+  const filtered = useMemo(() => {
+    if (selectedRegion === "전체") return mapped;
+    return mapped.filter((r) => r.region === selectedRegion);
+  }, [mapped, selectedRegion]);
+
+  // 정렬
   const sorted = useMemo(() => {
     const arr = [...filtered];
     if (sortType === "popular") {
@@ -77,13 +108,14 @@ const ReviewPage = () => {
     return arr;
   }, [filtered, sortType]);
 
-  // ReviewCard 규격으로 변환
-  const adapted = useMemo(() => sorted.map(toReviewCardData), [sorted]);
+  const adapted = sorted;
 
-  // 좋아요 토글 (카운트만 동기화)
+  // 좋아요 토글
   const onToggleLike = async (id) => {
     try {
-      const { data } = await axios.post(`http://localhost:8080/reviews/${id}/like`);
+      const { data } = await axios.post(
+        `http://localhost:8080/reviews/${id}/like`
+      );
       setItems((prev) =>
         prev.map((it) =>
           it.id === id ? { ...it, likeCount: data.likeCount } : it
@@ -94,12 +126,18 @@ const ReviewPage = () => {
     }
   };
 
+  // 상태 분기
+  const isEmptyAll = !loading && items.length === 0;
+  const isEmptyFiltered = !loading && items.length > 0 && adapted.length === 0;
+  const isListEnd = !loading && adapted.length > 0 && !hasNext;
+
   return (
     <div className="review-page">
       <Header />
+
       <div className="review-layout">
         <div className="review-top">
-          {/* 지역 선택 드롭다운 */}
+          {/* 지역 선택 */}
           <div className="region-header">
             <select
               className="region-select"
@@ -114,7 +152,7 @@ const ReviewPage = () => {
             </select>
           </div>
 
-          {/* 정렬 버튼 */}
+          {/* 정렬 */}
           <div className="filter-tabs">
             <button
               className={sortType === "latest" ? "active" : ""}
@@ -131,14 +169,14 @@ const ReviewPage = () => {
           </div>
         </div>
 
-        {/* 리뷰 카드 (UI 동일) */}
+        {/* 리뷰 카드 */}
         <div className="review-grid">
           {adapted.map((review) => (
             <ReviewCard
               key={review.id}
               review={review}
               to={`/reviews/${review.id}`}
-              onToggleLike={() => onToggleLike(review.id)} // ReviewCard가 지원하면 동작
+              onToggleLike={() => onToggleLike(review.id)}
             />
           ))}
         </div>
@@ -150,12 +188,96 @@ const ReviewPage = () => {
         {loading && (
           <div style={{ padding: 12, color: "#6b7280" }}>불러오는 중…</div>
         )}
-        {!hasNext && items.length > 0 && (
-          <div style={{ padding: 12, color: "#9ca3af" }}>끝까지 확인했어요</div>
+
+        {isEmptyAll && (
+          <div style={{ margin: "32px auto", textAlign: "center" }}>
+            <hr
+              style={{
+                border: "none",
+                borderTop: "1px solid #e5e7eb",
+                margin: "0 auto 16px",
+                width: "80%",
+                maxWidth: "400px",
+              }}
+            />
+            <div
+              style={{
+                display: "inline-block",
+                padding: "14px 20px",
+                background: "#f9fafb",
+                borderRadius: "12px",
+                color: "#6b7280",
+                fontSize: "14px",
+                lineHeight: "1.5",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              }}
+            >
+              {selectedRegion === "전체"
+                ? "아직 등록된 리뷰가 없습니다."
+                : `‘${selectedRegion}’에 해당하는 리뷰가 없습니다.`}
+              <br />첫 번째 리뷰를 남겨보세요! ✨
+            </div>
+          </div>
+        )}
+
+        {isEmptyFiltered && (
+          <div style={{ margin: "32px auto", textAlign: "center" }}>
+            <hr
+              style={{
+                border: "none",
+                borderTop: "1px solid #e5e7eb",
+                margin: "0 auto 16px",
+                width: "80%",
+                maxWidth: "400px",
+              }}
+            />
+            <div
+              style={{
+                display: "inline-block",
+                padding: "14px 20px",
+                background: "#f9fafb",
+                borderRadius: "12px",
+                color: "#6b7280",
+                fontSize: "14px",
+                lineHeight: "1.5",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              }}
+            >
+              {`‘${selectedRegion}’에 해당하는 리뷰가 없습니다.`}
+              <br />첫 번째 리뷰를 남겨보세요! ✨
+            </div>
+          </div>
+        )}
+
+        {isListEnd && (
+          <div style={{ margin: "32px auto", textAlign: "center" }}>
+            <hr
+              style={{
+                border: "none",
+                borderTop: "1px solid #e5e7eb",
+                margin: "0 auto 16px",
+                width: "80%",
+                maxWidth: "400px",
+              }}
+            />
+            <div
+              style={{
+                display: "inline-block",
+                padding: "12px 20px",
+                background: "#f9fafb",
+                borderRadius: "12px",
+                color: "#6b7280",
+                fontSize: "14px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              }}
+            >
+              모든 리뷰를 확인했어요 👏
+            </div>
+          </div>
         )}
       </div>
 
-      {/* 리뷰 작성 */}
+      {/* 리뷰 작성 CTA (페이지 하단 고정 버튼) */}
       <div className="write-button-container">
         <p>자신만의 데이트 코스를 공유해보세요!</p>
         <Link to="/review/new">

@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./style.css";
+import GalleryModal from "../../PhotoGallery/GalleryModal";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faCreditCard } from "@fortawesome/free-regular-svg-icons";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
@@ -289,7 +291,7 @@ const ReviewLeftContent = ({
         typeof it === "string" ? it : it?.imgUrl || it?.url || it?.src || null
       )
       .filter(Boolean);
-    if (srcs.length) return srcs;
+    if (srcs.length) return srcs.slice(0, 10); // 안전하게 최대 10장으로 제한
     return review?.image ? [review.image] : [];
   }, [review]);
 
@@ -297,6 +299,14 @@ const ReviewLeftContent = ({
   useEffect(() => {
     setSelectedImage(images[0] || null);
   }, [images]);
+
+  /* --- 전체 갤러리 모달 상태 --- */
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const openGallery = (i = 0) => {
+    setGalleryIndex(Number.isFinite(i) ? i : 0);
+    setGalleryOpen(true);
+  };
 
   /* ----- 상단 타이틀 메타 ----- */
   const region = review?.region || "";
@@ -420,8 +430,6 @@ const ReviewLeftContent = ({
     setMenuClosing(true);
   };
 
-  // ❌ 전역 document 리스너 없음 (백드롭이 대신 처리)
-
   return (
     <div className="review-left-content">
       <div className="title-meta-group">
@@ -429,7 +437,7 @@ const ReviewLeftContent = ({
           {region && <span className="region-badge-title">{region}</span>}
           <h1 className="review-title">{title}</h1>
 
-          {/* 점3개 메뉴 (백드롭으로 밖 클릭 처리) */}
+          {/* 점3개 메뉴 */}
           {showEdit && (
             <div className="action-menu" ref={menuRef}>
               <button
@@ -445,7 +453,6 @@ const ReviewLeftContent = ({
 
               {(menuOpen || menuClosing) && (
                 <>
-                  {/* ✅ 밖 클릭 닫힘: 화면 전체 백드롭 */}
                   <button
                     type="button"
                     className={`action-backdrop ${
@@ -493,17 +500,23 @@ const ReviewLeftContent = ({
       <div className="image-gallery-container">
         <div className="main-image-wrapper">
           {selectedImage ? (
-            <img src={selectedImage} className="main-image" alt="대표 이미지" />
+            <img
+              src={selectedImage}
+              className="main-image"
+              alt="대표 이미지"
+              onClick={() =>
+                openGallery(Math.max(0, images.indexOf(selectedImage)))
+              }
+              style={{ cursor: "zoom-in" }}
+            />
           ) : (
             <div className="main-image placeholder">이미지가 없습니다</div>
           )}
-          {images.length > 4 && (
+          {images.length > 5 && (
             <button
               type="button"
               className="overlay-show-all-button"
-              onClick={() =>
-                alert("전체 갤러리 보기 기능은 아직 준비 중이에요.")
-              }
+              onClick={() => openGallery(0)}
             >
               사진 모두 보기
             </button>
@@ -513,7 +526,7 @@ const ReviewLeftContent = ({
         {images.length > 0 && (
           <div className="thumbnail-grid-wrapper">
             <div className="thumbnail-grid">
-              {images.slice(0, 4).map((img, i) => (
+              {images.slice(0, 5).map((img, i) => (
                 <img
                   key={i}
                   src={img}
@@ -522,6 +535,7 @@ const ReviewLeftContent = ({
                     selectedImage === img ? "selected" : ""
                   }`}
                   onClick={() => setSelectedImage(img)}
+                  onDoubleClick={() => openGallery(i)}
                 />
               ))}
             </div>
@@ -591,6 +605,15 @@ const ReviewLeftContent = ({
         <div className="review-map-section" style={{ marginBottom: 24 }}>
           <KakaoMiniMap places={review.places} height={300} />
         </div>
+      )}
+
+      {/* ====== 전체 사진 보기 모달 ====== */}
+      {galleryOpen && (
+        <GalleryModal
+          images={images} // 최대 10장으로 이미 제한됨
+          initialIndex={galleryIndex}
+          onClose={() => setGalleryOpen(false)}
+        />
       )}
     </div>
   );

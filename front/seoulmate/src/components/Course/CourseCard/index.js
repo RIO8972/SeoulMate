@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import styles from "../CourseCard.module.css";
+import styles from "./CourseCard.module.css";
 
 /** 카테고리 → 이모지 */
 const CATEGORY_MAP = {
