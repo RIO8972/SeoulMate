@@ -1,6 +1,6 @@
 # 🌆 SeoulMate
 
-**실시간 혼잡도·인구 데이터를 기반으로 데이트/나들이 코스를 똑똑하게 추천하는 플랫폼**
+**실시간 혼잡도·인구 데이터 기반 데이트 플래너
 
 <p align="center">
   <img src="img/logo.jpg" width="200" alt="SeoulMate Logo" />
