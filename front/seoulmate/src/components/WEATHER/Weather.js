@@ -2,7 +2,9 @@ import React from "react";
 import styles from "./Weather.module.css";
 
 const fmt = (v, suffix = "") =>
-  v === null || v === undefined || v === "" || v === "-" ? "-" : `${v}${suffix}`;
+  v === null || v === undefined || v === "" || v === "-"
+    ? "-"
+    : `${v}${suffix}`;
 
 const airLevel = (score) => {
   const n = Number(score);
@@ -28,7 +30,7 @@ const levelClass = (label) => {
   }
 };
 
-// 아주 간단한 날씨 아이콘 매핑(이미지 경로 없을 때 이모지 사용)
+// 간단 아이콘 매핑(이미지 없을 때 이모지 사용)
 const skyIcon = (txt) => {
   const t = String(txt || "").trim();
   if (t.includes("비")) return "🌧️";
@@ -40,13 +42,18 @@ const skyIcon = (txt) => {
 
 const Weather = ({ weatherData = [], forecastData }) => {
   const d = weatherData?.[0];
-  if (!d) return <div className={styles.container}><p>날씨 데이터 없음</p></div>;
+  if (!d)
+    return (
+      <div className={styles.container}>
+        <p>날씨 데이터 없음</p>
+      </div>
+    );
 
   const airIdxLabel = airLevel(d.AIR_IDX);
   const pm10Label = d.PM10_INDEX || airLevel(d.PM10);
   const pm25Label = d.PM25_INDEX || airLevel(d.PM25);
 
-  // 24시간 예보(여러 케이스 대응)
+  // 24시간 예보(여러 필드 대응)
   const fcstRaw =
     forecastData ??
     d.FCST24HOURS ??
@@ -54,12 +61,8 @@ const Weather = ({ weatherData = [], forecastData }) => {
     d.FORECAST ??
     d.HOURLY ??
     [];
-
-  // FCST_DT(YYYYMMDDHHmm) → HH (두 자리)
   const fcst = fcstRaw.map((o) => {
-    const hh =
-      o.hour ??
-      (o.FCST_DT ? o.FCST_DT.slice(8, 10) : o.TIME ?? "");
+    const hh = o.hour ?? (o.FCST_DT ? o.FCST_DT.slice(8, 10) : o.TIME ?? "");
     return {
       hh: String(hh).padStart(2, "0"),
       temp: o.temp ?? o.TEMP ?? "-",
@@ -75,81 +78,120 @@ const Weather = ({ weatherData = [], forecastData }) => {
       <div className={styles.headerBar}>
         <div className={styles.refreshRow}>
           <span className={styles.rptDate}>{fmt(d.WEATHER_TIME)} 기준</span>
-          <button className={styles.refreshBtn} aria-label="새로고침">⟲</button>
+          <button className={styles.refreshBtn} aria-label="새로고침">
+            ⟲
+          </button>
         </div>
         <h2 className={styles.h2}>
-          {/* <span className={styles.hotspotNm}>POI</span>{" "} */}
           <span className={styles.txtGray}>날씨 / 환경 현황</span>
         </h2>
       </div>
 
       <div className={styles.inner}>
-        {/* 실시간 날씨 */}
+        {/* 실시간 날씨 카드 */}
         <div className={styles.card}>
           <h3 className={`${styles.h3} ${styles.borderBottom}`}>
             실시간 날씨 현황
-            <span className={styles.rightNote}>※ {fmt(d.WEATHER_TIME)} 기준</span>
+            <span className={styles.rightNote}>
+              ※ {fmt(d.WEATHER_TIME)} 기준
+            </span>
           </h3>
 
           {/* 현재 기온 */}
           <div className={styles.temperature}>
-            {/* <span className={styles.iconEmoji} aria-hidden>🌡️</span> */}
-            <b className={`${styles.tempNow} ${styles.primary}`}>{fmt(d.TEMP, "℃")}</b>
-            <span className={styles.feels}>체감 {fmt(d.SENSIBLE_TEMP, "℃")}</span>
+            <b className={styles.tempNow}>{fmt(d.TEMP, "℃")}</b>
+            <span className={styles.feels}>
+              체감 {fmt(d.SENSIBLE_TEMP, "℃")}
+            </span>
           </div>
 
-          {/* 습도 / 바람 (줄바꿈 방지) */}
-          <div className={`${styles.row2} ${styles.mt3}`}>
-            <div className={`${styles.col} ${styles.textRight} ${styles.borderRight}`}>
-              {/* <span className={styles.iconEmoji} aria-hidden>💧</span> */}
-              <span className={styles.nowrap}>습도 <b className={styles.bold}>{fmt(d.HUMIDITY, "%")}</b></span>
+          {/* 습도/바람: 2박스 */}
+          <div className={styles.humidityWindRow}>
+            <div className={styles.hwBox}>
+              <div className={styles.hwHeader}>
+                <span className={styles.hwLabel}>습도</span>
+                <span className={styles.hwValue}>{fmt(d.HUMIDITY, "%")}</span>
+              </div>
             </div>
-            <div className={`${styles.col} ${styles.textLeft}`}>
-              {/* <span className={styles.iconEmoji} aria-hidden>🍃</span> */}
-              <span className={styles.nowrap}>바람 <b className={styles.bold}>{fmt(d.WIND_SPD, "m/s")}</b></span>
+            <div className={styles.hwBox}>
+              <div className={styles.hwHeader}>
+                <span className={styles.hwLabel}>바람</span>
+                <span className={styles.hwValue}>{fmt(d.WIND_SPD, "m/s")}</span>
+              </div>
             </div>
           </div>
 
-    {/* ✅ ‘필 카드’ 스타일의 최저/최고/일출/일몰 */}
-      <div className={styles.row}>
-        <div className={styles.pillRow} role="list">
-          <div className={`${styles.pill} ${styles.pillBlue}`} role="listitem">
-            <span className={styles.pillLabel}>최저기온</span>
-            <span className={styles.pillValue}>{fmt(d.MIN_TEMP, "℃")}</span>
-          </div>
-          <div className={`${styles.pill} ${styles.pillBlue}`} role="listitem">
-            <span className={styles.pillLabel}>최고기온</span>
-            <span className={styles.pillValue}>{fmt(d.MAX_TEMP, "℃")}</span>
-          </div>
-          <div className={`${styles.pill} ${styles.pillSun}`} role="listitem">
-            <span className={styles.pillLabel}>일출</span>
-            <span className={`${styles.pillValue} ${styles.sunValue}`}>{fmt(d.SUNRISE)}</span>
-          </div>
-          <div className={`${styles.pill} ${styles.pillSun}`} role="listitem">
-            <span className={styles.pillLabel}>일몰</span>
-            <span className={`${styles.pillValue} ${styles.sunValue}`}>{fmt(d.SUNSET)}</span>
-          </div>
-        </div>
-      </div>
+          {/* ✅ 오늘 정보: 2행×2열 (최저 | 일출 / 최고 | 일몰) */}
+          <div className={styles.todayBlock}>
+            <div className={styles.todayTitle}>오늘 정보</div>
 
-          {/* 강수/자외선 */}
-          <div className={`${styles.weatherRow} ${styles.borderBottom}`}>
-            <div className={styles.iconCell} aria-hidden>🌂</div>
-            <div className={`${styles.mwLabel} ${styles.borderRight}`}>
-              강수량<br/><b className={styles.colorBk}>{fmt(d.PRECIPITATION)}</b>
+            <div className={styles.todayGrid2x2}>
+              <div className={`${styles.miniCard} ${styles.miniCool}`}>
+                <span className={styles.miniLabel}>최저</span>
+                <strong className={styles.miniValue}>
+                  {fmt(d.MIN_TEMP, "℃")}
+                </strong>
+              </div>
+              <div className={`${styles.miniCard} ${styles.miniSun}`}>
+                <span className={styles.miniLabel}>일출</span>
+                <strong className={styles.miniValue}>{fmt(d.SUNRISE)}</strong>
+              </div>
+              <div className={`${styles.miniCard} ${styles.miniWarm}`}>
+                <span className={styles.miniLabel}>최고</span>
+                <strong className={styles.miniValue}>
+                  {fmt(d.MAX_TEMP, "℃")}
+                </strong>
+              </div>
+              <div className={`${styles.miniCard} ${styles.miniSun}`}>
+                <span className={styles.miniLabel}>일몰</span>
+                <strong className={styles.miniValue}>{fmt(d.SUNSET)}</strong>
+              </div>
             </div>
-            <div className={styles.flexMsg}>{d.PCP_MSG || "강수 정보 없음"}</div>
           </div>
-          <div className={styles.weatherRow}>
-            <div className={styles.iconCell} aria-hidden>☀️</div>
-            <div className={`${styles.mwLabel} ${styles.borderRight}`}>
-              자외선지수<br/>
-              <b className={styles.colorBk}>
-                <span className={`${styles.badge} ${styles.good}`}>{d.UV_INDEX ?? "-"}</span>{" "}
-                <span className={styles.badgeLite}>{d.UV_INDEX_LVL ?? "-"}</span>
-              </b>
+
+          {/* 강수/자외선 안내 */}
+          <div className={styles.infoGrid}>
+            <div className={styles.infoCard}>
+              <div className={styles.infoHeader}>
+                <span aria-hidden>🌂</span>
+                <span>강수량</span>
+              </div>
+              <div className={styles.infoBody}>
+                <div className={styles.infoKV}>
+                  <span className={styles.infoKey}>현재</span>
+                  <span className={styles.infoVal}>{fmt(d.PRECIPITATION)}</span>
+                </div>
+                <div className={styles.infoMsg}>
+                  {d.PCP_MSG || "강수 정보 없음"}
+                </div>
+              </div>
             </div>
-            <div className={styles.flexMsg}>{d.UV_MSG || "자외선 정보 없음"}</div>
+
+            <div className={styles.infoCard}>
+              <div className={styles.infoHeader}>
+                <span aria-hidden>☀️</span>
+                <span>자외선지수</span>
+              </div>
+              <div className={styles.infoBody}>
+                <div className={styles.infoKV}>
+                  <span className={styles.infoKey}>지수</span>
+                  <span className={styles.infoVal}>
+                    <span className={`${styles.badge} ${styles.good}`}>
+                      {d.UV_INDEX ?? "-"}
+                    </span>
+                    <span
+                      className={styles.badgeLite}
+                      style={{ marginLeft: 8 }}
+                    >
+                      {d.UV_INDEX_LVL ?? "-"}
+                    </span>
+                  </span>
+                </div>
+                <div className={styles.infoMsg}>
+                  {d.UV_MSG || "자외선 정보 없음"}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 24시간 예보 */}
@@ -157,27 +199,63 @@ const Weather = ({ weatherData = [], forecastData }) => {
             <>
               <h4 className={`${styles.h4} ${styles.mt2}`}>24시간 날씨 예보</h4>
               <div className={styles.tableWrap}>
-                <table className={styles.table}>
+                <table className={`${styles.table} ${styles.tableFixed}`}>
+                  <thead>
+                    <tr>
+                      <th className={styles.firstCol} scope="col">
+                        시간
+                      </th>
+                      {fcst.map((h, i) => (
+                        <th
+                          key={`h-${i}`}
+                          scope="col"
+                          className={styles.headCell}
+                        >
+                          {h.hh}시
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
                   <tbody>
                     <tr>
-                      <th>시간</th>
-                      {fcst.map((h, i) => <td key={`h-${i}`}>{h.hh}시</td>)}
+                      <th className={styles.firstCol} scope="row">
+                        날씨
+                      </th>
+                      {fcst.map((h, i) => (
+                        <td key={`w-${i}`} className={styles.cellCenter}>
+                          {skyIcon(h.sky)}
+                        </td>
+                      ))}
                     </tr>
                     <tr>
-                      <th>날씨</th>
-                      {fcst.map((h, i) => <td key={`w-${i}`}>{skyIcon(h.sky)}</td>)}
+                      <th className={styles.firstCol} scope="row">
+                        기온(℃)
+                      </th>
+                      {fcst.map((h, i) => (
+                        <td key={`t-${i}`} className={styles.cellCenter}>
+                          {h.temp}
+                        </td>
+                      ))}
                     </tr>
                     <tr>
-                      <th>기온(℃)</th>
-                      {fcst.map((h, i) => <td key={`t-${i}`}>{h.temp}</td>)}
+                      <th className={styles.firstCol} scope="row">
+                        강수량(mm)
+                      </th>
+                      {fcst.map((h, i) => (
+                        <td key={`r-${i}`} className={styles.cellCenter}>
+                          {h.rainMm}
+                        </td>
+                      ))}
                     </tr>
                     <tr>
-                      <th>강수량(mm)</th>
-                      {fcst.map((h, i) => <td key={`r-${i}`}>{h.rainMm}</td>)}
-                    </tr>
-                    <tr>
-                      <th>강수확률(%)</th>
-                      {fcst.map((h, i) => <td key={`p-${i}`}>{h.rainProb}</td>)}
+                      <th className={styles.firstCol} scope="row">
+                        강수확률(%)
+                      </th>
+                      {fcst.map((h, i) => (
+                        <td key={`p-${i}`} className={styles.cellCenter}>
+                          {h.rainProb}
+                        </td>
+                      ))}
                     </tr>
                   </tbody>
                 </table>
@@ -186,23 +264,26 @@ const Weather = ({ weatherData = [], forecastData }) => {
           )}
         </div>
 
-        {/* 대기오염 현황 */}
+        {/* 대기오염 카드 */}
         <div className={styles.card}>
           <h3 className={`${styles.h3} ${styles.borderBottom}`}>
             대기오염 현황
-            <span className={styles.rightNote}>※ {fmt(d.WEATHER_TIME)} 기준</span>
+            <span className={styles.rightNote}>
+              ※ {fmt(d.WEATHER_TIME)} 기준
+            </span>
           </h3>
 
           <div className={styles.airTitleRow}>
             <strong className={styles.airTitle}>통합대기환경지수</strong>
-            <span className={`${styles.wAllBadge} ${levelClass(airIdxLabel)}`}>{airIdxLabel}</span>
+            <span className={`${styles.wAllBadge} ${levelClass(airIdxLabel)}`}>
+              {airIdxLabel}
+            </span>
           </div>
 
           <ul className={`${styles.descList} ${styles.mt2}`}>
             <li>{d.AIR_MSG || "대기질 정보를 확인하세요."}</li>
           </ul>
 
-          {/* PM 카드 2열: 줄바꿈 방지 */}
           <div className={styles.pmGrid}>
             <div className={styles.pmItem}>
               <span className={styles.pmLabel}>미세먼지</span>
@@ -210,7 +291,9 @@ const Weather = ({ weatherData = [], forecastData }) => {
                 <span className={styles.pmValue}>{fmt(d.PM10, "")}</span>
                 <span className={styles.unit}>㎍/㎥</span>
               </span>
-              <span className={`${styles.pmLevel} ${levelClass(pm10Label)}`}></span>
+              <span
+                className={`${styles.pmLevel} ${levelClass(pm10Label)}`}
+              ></span>
             </div>
             <div className={styles.pmItem}>
               <span className={styles.pmLabel}>초미세먼지</span>
@@ -218,11 +301,11 @@ const Weather = ({ weatherData = [], forecastData }) => {
                 <span className={styles.pmValue}>{fmt(d.PM25, "")}</span>
                 <span className={styles.unit}>㎍/㎥</span>
               </span>
-              <span className={`${styles.pmLevel} ${levelClass(pm25Label)}`}></span>
+              <span
+                className={`${styles.pmLevel} ${levelClass(pm25Label)}`}
+              ></span>
             </div>
           </div>
-
-
         </div>
       </div>
     </div>
@@ -230,10 +313,6 @@ const Weather = ({ weatherData = [], forecastData }) => {
 };
 
 export default Weather;
-
-
-
-
 
 // import React from 'react';
 

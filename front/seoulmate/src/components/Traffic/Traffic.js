@@ -9,22 +9,21 @@ const toNum = (v) =>
 
 /** 따릉이: 잔여(빈 슬롯)/총, 거치율(= 빈 슬롯 비율) */
 const calcBike = (b) => {
-  const total = toNum(b.SBIKE_RACK_CNT) ?? 0;        // 거치대 수(총)
-  const empty = toNum(b.SBIKE_PARKING_CNT);          // 주차가능 대수(빈 슬롯)
+  const total = toNum(b.SBIKE_RACK_CNT) ?? 0; // 거치대 수(총)
+  const empty = toNum(b.SBIKE_PARKING_CNT); // 주차가능 대수(빈 슬롯)
   if (empty === null || total === 0) {
     return { empty: "-", total, freeRate: "-" };
   }
-  // 1번 스샷처럼 cap 없이 그대로(예: 180% 가능)
-  const freeRate = Math.round((empty / total) * 100);
+  const freeRate = Math.round((empty / total) * 100); // cap 없이 그대로
   return { empty, total, freeRate };
 };
 
 /** 거치율 색상 클래스 */
 const rateClass = (r) => {
   if (r === "-") return styles.rateNA;
-  if (r < 30) return styles.rateLow;   // 빨강
-  if (r < 70) return styles.rateMid;   // 주황
-  return styles.rateHigh;              // 초록
+  if (r < 30) return styles.rateLow; // 빨강
+  if (r < 70) return styles.rateMid; // 주황
+  return styles.rateHigh; // 초록
 };
 
 const Traffic = ({ parkingData = [], sbikeData = [] }) => {
@@ -44,8 +43,14 @@ const Traffic = ({ parkingData = [], sbikeData = [] }) => {
     <div className={styles.container}>
       {/* 주차장 표: 수용 가능 면수만 표시 */}
       <div className={styles.tableWrap}>
-        <h4 className={styles.subTitle}>주차장 정보</h4>
-        <table className={styles.table}>
+        <h2 className={styles.subTitle}>주차장 정보</h2>
+        <table className={`${styles.table} ${styles.parkingTable}`}>
+          {/* 열 고정: 주차장명 56% / 면수 14% / 위치 30% */}
+          <colgroup>
+            <col className={styles.colParkName} />
+            <col className={styles.colParkCap} />
+            <col className={styles.colParkAddr} />
+          </colgroup>
           <thead>
             <tr>
               <th>주차장명</th>
@@ -56,11 +61,14 @@ const Traffic = ({ parkingData = [], sbikeData = [] }) => {
           <tbody>
             {parkingRows.length === 0 ? (
               <tr>
-                <td colSpan={3} className={styles.empty}>데이터 없음</td>
+                <td colSpan={3} className={styles.empty}>
+                  데이터 없음
+                </td>
               </tr>
             ) : (
               parkingRows.map((p, i) => {
-                const total = p.CPCTY == null || p.CPCTY === "" ? "-" : Number(p.CPCTY);
+                const total =
+                  p.CPCTY == null || p.CPCTY === "" ? "-" : Number(p.CPCTY);
                 const addr = p.ROAD_ADDR || p.ADDRESS || "주소 정보 없음";
                 return (
                   <tr key={`${p.PRK_CD ?? "noid"}-${i}`}>
@@ -82,30 +90,40 @@ const Traffic = ({ parkingData = [], sbikeData = [] }) => {
       <div className={styles.section}>
         <h4 className={styles.subTitle}>따릉이 거치소 정보</h4>
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <table className={`${styles.table} ${styles.bikeTable}`}>
+            {/* 열 고정: 거치소명 60% / 잔여총 20% / 거치율 20% */}
+            <colgroup>
+              <col className={styles.colBikeName} />
+              <col className={styles.colBikeAvail} />
+              <col className={styles.colBikeRate} />
+            </colgroup>
             <thead>
               <tr>
                 <th>거치소명</th>
                 <th>잔여/총</th>
-                <th>거치율</th> {/* = (빈 슬롯 / 거치대수) × 100 */}
+                <th>거치율</th>
               </tr>
             </thead>
             <tbody>
               {bikeRows.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className={styles.empty}>데이터 없음</td>
+                  <td colSpan={3} className={styles.empty}>
+                    데이터 없음
+                  </td>
                 </tr>
               ) : (
                 bikeRows.map((b, i) => {
                   const { empty, total, freeRate } = calcBike(b);
                   const availDisplay = total
                     ? `${empty === "-" ? "-" : empty}/${total}`
-                    : (empty ?? "-");
+                    : empty ?? "-";
                   return (
                     <tr key={`${b.SBIKE_SPOT_ID ?? "noid"}-${i}`}>
                       <td>{b.SBIKE_SPOT_NM}</td>
                       <td className={styles.availCell}>{availDisplay}</td>
-                      <td className={`${styles.availCell} ${rateClass(freeRate)}`}>
+                      <td
+                        className={`${styles.availCell} ${rateClass(freeRate)}`}
+                      >
                         {freeRate === "-" ? "-" : `${freeRate}%`}
                       </td>
                     </tr>
@@ -114,10 +132,7 @@ const Traffic = ({ parkingData = [], sbikeData = [] }) => {
               )}
             </tbody>
           </table>
-          <div className={styles.note}>
-            ※ 잔여/총 = 주차가능 대수 / 거치대 수
-            {/* 빈자리 비율 = 주차가능대수 ÷ 거치대수 × 100 입니다. */}
-          </div>
+          <div className={styles.note}>※ 잔여/총 = 주차가능 대수/거치대 수</div>
         </div>
       </div>
     </div>
@@ -126,15 +141,13 @@ const Traffic = ({ parkingData = [], sbikeData = [] }) => {
 
 export default Traffic;
 
-
-
 // import React from 'react';
 
 // const Traffic = ({parkingData, sbikeData}) => {
 //     console.log(parkingData);
 //     console.log(sbikeData);
 //     return (
-//     <> 
+//     <>
 //       <h3>따릉이 거치소 정보</h3>
 //       {sbikeData.map((sbike, index) => (
 //         <div key={`sbike-${sbike?.SBIKE_SPOT_ID ?? 'noid'}-${index}`}>

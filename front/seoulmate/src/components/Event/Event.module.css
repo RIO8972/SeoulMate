@@ -3,21 +3,25 @@
   background: #fff;
   border-radius: 16px;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 10px #0000000a;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
   padding: 16px;
+  margin-top: 18px;
 }
 
 .headerRow {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
+
 .title {
-  font-size: 18px;
+  font-size: 20px; /* ← 최종 한 번만 선언 */
   font-weight: 700;
   color: #1f2937;
+  margin: 0;
 }
+
 .updatedAt {
   font-size: 12px;
   color: #6b7280;
@@ -26,6 +30,7 @@
 .tableWrap {
   overflow: auto;
 }
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -34,6 +39,7 @@
   border-radius: 10px;
   overflow: hidden;
 }
+
 .table thead th {
   background: #f3f4f6;
   color: #374151;
@@ -43,6 +49,7 @@
   border-bottom: 1px solid #e5e7eb;
   white-space: nowrap;
 }
+
 .table tbody td {
   padding: 10px 12px;
   border-top: 1px solid #f1f5f9;
@@ -57,27 +64,23 @@
 .addr {
   color: #4b5563;
 }
-.link {
-  color: inherit; /* 파란색 제거 */
-  text-decoration: none; /* 밑줄 제거 */
-  font-weight: 700; /* 글씨 진하게 */
-  cursor: default; /* 기본은 텍스트처럼 */
-}
 
+.link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 700;
+  cursor: default;
+}
 .link:hover {
   color: inherit;
   text-decoration: none;
-  cursor: pointer; /* 마우스 올리면 클릭 모드 */
+  cursor: pointer;
 }
-
-/* 상태 유지 */
 .link:active,
 .link:visited {
   color: inherit;
   text-decoration: none;
 }
-
-/* (선택) 키보드 접근성 */
 .link:focus-visible {
   outline: 2px solid #4f46e5;
   outline-offset: 2px;
@@ -97,6 +100,7 @@
   border: 1px solid #e5e7eb;
   background: #f9fafb;
 }
+
 .thumbPlaceholder {
   width: 80px;
   height: 56px;
@@ -140,176 +144,20 @@
 .addButton {
   padding: 4px 10px;
   background-color: #4f46e5;
-  color: white;
+  color: #fff;
   font-size: 0.875rem;
   border: none;
   border-radius: 6px;
   cursor: pointer;
 }
-
-.container {
-  width: 100%;
-  background: #fff;
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-  padding: 16px;
-}
-
-.headerRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 12px;
-}
-.title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1f2937;
-}
-.updatedAt {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.tableWrap {
-  overflow: auto;
-}
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  overflow: hidden;
-}
-.table thead th {
-  background: #f3f4f6;
-  color: #374151;
-  text-align: left;
-  padding: 10px 12px;
-  font-weight: 700;
-  border-bottom: 1px solid #e5e7eb;
-  white-space: nowrap;
-}
-.table tbody td {
-  padding: 10px 12px;
-  border-top: 1px solid #f1f5f9;
-  vertical-align: middle;
-}
-
-.empty {
-  text-align: center;
-  color: #9ca3af;
-  padding: 18px;
-}
-.addr {
-  color: #4b5563;
-}
-.link {
-  color: inherit; /* 파란색 제거 */
-  text-decoration: none; /* 밑줄 제거 */
-  font-weight: 700; /* 글씨 진하게 */
-  cursor: default; /* 기본은 텍스트처럼 */
-}
-
-.link:hover {
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer; /* 마우스 올리면 클릭 모드 */
-}
-
-/* 상태 유지 */
-.link:active,
-.link:visited {
-  color: inherit;
-  text-decoration: none;
-}
-
-/* (선택) 키보드 접근성 */
-.link:focus-visible {
-  outline: 2px solid #4f46e5;
-  outline-offset: 2px;
-}
-
-.note {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.thumb {
-  width: 60px;
-  height: 56px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-}
-.thumbPlaceholder {
-  width: 80px;
-  height: 56px;
-  border-radius: 6px;
-  background: #f3f4f6;
-  display: grid;
-  place-items: center;
-  color: #9ca3af;
-  font-size: 12px;
-  border: 1px solid #e5e7eb;
-}
-
-.eventName {
-  min-width: 220px;
-}
-.nameRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-}
-.badgeNow {
-  background: #ecfdf5;
-  color: #047857;
-  border-color: #a7f3d0;
-}
-.badgeDone {
-  background: #f9fafb;
-  color: #6b7280;
-  border-color: #e5e7eb;
-}
-
-/* 기본 버튼 */
-.addButton {
-  padding: 4px 10px;
-  background-color: #4f46e5;
-  color: white;
-  font-size: 0.875rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;              /* 클릭 가능 */
-}
-
-/* 저장됨(회색)이어도 토글 가능: 커서 유지 */
 .addButtonSaved {
-  background: #e5e7eb;          /* slate-200 */
-  color: #64748b;               /* slate-500 */
-  cursor: pointer;              /* ← not-allowed 제거 */
-  /* pointer-events: auto;      ← 전역에서 막았다면 주석 해제 */
+  background: #e5e7eb;
+  color: #64748b;
+  cursor: pointer;
 }
-
-/* 로딩/요청 중에만 비활성화 느낌 */
 .addButtonBusy,
 .addButton:disabled {
   opacity: 0.7;
-  cursor: wait;                 /* 대기 커서(선택) */
-  pointer-events: none;         /* 실제 클릭 차단 */
+  cursor: wait;
+  pointer-events: none;
 }
-

@@ -1,7 +1,7 @@
 // src/components/Event/Event.js
 import React, { useMemo, useCallback, useState, useEffect } from "react";
-import axios from "axios";          // cityapi(근처 장소) 전용
-import api from "../../api/api";    // contentapi 전용 인스턴스
+import axios from "axios"; // cityapi(근처 장소) 전용
+import api from "../../api/api"; // contentapi 전용 인스턴스
 import styles from "./Event.module.css";
 import requireLogin from "../../utils/requireLogin";
 
@@ -43,7 +43,7 @@ const Event = ({ event = [], onSavePlace }) => {
     }
 
     api
-      .post("/carts/check/names", names)   // ✅ baseURL은 src/api/api.js
+      .post("/carts/check/names", names) // ✅ baseURL은 src/api/api.js
       .then((res) => {
         const m = res?.data || {};
         const s = new Set(
@@ -134,7 +134,7 @@ const Event = ({ event = [], onSavePlace }) => {
   return (
     <div className={styles.container}>
       <div className={styles.headerRow}>
-        <h3 className={styles.title}>문화행사</h3>
+        <h2 className={styles.title}>문화행사</h2>
       </div>
 
       <div className={styles.tableWrap}>
@@ -205,12 +205,22 @@ const Event = ({ event = [], onSavePlace }) => {
                           <span className={styles.namePlain}>{name}</span>
                         )}
                         {ongoing === true && (
-                          <span className={`${styles.badge} ${styles.badgeNow}`}>진행중</span>
+                          <span
+                            className={`${styles.badge} ${styles.badgeNow}`}
+                          >
+                            진행중
+                          </span>
                         )}
                         {ongoing === false && (
-                          <span className={`${styles.badge} ${styles.badgeDone}`}>종료</span>
+                          <span
+                            className={`${styles.badge} ${styles.badgeDone}`}
+                          >
+                            종료
+                          </span>
                         )}
-                        {isSaved && <span className={styles.badge}>저장됨</span>}
+                        {isSaved && (
+                          <span className={styles.badge}>저장됨</span>
+                        )}
                       </div>
                     </td>
                     <td>
@@ -232,7 +242,9 @@ const Event = ({ event = [], onSavePlace }) => {
           </tbody>
         </table>
 
-        <div className={styles.note}>※ 진행 상태는 기간 기준으로 단순 계산됩니다.</div>
+        <div className={styles.note}>
+          ※ 진행 상태는 기간 기준으로 단순 계산됩니다.
+        </div>
       </div>
     </div>
   );

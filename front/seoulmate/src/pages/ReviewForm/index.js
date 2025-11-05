@@ -206,6 +206,29 @@ function ReviewForm({
   const prev = () => setStep((p) => Math.max(1, p - 1));
   const progress = (step / totalSteps) * 100;
 
+  const isStepValid = (stepNum) => {
+    switch (stepNum) {
+      case 1: // StepCategory
+        return formData.categories?.length > 0;
+      case 2: // StepDate
+        return !!formData.date;
+      case 3: // StepLocation
+        return formData.selectedPlaces?.length > 0;
+      case 4: // StepImage
+        return (
+          (formData.existingImages?.length || 0) +
+            (formData.newImages?.length || 0) >
+          0
+        );
+      case 5: // StepDescription
+        return !!formData.title && !!formData.detail;
+      case 6: // StepCost
+        return formData.cost !== null && formData.cost > 0;
+      default:
+        return false;
+    }
+  };
+
   const buildDateTime = (date, time) => {
     if (!date && !time) return null;
     if (date && time) return `${date}T${time}:00`;
@@ -368,12 +391,13 @@ function ReviewForm({
                 이전
               </button>
             )}
+
             {step < totalSteps ? (
               <button
                 type="button"
                 className="review-button next"
                 onClick={next}
-                disabled={submitting}
+                disabled={submitting || !isStepValid(step)}
               >
                 다음
               </button>
@@ -382,7 +406,7 @@ function ReviewForm({
                 type="button"
                 className="review-button next"
                 onClick={handleFinish}
-                disabled={submitting}
+                disabled={submitting || !isStepValid(step)}
               >
                 {submitText}
               </button>
